@@ -14,4 +14,9 @@ dependencies {
     api(projects.components.host.api)
     api(projects.components.server.api)
     implementation(projects.components.core.api)
+
+    testImplementation(libs.kotlin.stdlib)
+    testImplementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.tests.kotlin.test)
 }

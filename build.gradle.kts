@@ -40,6 +40,9 @@ subprojects {
                 jvmDefault.set(JvmDefaultMode.NO_COMPATIBILITY)
             }
         }
+        tasks.withType<Test>().configureEach {
+            useJUnitPlatform()
+        }
     }
     // Both the main plugin and the module plugin register this extension
     plugins.withId("org.jetbrains.intellij.platform.module") {
