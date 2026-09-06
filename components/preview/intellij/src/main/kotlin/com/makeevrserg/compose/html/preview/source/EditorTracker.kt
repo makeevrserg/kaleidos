@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
+import com.makeevrserg.compose.html.preview.feature.PreviewFunction
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
 import com.makeevrserg.compose.html.preview.feature.PreviewTarget
 import com.makeevrserg.compose.html.preview.psi.PreviewFileScanner
@@ -38,8 +39,14 @@ class EditorTracker(
     private val contract: PreviewStore,
     private val mainContext: CoroutineContext
 ) {
+    /** A file deleted between the editor event and the scan is invalid; PSI lookup would log an error for it. */
+    private fun previewsOf(file: VirtualFile): List<PreviewFunction> {
+        if (!file.isValid) return emptyList()
+        return projectDependencies.psiManager.findFile(file)?.let(fileScanner::scan).orEmpty()
+    }
+
     private suspend fun scan(file: VirtualFile): PreviewTarget = readAction {
-        val previews = projectDependencies.psiManager.findFile(file)?.let(fileScanner::scan).orEmpty()
+        val previews = previewsOf(file)
         PreviewTarget(
             filePath = file.path,
             fileName = file.name,
