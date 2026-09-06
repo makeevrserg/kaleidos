@@ -64,7 +64,7 @@
 - Тесты `EditorTracker` сейчас отсутствуют (intellij-модуль); проверка через `buildPlugin` + smoke в sandbox
   (см. `WORKLOG.md`, раздел про Robot).
 
-### 3. `PreviewFeature.connectIfNeeded` через `mapLatest` — НЕ НАЧАТО
+### 3. `PreviewFeature.connectIfNeeded` через `mapLatest` — СДЕЛАНО
 
 Проблема. Каждое событие редактора делает `launch { resolveHost(); requestRunning() }`; быстрое переключение файлов
 даёт параллельные `readAction`, отменить устаревший `locate` нечем. Состояние не портится (редьюсер сверяет
@@ -109,4 +109,9 @@
   `editedFiles`) с `Disposer.newDisposable` в теле и `awaitClose { dispose }`; `track()` это suspend до отмены,
   `mapLatest` вместо `scanJob`/`cancelAndJoin`. В `core:api` добавлен `CoroutineLifecycle(scope, block)`: запускает
   в `onEnable`, отменяет в `onDisable`; `IntellijPreviewModule.lifecycle` стал `CompositeLifecycle`. `EditorEvent` и
-  канал удалены. Следующий: пункт 3.
+  канал удалены. 
+- 2026-09-06: пункт 3 сделан. `PreviewConnectRequest(target, retryAfterFailure, attempt)` в `MutableStateFlow`,
+  в `init` `connectRequests.filterNotNull().mapLatest(::connect).launchIn(this)`. `FakePreviewHostLocator.locateDelay`
+  позволяет прервать lookup новым запросом; тест «stale lookup dropped» добавлен, PreviewFeatureTest: 18.
+  `launch { toolWindowPresenter.show() }` в `onFocusPreview` оставлен: это прыжок на EDT, не ресурс.
+  Следующий: пункт 5 (мелочи), затем 4 по желанию.

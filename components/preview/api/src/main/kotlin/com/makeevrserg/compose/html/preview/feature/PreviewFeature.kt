@@ -6,15 +6,23 @@ import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
 import com.makeevrserg.compose.html.preview.notification.PreviewNotifier
 import com.makeevrserg.compose.html.preview.server.DevServerController
 import com.makeevrserg.compose.html.preview.server.DevServerState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Connecting to the dev server is driven by the latest [PreviewConnectRequest]: a newer request, from
+ * a faster file switch for example, cancels the host lookup of the previous one instead of racing it.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 class PreviewFeature(
     private val devServerController: DevServerController,
     private val hostLocator: PreviewHostLocator,
@@ -34,9 +42,15 @@ class PreviewFeature(
         )
     )
 
+    private val connectRequests = MutableStateFlow<PreviewConnectRequest?>(null)
+
     override val state: StateFlow<PreviewState> = mutableState.asStateFlow()
 
     init {
+        connectRequests
+            .filterNotNull()
+            .mapLatest(::connect)
+            .launchIn(this)
         devServerController.state
             .onEach { serverState -> mutableState.update { current -> reducer.setServerState(current, serverState) } }
             .launchIn(this)
@@ -62,6 +76,13 @@ class PreviewFeature(
         return resolution
     }
 
+    private suspend fun connect(request: PreviewConnectRequest) {
+        val resolution = resolveHost(request.target, force = request.retryAfterFailure)
+        if (resolution is PreviewHostResolution.Found) {
+            devServerController.requestRunning(resolution.host, request.retryAfterFailure)
+        }
+    }
+
     /**
      * The dev server is contacted only for a page that is about to be shown. Automatic checks never
      * relaunch a server whose last launch failed; explicit user requests do.
@@ -70,11 +91,8 @@ class PreviewFeature(
         val current = mutableState.value
         val target = current.target ?: return
         if (target.previews.isEmpty() || !current.isToolWindowVisible) return
-        launch {
-            val resolution = resolveHost(target, force = retryAfterFailure)
-            if (resolution is PreviewHostResolution.Found) {
-                devServerController.requestRunning(resolution.host, retryAfterFailure)
-            }
+        connectRequests.update { previous ->
+            PreviewConnectRequest(target, retryAfterFailure, attempt = (previous?.attempt ?: 0) + 1)
         }
     }
 

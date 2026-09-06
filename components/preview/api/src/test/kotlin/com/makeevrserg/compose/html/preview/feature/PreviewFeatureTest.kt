@@ -4,6 +4,7 @@ import com.makeevrserg.compose.html.preview.core.TestCoroutineFeature
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.BUTTON_FILE
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.CARD_FILE
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.hostFound
+import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.otherHost
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.previewFunction
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.previewHost
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.running
@@ -13,6 +14,7 @@ import com.makeevrserg.compose.html.preview.server.DevServerState
 import com.makeevrserg.compose.html.preview.url.PreviewUrlFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import java.time.Clock
@@ -22,6 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PreviewFeatureTest {
@@ -101,6 +104,26 @@ class PreviewFeatureTest {
         assertEquals(1, hostLocator.locatedFiles.size)
         assertEquals(2, devServerController.runningRequests.size)
     }
+
+    @Test
+    fun GIVEN_lookup_in_progress_WHEN_another_file_selected_THEN_stale_lookup_dropped_and_only_new_host_requested() =
+        runTest {
+            hostLocator.resolutions[CARD_FILE] = hostFound
+            hostLocator.resolutions[BUTTON_FILE] = PreviewHostResolution.Found(otherHost)
+            hostLocator.locateDelay = 1.seconds
+            val feature = createFeature()
+            feature.onToolWindowVisibilityChanged(isVisible = true)
+
+            feature.onFileSelected(target())
+            runCurrent()
+            feature.onFileSelected(target(filePath = BUTTON_FILE))
+            advanceTimeBy(2.seconds)
+            runCurrent()
+
+            assertEquals(listOf(CARD_FILE, BUTTON_FILE), hostLocator.locatedFiles)
+            assertEquals(listOf(RunningRequest(otherHost, false)), devServerController.runningRequests)
+            assertEquals(PreviewHostResolution.Found(otherHost), feature.state.value.target?.host)
+        }
 
     @Test
     fun GIVEN_host_not_found_WHEN_file_selected_THEN_user_notified_once_for_the_same_reason() = runTest {
