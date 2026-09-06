@@ -1,41 +1,87 @@
-import ru.astrainteractive.gradleplugin.property.PropertyValue.Companion.gradleProperty
-import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
-import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.requireString
+import org.gradle.process.CommandLineArgumentProvider
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    id("java")
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.intellij)
+    alias(libs.plugins.intellij.platform)
 }
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
-    implementation(libs.kotlin.coroutines.swing)
-    implementation(project(":core"))
+    intellijPlatform {
+        intellijIdeaCommunity(providers.gradleProperty("intellij.version"))
+        bundledPlugins("com.intellij.java", "org.jetbrains.kotlin", "com.intellij.gradle")
+        pluginVerifier()
+        // Merge :core into the plugin JAR; a plain project dependency lands in lib/modules and is not loaded
+        pluginComposedModule(implementation(project(":core")))
+    }
 }
 
-intellij {
-    pluginName = requireProjectInfo.name
-    version.set(gradleProperty("intellij.version").requireString)
-    type.set(gradleProperty("intellij.type").requireString)
+kotlin {
+    compilerOptions {
+        // Match the Kotlin runtime bundled with the target IntelliJ Platform
+        apiVersion.set(KotlinVersion.KOTLIN_2_1)
+        languageVersion.set(KotlinVersion.KOTLIN_2_1)
+        // Without JVM default methods Kotlin emits bridges to DefaultImpls of platform interfaces
+        // (ToolWindowFactory and others), which the Plugin Verifier reports as internal API overrides
+        jvmDefault.set(JvmDefaultMode.NO_COMPATIBILITY)
+    }
 }
 
-tasks {
-    patchPluginXml {
-        sinceBuild.set("223")
-        untilBuild.set("251.*")
+intellijPlatform {
+    // No Swing forms and no @NotNull assertions to instrument; the task also fails on some macOS JDK layouts
+    instrumentCode = false
+
+    pluginConfiguration {
+        version = providers.gradleProperty("klibs.project.version.string")
+        ideaVersion {
+            sinceBuild = providers.gradleProperty("intellij.sinceBuild")
+            untilBuild = provider { null }
+        }
     }
 
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
 
-    publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
+    }
+
+    pluginVerification {
+        ides {
+            // Verify against the same build the plugin is compiled with; add recommended() for a wider matrix
+            current()
+        }
+    }
+}
+
+// Sandbox IDE with the Robot Server plugin for scripted UI checks. Pass -PuiTestProject=<path>
+// to open a project on start: ./gradlew :plugin:runIdeForUiTests -PuiTestProject=/path/to/project
+val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
+    task {
+        jvmArgumentProviders += CommandLineArgumentProvider {
+            listOf(
+                "-Drobot-server.port=8082",
+                "-Dide.mac.message.dialogs.as.sheets=false",
+                "-Djb.privacy.policy.text=<!--999.999-->",
+                "-Djb.consents.confirmation.enabled=false",
+                "-Didea.trust.all.projects=true"
+            )
+        }
+        providers.gradleProperty("uiTestProject").orNull?.let { projectPath -> args(projectPath) }
+    }
+
+    plugins {
+        robotServerPlugin()
     }
 }

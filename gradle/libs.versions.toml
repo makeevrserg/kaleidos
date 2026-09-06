@@ -1,30 +1,18 @@
 [versions]
 # Kotlin
-kotlin-version = "2.1.10" # https://github.com/JetBrains/kotlin
-kotlin-coroutines = "1.10.2" # https://github.com/Kotlin/kotlinx.coroutines
-jetbrains-intellij = "1.17.4" # https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#ide-configuration
+kotlin-version = "2.3.20" # https://github.com/JetBrains/kotlin
+# IntelliJ
+intellij-platform-gradle = "2.18.1" # https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 # klibs
-klibs-gradleplugin = "1.8.0" # https://github.com/makeevrserg/gradle-plugin
-klibs-kstorage = "4.2.0" # https://github.com/makeevrserg/klibs.kstorage
-klibs-mikro = "1.11.0" # https://github.com/makeevrserg/klibs.mikro
-
-[libraries]
-kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-version" }
-kotlin-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlin-coroutines" }
-klibs-kstorage = { module = "ru.astrainteractive.klibs:kstorage", version.ref = "klibs-kstorage" }
-klibs-mikro-core = { module = "ru.astrainteractive.klibs:mikro-core", version.ref = "klibs-mikro" }
+klibs-gradleplugin = "2.0.0" # https://github.com/makeevrserg/gradle-plugin
 
 [plugins]
 # Kotlin
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }
-kotlin-gradle = { id = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-version" }
-intellij = { id = "org.jetbrains.intellij", version.ref = "jetbrains-intellij" }
-
+# IntelliJ
+intellij-platform = { id = "org.jetbrains.intellij.platform", version.ref = "intellij-platform-gradle" }
+intellij-platform-module = { id = "org.jetbrains.intellij.platform.module", version.ref = "intellij-platform-gradle" }
 # klibs - core
 klibs-gradle-detekt = { id = "ru.astrainteractive.gradleplugin.detekt", version.ref = "klibs-gradleplugin" }
-klibs-gradle-detekt-compose = { id = "ru.astrainteractive.gradleplugin.detekt.compose", version.ref = "klibs-gradleplugin" }
-klibs-gradle-dokka-root = { id = "ru.astrainteractive.gradleplugin.dokka.root", version.ref = "klibs-gradleplugin" }
-klibs-gradle-dokka-module = { id = "ru.astrainteractive.gradleplugin.dokka.module", version.ref = "klibs-gradleplugin" }
-klibs-gradle-java-core = { id = "ru.astrainteractive.gradleplugin.java.core", version.ref = "klibs-gradleplugin" }
-klibs-gradle-publication = { id = "ru.astrainteractive.gradleplugin.publication", version.ref = "klibs-gradleplugin" }
-klibs-gradle-rootinfo = { id = "ru.astrainteractive.gradleplugin.root.info", version.ref = "klibs-gradleplugin" }
+klibs-gradle-java-version = { id = "ru.astrainteractive.gradleplugin.java.version", version.ref = "klibs-gradleplugin" }
+klibs-gradle-rootinfo = { id = "ru.astrainteractive.gradleplugin.rootinfo", version.ref = "klibs-gradleplugin" }
