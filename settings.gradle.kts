@@ -15,3 +15,7 @@ include(
     ":components:core:api",
     ":components:core:intellij",
 )
+include(
+    ":components:host:api",
+    ":components:host:intellij",
+)

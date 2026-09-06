@@ -21,6 +21,8 @@ dependencies {
         // and is not loaded. The list is explicit so no module is pulled in by accident.
         pluginComposedModule(implementation(projects.components.core.api))
         pluginComposedModule(implementation(projects.components.core.intellij))
+        pluginComposedModule(implementation(projects.components.host.api))
+        pluginComposedModule(implementation(projects.components.host.intellij))
     }
 }
 

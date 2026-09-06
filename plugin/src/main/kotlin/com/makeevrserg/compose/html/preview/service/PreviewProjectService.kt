@@ -12,8 +12,8 @@ import com.makeevrserg.compose.html.preview.feature.PreviewFeature
 import com.makeevrserg.compose.html.preview.feature.PreviewStateReducer
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
 import com.makeevrserg.compose.html.preview.host.GradleModuleCatalog
+import com.makeevrserg.compose.html.preview.host.IntellijPreviewHostLocator
 import com.makeevrserg.compose.html.preview.host.ModuleDependencyGraphReader
-import com.makeevrserg.compose.html.preview.host.PreviewHostLocator
 import com.makeevrserg.compose.html.preview.host.PreviewHostSelector
 import com.makeevrserg.compose.html.preview.notification.PreviewNotifier
 import com.makeevrserg.compose.html.preview.psi.AnnotationFqnResolver
@@ -77,11 +77,11 @@ class PreviewProjectService(project: Project, private val coroutineScope: Corout
 
     val feature: PreviewStore = PreviewFeature(
         devServerController = devServerController,
-        hostLocator = PreviewHostLocator(
+        hostLocator = IntellijPreviewHostLocator(
             gradleModuleCatalog = GradleModuleCatalog(projectDependencies),
             graphReader = ModuleDependencyGraphReader(projectDependencies),
             selector = PreviewHostSelector(),
-            backgroundDispatcher = Dispatchers.Default
+            backgroundContext = dispatchers.default
         ),
         projectDependencies = projectDependencies,
         previewNotifier = PreviewNotifier(project),
