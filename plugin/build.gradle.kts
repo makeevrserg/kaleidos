@@ -23,6 +23,8 @@ dependencies {
         pluginComposedModule(implementation(projects.components.core.intellij))
         pluginComposedModule(implementation(projects.components.host.api))
         pluginComposedModule(implementation(projects.components.host.intellij))
+        pluginComposedModule(implementation(projects.components.server.api))
+        pluginComposedModule(implementation(projects.components.server.intellij))
     }
 }
 

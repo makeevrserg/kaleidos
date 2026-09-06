@@ -23,7 +23,7 @@ import com.makeevrserg.compose.html.preview.server.DevServerController
 import com.makeevrserg.compose.html.preview.server.DevServerHealthCheck
 import com.makeevrserg.compose.html.preview.server.DevServerOriginResolver
 import com.makeevrserg.compose.html.preview.server.DevServerUrlDetector
-import com.makeevrserg.compose.html.preview.server.GradleTaskRunner
+import com.makeevrserg.compose.html.preview.server.ExternalSystemGradleTaskRunner
 import com.makeevrserg.compose.html.preview.server.KobwebConfReader
 import com.makeevrserg.compose.html.preview.source.EditorTracker
 import com.makeevrserg.compose.html.preview.source.SourceChangeTracker
@@ -32,7 +32,6 @@ import com.makeevrserg.compose.html.preview.ui.PreviewStateTexts
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowserFactory
 import com.makeevrserg.compose.html.preview.url.PreviewUrlFactory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import java.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -55,18 +54,19 @@ class PreviewProjectService(project: Project, private val coroutineScope: Corout
     val previewStateTexts = PreviewStateTexts()
 
     private val healthCheck = DevServerHealthCheck(
-        ioDispatcher = Dispatchers.IO,
+        ioContext = dispatchers.io,
         connectTimeout = HEALTH_CHECK_TIMEOUT
     )
 
     private val devServerController = DevServerController(
         healthCheck = healthCheck,
-        gradleTaskRunner = GradleTaskRunner(
+        gradleTaskRunner = ExternalSystemGradleTaskRunner(
             projectDependencies = projectDependencies,
-            backgroundDispatcher = Dispatchers.Default
+            mainContext = dispatchers.main,
+            backgroundContext = dispatchers.default
         ),
         originResolver = DevServerOriginResolver(
-            kobwebConfReader = KobwebConfReader(ioDispatcher = Dispatchers.IO),
+            kobwebConfReader = KobwebConfReader(ioContext = dispatchers.io),
             healthCheck = healthCheck
         ),
         urlDetector = DevServerUrlDetector(),

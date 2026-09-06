@@ -19,3 +19,7 @@ include(
     ":components:host:api",
     ":components:host:intellij",
 )
+include(
+    ":components:server:api",
+    ":components:server:intellij",
+)

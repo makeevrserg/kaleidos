@@ -4,26 +4,29 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.util.Disposer
 import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Launches Gradle tasks as regular runs so their output lands in the Run tool window, exactly like
- * the Compose Desktop preview does. Runs are told apart by their execution name.
+ * the Compose Desktop preview does.
+ *
+ * @param mainContext run descriptors and `ExternalSystemUtil.runTask` require the event dispatch thread
+ * @param backgroundContext destroying an external system process cancels the Gradle task synchronously,
+ * which the platform forbids on the event dispatch thread
  */
-class GradleTaskRunner(
+class ExternalSystemGradleTaskRunner(
     private val projectDependencies: ProjectDependencies,
-    private val backgroundDispatcher: CoroutineDispatcher
-) {
+    private val mainContext: CoroutineContext,
+    private val backgroundContext: CoroutineContext
+) : GradleTaskRunner {
 
     private fun createSettings(
         config: DevServerLaunchConfig,
@@ -71,8 +74,12 @@ class GradleTaskRunner(
             .filterNot { handler -> handler.isProcessTerminated }
     }
 
-    suspend fun start(config: DevServerLaunchConfig, executionName: String, listener: DevServerProcessListener) {
-        withContext(Dispatchers.EDT) {
+    override suspend fun start(
+        config: DevServerLaunchConfig,
+        executionName: String,
+        listener: DevServerProcessListener
+    ) {
+        withContext(mainContext) {
             val subscription = subscribeToOutput(executionName, listener)
             ExternalSystemUtil.runTask(
                 createSettings(config, executionName),
@@ -86,14 +93,9 @@ class GradleTaskRunner(
         }
     }
 
-    /**
-     * Terminates every run started with [executionName]. A dev server started manually from a
-     * terminal is left untouched. Run descriptors are read on the EDT, but destroying an external
-     * system process cancels the Gradle task synchronously, which the platform forbids on the EDT.
-     */
-    suspend fun stop(executionName: String) {
-        val handlers = withContext(Dispatchers.EDT) { findRunningHandlers(executionName) }
-        withContext(backgroundDispatcher) {
+    override suspend fun stop(executionName: String) {
+        val handlers = withContext(mainContext) { findRunningHandlers(executionName) }
+        withContext(backgroundContext) {
             handlers.forEach { handler -> handler.destroyProcess() }
         }
     }

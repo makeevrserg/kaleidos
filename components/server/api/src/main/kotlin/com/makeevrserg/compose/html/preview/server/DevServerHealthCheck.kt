@@ -1,13 +1,13 @@
 package com.makeevrserg.compose.html.preview.server
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URI
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 
 class DevServerHealthCheck(
-    private val ioDispatcher: CoroutineDispatcher,
+    private val ioContext: CoroutineContext,
     private val connectTimeout: Duration
 ) {
 
@@ -24,7 +24,7 @@ class DevServerHealthCheck(
      * Any HTTP answer counts as alive: webpack-dev-server serves the page for every route, and an
      * error page still proves the process listens on the port.
      */
-    suspend fun isAlive(url: String): Boolean = withContext(ioDispatcher) {
+    suspend fun isAlive(url: String): Boolean = withContext(ioContext) {
         runCatching {
             val connection = openConnection(url)
             connection.responseCode
