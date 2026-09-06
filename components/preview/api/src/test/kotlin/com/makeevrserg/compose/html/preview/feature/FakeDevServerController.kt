@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 class FakeDevServerController : DevServerController {
     val mutableState = MutableStateFlow<DevServerState>(DevServerState.Stopped)
 
-    val ensureRunningRequests = mutableListOf<EnsureRunningRequest>()
+    val runningRequests = mutableListOf<RunningRequest>()
 
     val restartedHosts = mutableListOf<PreviewHost>()
 
@@ -17,15 +17,15 @@ class FakeDevServerController : DevServerController {
 
     override val state: StateFlow<DevServerState> = mutableState
 
-    override suspend fun ensureRunning(host: PreviewHost, retryAfterFailure: Boolean) {
-        ensureRunningRequests += EnsureRunningRequest(host, retryAfterFailure)
+    override suspend fun requestRunning(host: PreviewHost, retryAfterFailure: Boolean) {
+        runningRequests += RunningRequest(host, retryAfterFailure)
     }
 
-    override suspend fun stop() {
+    override fun stop() {
         stopCount++
     }
 
-    override suspend fun restart(host: PreviewHost) {
+    override fun restart(host: PreviewHost) {
         restartedHosts += host
     }
 }

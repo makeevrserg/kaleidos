@@ -66,7 +66,7 @@ class PreviewFeatureTest {
         runCurrent()
 
         assertTrue(hostLocator.locatedFiles.isEmpty())
-        assertTrue(devServerController.ensureRunningRequests.isEmpty())
+        assertTrue(devServerController.runningRequests.isEmpty())
         assertEquals(target(), feature.state.value.target)
     }
 
@@ -75,7 +75,7 @@ class PreviewFeatureTest {
         val feature = createVisibleFeatureWithCardFile()
 
         assertEquals(listOf(CARD_FILE), hostLocator.locatedFiles)
-        assertEquals(listOf(EnsureRunningRequest(previewHost, false)), devServerController.ensureRunningRequests)
+        assertEquals(listOf(RunningRequest(previewHost, false)), devServerController.runningRequests)
         assertEquals(hostFound, feature.state.value.target?.host)
     }
 
@@ -88,7 +88,7 @@ class PreviewFeatureTest {
         runCurrent()
 
         assertTrue(hostLocator.locatedFiles.isEmpty())
-        assertTrue(devServerController.ensureRunningRequests.isEmpty())
+        assertTrue(devServerController.runningRequests.isEmpty())
     }
 
     @Test
@@ -99,7 +99,7 @@ class PreviewFeatureTest {
         runCurrent()
 
         assertEquals(1, hostLocator.locatedFiles.size)
-        assertEquals(2, devServerController.ensureRunningRequests.size)
+        assertEquals(2, devServerController.runningRequests.size)
     }
 
     @Test
@@ -115,7 +115,7 @@ class PreviewFeatureTest {
 
         assertEquals(listOf("No preview module"), notifier.errors)
         assertEquals(2, hostLocator.locatedFiles.size)
-        assertTrue(devServerController.ensureRunningRequests.isEmpty())
+        assertTrue(devServerController.runningRequests.isEmpty())
     }
 
     @Test
@@ -130,7 +130,7 @@ class PreviewFeatureTest {
         feature.onReconnect()
         runCurrent()
 
-        assertEquals(listOf(EnsureRunningRequest(previewHost, true)), devServerController.ensureRunningRequests)
+        assertEquals(listOf(RunningRequest(previewHost, true)), devServerController.runningRequests)
         assertEquals(hostFound, feature.state.value.target?.host)
     }
 
@@ -144,7 +144,7 @@ class PreviewFeatureTest {
         runCurrent()
 
         assertEquals(1, toolWindowPresenter.showCount)
-        assertEquals(listOf(EnsureRunningRequest(previewHost, true)), devServerController.ensureRunningRequests)
+        assertEquals(listOf(RunningRequest(previewHost, true)), devServerController.runningRequests)
         assertEquals("app.CardPreview", feature.state.value.target?.focusedFqn)
     }
 
@@ -170,7 +170,7 @@ class PreviewFeatureTest {
         feature.onToolWindowVisibilityChanged(isVisible = true)
         runCurrent()
 
-        assertEquals(listOf(EnsureRunningRequest(previewHost, true)), devServerController.ensureRunningRequests)
+        assertEquals(listOf(RunningRequest(previewHost, true)), devServerController.runningRequests)
     }
 
     @Test
@@ -180,7 +180,7 @@ class PreviewFeatureTest {
         feature.onToolWindowVisibilityChanged(isVisible = true)
         runCurrent()
 
-        assertEquals(1, devServerController.ensureRunningRequests.size)
+        assertEquals(1, devServerController.runningRequests.size)
     }
 
     @Test
@@ -191,7 +191,7 @@ class PreviewFeatureTest {
         runCurrent()
 
         assertEquals(2, hostLocator.locatedFiles.size)
-        assertEquals(EnsureRunningRequest(previewHost, true), devServerController.ensureRunningRequests.last())
+        assertEquals(RunningRequest(previewHost, true), devServerController.runningRequests.last())
     }
 
     @Test

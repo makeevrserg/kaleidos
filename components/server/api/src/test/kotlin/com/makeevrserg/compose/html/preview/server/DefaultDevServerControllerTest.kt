@@ -4,8 +4,13 @@ import com.makeevrserg.compose.html.preview.core.TestCoroutineFeature
 import com.makeevrserg.compose.html.preview.host.DevServerKind
 import com.makeevrserg.compose.html.preview.host.PreviewHost
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -43,22 +48,56 @@ class DefaultDevServerControllerTest {
         healthCheck = healthCheck
     )
 
-    private fun TestScope.createController(): DefaultDevServerController {
+    private fun createController(scope: CoroutineScope): DefaultDevServerController {
         return DefaultDevServerController(
-            healthCheck = healthCheck,
-            gradleTaskRunner = taskRunner,
+            launcher = DevServerLauncher(
+                gradleTaskRunner = taskRunner,
+                healthCheck = healthCheck,
+                originResolver = originResolver,
+                urlDetector = DevServerUrlDetector(),
+                startupTimeout = STARTUP_TIMEOUT,
+                pollInterval = POLL_INTERVAL
+            ),
             originResolver = originResolver,
-            urlDetector = DevServerUrlDetector(),
-            startupTimeout = STARTUP_TIMEOUT,
-            pollInterval = POLL_INTERVAL,
-            coroutineFeature = TestCoroutineFeature(backgroundScope)
+            healthCheck = healthCheck,
+            coroutineFeature = TestCoroutineFeature(scope)
         )
     }
+
+    private fun TestScope.createController(): DefaultDevServerController = createController(backgroundScope)
 
     /** Simulates the dev server printing its origin and answering at it. */
     private fun StartedRun.serverComesUp(baseUrl: String) {
         listener.onOutput("Loopback: $baseUrl/\n")
         healthCheck.aliveUrls += baseUrl
+    }
+
+    private suspend fun TestScope.requestWebpackLaunch(controller: DevServerController): StartedRun {
+        controller.requestRunning(webpackHost, retryAfterFailure = false)
+        runCurrent()
+        return taskRunner.devServerRuns.last()
+    }
+
+    private suspend fun TestScope.startWebpackServer(controller: DevServerController): StartedRun {
+        val run = requestWebpackLaunch(controller)
+        run.serverComesUp("http://localhost:8085")
+        advanceTimeBy(POLL_INTERVAL)
+        runCurrent()
+        return run
+    }
+
+    private suspend fun TestScope.failWebpackLaunch(controller: DevServerController) {
+        requestWebpackLaunch(controller).listener.onExited(isSuccess = false)
+        advanceTimeBy(POLL_INTERVAL)
+        runCurrent()
+        assertIs<DevServerState.Failed>(controller.state.value)
+    }
+
+    private suspend fun TestScope.adoptKobwebServer(controller: DevServerController) {
+        healthCheck.aliveUrls += "http://localhost:8086"
+        controller.requestRunning(kobwebHost, retryAfterFailure = false)
+        runCurrent()
+        assertRunning(controller, kobwebHost, "http://localhost:8086")
     }
 
     private fun assertRunning(controller: DevServerController, host: PreviewHost, baseUrl: String) {
@@ -71,80 +110,75 @@ class DefaultDevServerControllerTest {
     }
 
     @Test
-    fun GIVEN_server_already_answers_at_conf_origin_WHEN_ensureRunning_THEN_adopted_without_gradle() = runTest {
+    fun GIVEN_no_server_WHEN_requestRunning_THEN_starting_and_run_launched() = runTest {
         val controller = createController()
-        healthCheck.aliveUrls += "http://localhost:8086"
 
-        controller.ensureRunning(kobwebHost, retryAfterFailure = false)
+        requestWebpackLaunch(controller)
+
+        assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
+        assertEquals(1, taskRunner.devServerRuns.size)
+    }
+
+    @Test
+    fun GIVEN_launch_in_progress_WHEN_requestRunning_again_for_same_host_THEN_no_second_launch() = runTest {
+        val controller = createController()
+        requestWebpackLaunch(controller)
+
+        controller.requestRunning(webpackHost, retryAfterFailure = true)
+        runCurrent()
+
+        assertEquals(1, taskRunner.devServerRuns.size)
+        assertTrue(taskRunner.stoppedExecutionNames.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_running_server_answers_WHEN_requestRunning_for_same_host_THEN_nothing_launched() = runTest {
+        val controller = createController()
+        adoptKobwebServer(controller)
+
+        controller.requestRunning(kobwebHost, retryAfterFailure = true)
+        runCurrent()
 
         assertRunning(controller, kobwebHost, "http://localhost:8086")
         assertTrue(taskRunner.startedRuns.isEmpty())
     }
 
     @Test
-    fun GIVEN_no_server_WHEN_ensureRunning_THEN_start_task_of_the_kind_is_launched_in_the_module() = runTest {
+    fun GIVEN_running_server_stopped_answering_WHEN_requestRunning_THEN_relaunched() = runTest {
         val controller = createController()
+        adoptKobwebServer(controller)
+        healthCheck.aliveUrls.clear()
 
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
+        controller.requestRunning(kobwebHost, retryAfterFailure = false)
         runCurrent()
 
-        assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
+        assertEquals(DevServerState.Starting(kobwebHost), controller.state.value)
         val run = taskRunner.devServerRuns.single()
-        assertEquals(":instances:web-preview:jsBrowserDevelopmentRun", run.config.qualifiedTaskName)
-        assertEquals("--continuous", run.config.arguments)
-        assertEquals("/project", run.config.rootProjectPath)
-        assertEquals(DevServerRunNames.devServer(webpackHost), run.executionName)
-        controller.stop()
+        assertEquals(":instances:web-preview-kobweb:kobwebStart", run.config.qualifiedTaskName)
     }
 
     @Test
-    fun GIVEN_run_announces_origin_and_server_answers_WHEN_polled_THEN_running_at_announced_origin() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
+    fun GIVEN_server_of_one_module_running_WHEN_another_module_requested_THEN_previous_run_stopped_and_new_launched() =
+        runTest {
+            val controller = createController()
+            startWebpackServer(controller)
 
-        taskRunner.devServerRuns.single().serverComesUp("http://localhost:8085")
-        advanceTimeBy(POLL_INTERVAL)
-        runCurrent()
+            controller.requestRunning(kobwebHost, retryAfterFailure = false)
+            runCurrent()
 
-        assertRunning(controller, webpackHost, "http://localhost:8085")
-    }
-
-    @Test
-    fun GIVEN_run_fails_before_serving_WHEN_exit_reported_THEN_failed_with_task_name() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-
-        taskRunner.devServerRuns.single().listener.onExited(isSuccess = false)
-        runCurrent()
-
-        val state = assertIs<DevServerState.Failed>(controller.state.value)
-        assertTrue(state.reason.contains(":instances:web-preview:jsBrowserDevelopmentRun"), state.reason)
-    }
-
-    @Test
-    fun GIVEN_server_never_answers_WHEN_startup_timeout_passes_THEN_failed() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-
-        advanceTimeBy(STARTUP_TIMEOUT + POLL_INTERVAL)
-        runCurrent()
-
-        val state = assertIs<DevServerState.Failed>(controller.state.value)
-        assertTrue(state.reason.contains("did not answer"), state.reason)
-    }
+            assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
+            assertEquals(DevServerState.Starting(kobwebHost), controller.state.value)
+            val run = taskRunner.devServerRuns.last()
+            assertEquals(":instances:web-preview-kobweb:kobwebStart", run.config.qualifiedTaskName)
+        }
 
     @Test
     fun GIVEN_previous_launch_failed_WHEN_automatic_request_THEN_no_relaunch() = runTest {
         val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-        taskRunner.devServerRuns.single().listener.onExited(isSuccess = false)
-        runCurrent()
+        failWebpackLaunch(controller)
 
-        controller.ensureRunning(webpackHost, retryAfterFailure = false)
+        controller.requestRunning(webpackHost, retryAfterFailure = false)
+        runCurrent()
 
         assertIs<DevServerState.Failed>(controller.state.value)
         assertEquals(1, taskRunner.devServerRuns.size)
@@ -153,191 +187,105 @@ class DefaultDevServerControllerTest {
     @Test
     fun GIVEN_previous_launch_failed_WHEN_explicit_request_THEN_relaunched() = runTest {
         val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-        taskRunner.devServerRuns.single().listener.onExited(isSuccess = false)
-        runCurrent()
+        failWebpackLaunch(controller)
 
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = true) }
+        controller.requestRunning(webpackHost, retryAfterFailure = true)
         runCurrent()
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
         assertEquals(2, taskRunner.devServerRuns.size)
-        controller.stop()
     }
 
     @Test
     fun GIVEN_launch_of_one_module_failed_WHEN_another_module_already_answers_THEN_adopted() = runTest {
         val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-        taskRunner.devServerRuns.single().listener.onExited(isSuccess = false)
-        runCurrent()
-        healthCheck.aliveUrls += "http://localhost:8086"
+        failWebpackLaunch(controller)
 
-        controller.ensureRunning(kobwebHost, retryAfterFailure = false)
-
-        assertRunning(controller, kobwebHost, "http://localhost:8086")
-    }
-
-    @Test
-    fun GIVEN_launch_in_progress_WHEN_ensureRunning_again_for_same_host_THEN_no_second_launch() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = true) }
-        runCurrent()
+        adoptKobwebServer(controller)
 
         assertEquals(1, taskRunner.devServerRuns.size)
-        controller.stop()
     }
 
     @Test
-    fun GIVEN_running_server_stopped_answering_WHEN_ensureRunning_THEN_relaunched() = runTest {
+    fun GIVEN_launch_of_one_module_failed_WHEN_silent_module_requested_automatically_THEN_not_launched() = runTest {
         val controller = createController()
-        healthCheck.aliveUrls += "http://localhost:8086"
-        controller.ensureRunning(kobwebHost, retryAfterFailure = false)
-        healthCheck.aliveUrls.clear()
+        failWebpackLaunch(controller)
 
-        launch { controller.ensureRunning(kobwebHost, retryAfterFailure = false) }
+        controller.requestRunning(kobwebHost, retryAfterFailure = false)
         runCurrent()
 
-        assertEquals(DevServerState.Starting(kobwebHost), controller.state.value)
-        val run = taskRunner.devServerRuns.single()
-        assertEquals(":instances:web-preview-kobweb:kobwebStart", run.config.qualifiedTaskName)
-        controller.stop()
+        assertIs<DevServerState.Failed>(controller.state.value)
+        assertEquals(1, taskRunner.devServerRuns.size)
     }
 
     @Test
-    fun GIVEN_running_kobweb_server_WHEN_stop_THEN_run_terminated_stop_task_executed_and_origin_forgotten() = runTest {
+    fun GIVEN_running_server_WHEN_stop_THEN_stopped_and_run_terminated() = runTest {
         val controller = createController()
-        healthCheck.aliveUrls += "http://localhost:8086"
-        controller.ensureRunning(kobwebHost, retryAfterFailure = false)
-        originResolver.remember(kobwebHost, "http://localhost:8086")
+        startWebpackServer(controller)
 
         controller.stop()
-
-        assertEquals(DevServerState.Stopped, controller.state.value)
-        assertEquals(listOf(DevServerRunNames.devServer(kobwebHost)), taskRunner.stoppedExecutionNames)
-        val stopRun = taskRunner.startedRuns.single()
-        assertEquals(DevServerRunNames.STOP_TASK, stopRun.executionName)
-        assertEquals(":instances:web-preview-kobweb:kobwebStop", stopRun.config.qualifiedTaskName)
-    }
-
-    @Test
-    fun GIVEN_running_webpack_server_WHEN_stop_THEN_only_the_run_is_terminated() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
         runCurrent()
-        taskRunner.devServerRuns.single().serverComesUp("http://localhost:8085")
-        advanceTimeBy(POLL_INTERVAL)
-        runCurrent()
-
-        controller.stop()
 
         assertEquals(DevServerState.Stopped, controller.state.value)
         assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
-        assertEquals(1, taskRunner.startedRuns.size)
     }
 
     @Test
-    fun GIVEN_stopped_webpack_server_WHEN_ensureRunning_THEN_launched_again_instead_of_adopting_old_origin() = runTest {
+    fun GIVEN_stopped_server_WHEN_requestRunning_THEN_launched_again() = runTest {
         val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-        taskRunner.devServerRuns.single().serverComesUp("http://localhost:8085")
-        advanceTimeBy(POLL_INTERVAL)
-        runCurrent()
+        startWebpackServer(controller)
         controller.stop()
+        runCurrent()
         healthCheck.aliveUrls.clear()
 
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
+        controller.requestRunning(webpackHost, retryAfterFailure = false)
         runCurrent()
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
         assertEquals(2, taskRunner.devServerRuns.size)
-        controller.stop()
     }
 
     @Test
-    fun GIVEN_launch_in_progress_WHEN_stop_THEN_stopped_and_pending_launch_gives_up() = runTest {
+    fun GIVEN_launch_in_progress_WHEN_restart_THEN_old_run_stopped_new_launched_and_stale_exit_ignored() = runTest {
         val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
+        val firstRun = requestWebpackLaunch(controller)
 
-        controller.stop()
-        advanceTimeBy(STARTUP_TIMEOUT + POLL_INTERVAL)
-        runCurrent()
-
-        assertEquals(DevServerState.Stopped, controller.state.value)
-    }
-
-    @Test
-    fun GIVEN_restart_WHEN_old_run_reports_failure_afterwards_THEN_stale_exit_is_ignored() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-        val firstRun = taskRunner.devServerRuns.single()
-
-        launch { controller.restart(webpackHost) }
+        controller.restart(webpackHost)
         runCurrent()
         firstRun.listener.onExited(isSuccess = false)
-        runCurrent()
-
-        assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
-        assertEquals(2, taskRunner.devServerRuns.size)
-        controller.stop()
-    }
-
-    @Test
-    fun GIVEN_kobweb_run_finishes_but_server_keeps_answering_WHEN_exit_reported_THEN_still_running() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(kobwebHost, retryAfterFailure = false) }
-        runCurrent()
-        val run = taskRunner.devServerRuns.single()
-        run.serverComesUp("http://localhost:8086")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 
-        run.listener.onExited(isSuccess = true)
-        runCurrent()
-
-        assertRunning(controller, kobwebHost, "http://localhost:8086")
+        assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
+        assertEquals(2, taskRunner.devServerRuns.size)
+        assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
     }
 
     @Test
-    fun GIVEN_run_finishes_and_server_is_gone_WHEN_exit_reported_THEN_stopped() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
+    fun GIVEN_launch_in_progress_WHEN_owning_scope_cancelled_THEN_run_stopped() = runTest {
+        val scope = CoroutineScope(backgroundScope.coroutineContext + Job(backgroundScope.coroutineContext[Job]))
+        val controller = createController(scope)
+        requestWebpackLaunch(controller)
+
+        scope.cancel()
         runCurrent()
-        val run = taskRunner.devServerRuns.single()
+
+        assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
+    }
+
+    @Test
+    fun GIVEN_launch_in_progress_WHEN_origin_awaited_with_first_THEN_server_keeps_running_afterwards() = runTest {
+        val controller = createController()
+        val run = requestWebpackLaunch(controller)
+        val awaitedRunning = async { controller.state.filterIsInstance<DevServerState.Running>().first() }
+
         run.serverComesUp("http://localhost:8085")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
-        healthCheck.aliveUrls.clear()
 
-        run.listener.onExited(isSuccess = true)
-        runCurrent()
-
-        assertEquals(DevServerState.Stopped, controller.state.value)
-    }
-
-    @Test
-    fun GIVEN_abandoned_launch_announced_origin_WHEN_module_requested_again_THEN_adopted_without_relaunch() = runTest {
-        val controller = createController()
-        launch { controller.ensureRunning(webpackHost, retryAfterFailure = false) }
-        runCurrent()
-        val run = taskRunner.devServerRuns.single()
-        run.listener.onOutput("Loopback: http://localhost:8085/\n")
-        healthCheck.aliveUrls += "http://localhost:8086"
-        controller.ensureRunning(kobwebHost, retryAfterFailure = false)
-        healthCheck.aliveUrls += "http://localhost:8085"
-
-        controller.ensureRunning(webpackHost, retryAfterFailure = false)
-
+        assertEquals(DevServerState.Running(webpackHost, "http://localhost:8085"), awaitedRunning.await())
         assertRunning(controller, webpackHost, "http://localhost:8085")
-        assertEquals(1, taskRunner.devServerRuns.size)
+        assertTrue(taskRunner.stoppedExecutionNames.isEmpty())
     }
 
     private companion object {
