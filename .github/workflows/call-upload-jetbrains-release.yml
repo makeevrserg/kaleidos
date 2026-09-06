@@ -1,0 +1,42 @@
+name: "upload-jetbrains-release"
+on:
+  workflow_call:
+    secrets:
+      PUBLISH_TOKEN:
+        description: "JetBrains Marketplace permanent token used to publish the plugin."
+        required: true
+      CERTIFICATE_CHAIN:
+        description: "Certificate chain the plugin is signed with. The plugin is published unsigned when it is missing."
+        required: false
+      PRIVATE_KEY:
+        description: "Private key matching CERTIFICATE_CHAIN."
+        required: false
+      PRIVATE_KEY_PASSWORD:
+        description: "Password of PRIVATE_KEY."
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  upload_jetbrains_release:
+    name: Upload JetBrains Marketplace release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Git repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up JDK
+        uses: ./.github/actions/setup-jdk
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+      - name: Give gradle permission
+        run: chmod +x gradlew
+      # publishPlugin builds the distribution itself and signs it first when the signing secrets are set.
+      # All four variables are read by the intellijPlatform block in plugin/build.gradle.kts.
+      - name: Publish plugin to JetBrains Marketplace
+        env:
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+        run: ./gradlew :plugin:publishPlugin --stacktrace
