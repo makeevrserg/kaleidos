@@ -1,7 +1,6 @@
 package com.makeevrserg.compose.html.preview.feature
 
 import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
-import com.makeevrserg.compose.html.preview.psi.PreviewFunction
 
 /**
  * The file the preview follows: the selected editor file and its preview functions.

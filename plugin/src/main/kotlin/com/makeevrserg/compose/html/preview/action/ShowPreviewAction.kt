@@ -4,7 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.makeevrserg.compose.html.preview.psi.PreviewFunction
+import com.makeevrserg.compose.html.preview.feature.PreviewFunction
 import com.makeevrserg.compose.html.preview.service.PreviewProjectService
 import com.makeevrserg.compose.html.preview.ui.PreviewIcons
 

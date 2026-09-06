@@ -5,7 +5,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
-import com.makeevrserg.compose.html.preview.ui.PreviewToolWindowIds
+import com.makeevrserg.compose.html.preview.toolwindow.PreviewToolWindowIds
 
 /**
  * Reports whether the preview tool window is visible, so nothing is rendered and no dev server is

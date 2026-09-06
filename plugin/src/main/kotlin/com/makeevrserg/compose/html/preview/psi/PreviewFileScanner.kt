@@ -1,6 +1,7 @@
 package com.makeevrserg.compose.html.preview.psi
 
 import com.intellij.psi.PsiFile
+import com.makeevrserg.compose.html.preview.feature.PreviewFunction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 

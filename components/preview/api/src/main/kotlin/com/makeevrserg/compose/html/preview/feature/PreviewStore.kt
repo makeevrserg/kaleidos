@@ -1,6 +1,5 @@
 package com.makeevrserg.compose.html.preview.feature
 
-import com.makeevrserg.compose.html.preview.psi.PreviewFunction
 import kotlinx.coroutines.flow.StateFlow
 
 /**

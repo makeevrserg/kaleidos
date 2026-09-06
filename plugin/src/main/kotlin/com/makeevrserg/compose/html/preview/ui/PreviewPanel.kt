@@ -162,11 +162,12 @@ class PreviewPanel(
     private fun render(state: PreviewState) {
         renderBanner(state.sourceState)
         val message = texts.message(state)
+        val previewUrl = state.previewUrl
         when {
             message != null -> renderMessage(message)
             !state.isToolWindowVisible -> Unit
-            state.previewUrl == null -> renderLoading(state)
-            else -> renderPage(state, state.previewUrl)
+            previewUrl == null -> renderLoading(state)
+            else -> renderPage(state, previewUrl)
         }
     }
 

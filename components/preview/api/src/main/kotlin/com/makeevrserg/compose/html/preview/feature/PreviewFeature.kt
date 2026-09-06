@@ -1,14 +1,11 @@
 package com.makeevrserg.compose.html.preview.feature
 
 import com.makeevrserg.compose.html.preview.core.CoroutineFeature
-import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
 import com.makeevrserg.compose.html.preview.host.PreviewHostLocator
 import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
 import com.makeevrserg.compose.html.preview.notification.PreviewNotifier
-import com.makeevrserg.compose.html.preview.psi.PreviewFunction
 import com.makeevrserg.compose.html.preview.server.DevServerController
 import com.makeevrserg.compose.html.preview.server.DevServerState
-import com.makeevrserg.compose.html.preview.ui.PreviewToolWindowIds
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +18,7 @@ import kotlinx.coroutines.launch
 class PreviewFeature(
     private val devServerController: DevServerController,
     private val hostLocator: PreviewHostLocator,
-    private val projectDependencies: ProjectDependencies,
+    private val toolWindowPresenter: PreviewToolWindowPresenter,
     private val previewNotifier: PreviewNotifier,
     private val reducer: PreviewStateReducer,
     coroutineFeature: CoroutineFeature
@@ -47,10 +44,6 @@ class PreviewFeature(
             .filterIsInstance<DevServerState.Failed>()
             .onEach { failed -> previewNotifier.error(failed.reason) }
             .launchIn(this)
-    }
-
-    private fun showToolWindow() {
-        projectDependencies.toolWindowManager.getToolWindow(PreviewToolWindowIds.ID)?.show()
     }
 
     /**
@@ -92,7 +85,7 @@ class PreviewFeature(
 
     override fun onFocusPreview(previewFunction: PreviewFunction) {
         mutableState.update { current -> reducer.focus(current, previewFunction) }
-        launch { showToolWindow() }
+        launch { toolWindowPresenter.show() }
         connectIfNeeded(retryAfterFailure = true)
     }
 

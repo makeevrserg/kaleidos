@@ -1,4 +1,4 @@
-package com.makeevrserg.compose.html.preview.psi
+package com.makeevrserg.compose.html.preview.feature
 
 /**
  * @param fqn fully qualified name of the top-level function, used as the preview identifier in the dev page URL

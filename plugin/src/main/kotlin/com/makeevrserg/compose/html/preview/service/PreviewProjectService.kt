@@ -15,7 +15,7 @@ import com.makeevrserg.compose.html.preview.host.GradleModuleCatalog
 import com.makeevrserg.compose.html.preview.host.IntellijPreviewHostLocator
 import com.makeevrserg.compose.html.preview.host.ModuleDependencyGraphReader
 import com.makeevrserg.compose.html.preview.host.PreviewHostSelector
-import com.makeevrserg.compose.html.preview.notification.PreviewNotifier
+import com.makeevrserg.compose.html.preview.notification.IntellijPreviewNotifier
 import com.makeevrserg.compose.html.preview.psi.AnnotationFqnResolver
 import com.makeevrserg.compose.html.preview.psi.PreviewFileScanner
 import com.makeevrserg.compose.html.preview.psi.PreviewFunctionDetector
@@ -28,6 +28,7 @@ import com.makeevrserg.compose.html.preview.server.KobwebConfReader
 import com.makeevrserg.compose.html.preview.source.EditorTracker
 import com.makeevrserg.compose.html.preview.source.SourceChangeTracker
 import com.makeevrserg.compose.html.preview.source.ToolWindowVisibilityTracker
+import com.makeevrserg.compose.html.preview.toolwindow.IntellijPreviewToolWindowPresenter
 import com.makeevrserg.compose.html.preview.ui.PreviewStateTexts
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowserFactory
 import com.makeevrserg.compose.html.preview.url.PreviewUrlFactory
@@ -83,8 +84,8 @@ class PreviewProjectService(project: Project, private val coroutineScope: Corout
             selector = PreviewHostSelector(),
             backgroundContext = dispatchers.default
         ),
-        projectDependencies = projectDependencies,
-        previewNotifier = PreviewNotifier(project),
+        toolWindowPresenter = IntellijPreviewToolWindowPresenter(projectDependencies),
+        previewNotifier = IntellijPreviewNotifier(project),
         reducer = PreviewStateReducer(
             clock = Clock.systemDefaultZone(),
             previewUrlFactory = PreviewUrlFactory()

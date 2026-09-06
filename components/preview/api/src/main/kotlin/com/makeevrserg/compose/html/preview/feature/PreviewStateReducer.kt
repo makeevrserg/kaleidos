@@ -1,7 +1,6 @@
 package com.makeevrserg.compose.html.preview.feature
 
 import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
-import com.makeevrserg.compose.html.preview.psi.PreviewFunction
 import com.makeevrserg.compose.html.preview.server.DevServerState
 import com.makeevrserg.compose.html.preview.url.PreviewUrlFactory
 import java.time.Clock

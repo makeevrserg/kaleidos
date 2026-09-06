@@ -4,7 +4,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 
-class PreviewNotifier(private val project: Project) {
+class IntellijPreviewNotifier(private val project: Project) : PreviewNotifier {
 
     private fun notify(content: String, type: NotificationType) {
         NotificationGroupManager.getInstance()
@@ -13,7 +13,7 @@ class PreviewNotifier(private val project: Project) {
             .notify(project)
     }
 
-    fun error(content: String) = notify(content, NotificationType.ERROR)
+    override fun error(content: String) = notify(content, NotificationType.ERROR)
 
     companion object {
         /** Must match the `notificationGroup` id registered in plugin.xml. */
