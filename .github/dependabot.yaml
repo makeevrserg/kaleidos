@@ -7,23 +7,33 @@ updates:
       day: "monday"
       time: "08:00"
       timezone: "Europe/Moscow"
-    rebase-strategy: "disabled"
+    rebase-strategy: "auto"
+    open-pull-requests-limit: 1
     groups:
       versions:
         dependency-type: production
         applies-to: version-updates
-    open-pull-requests-limit: 1
+        update-types:
+          - major
+          - minor
+          - patch
 
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"
+      - "/.github/actions/*"
     schedule:
       interval: "monthly"
       day: "monday"
       time: "08:00"
       timezone: "Europe/Moscow"
+    rebase-strategy: "auto"
+    open-pull-requests-limit: 1
     groups:
       versions:
         dependency-type: production
         applies-to: version-updates
-    rebase-strategy: "disabled"
-    open-pull-requests-limit: 1
+        update-types:
+          - major
+          - minor
+          - patch

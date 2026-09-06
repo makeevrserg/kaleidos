@@ -59,6 +59,13 @@ intellijPlatform {
     }
 }
 
+// `buildPlugin` names the ZIP after the Gradle project name and version, which are `plugin` and unset here,
+// so the distribution would be `plugin.zip`. Release assets must carry the plugin name and version.
+tasks.named<Zip>("buildPlugin") {
+    archiveBaseName = providers.gradleProperty("klibs.project.name")
+    archiveVersion = providers.gradleProperty("klibs.project.version.string")
+}
+
 // Sandbox IDE with the Robot Server plugin for scripted UI checks. Pass -PuiTestProject=<path>
 // to open a project on start: ./gradlew :plugin:runIdeForUiTests -PuiTestProject=/path/to/project
 val runIdeForUiTests by intellijPlatformTesting.runIde.registering {

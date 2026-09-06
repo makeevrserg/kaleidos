@@ -1,4 +1,4 @@
-name: "build-project"
+name: "upload-artifacts"
 on:
   workflow_call:
 
@@ -6,8 +6,8 @@ permissions:
   contents: read
 
 jobs:
-  build_project:
-    name: Build plugin distribution with Gradle
+  upload_artifacts:
+    name: Build and upload plugin distribution
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Git repo
@@ -18,7 +18,12 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
       - name: Give gradle permission
         run: chmod +x gradlew
-      # The same task the release builds, so a pull request fails before master does.
-      # Tests and detekt run in their own jobs, so `build` would only repeat them here.
       - name: Build plugin distribution with Gradle
         run: ./gradlew :plugin:buildPlugin --stacktrace
+      - name: Upload plugin distribution
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          # buildPlugin writes <klibs.project.name>-<klibs.project.version.string>.zip here
+          path: ./plugin/build/distributions/*.zip
+          if-no-files-found: error
