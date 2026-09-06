@@ -1,3 +1,8 @@
+import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.intellij.platform) apply false
@@ -21,8 +26,31 @@ tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     exclude("**/.intellijPlatform/**")
 }
 
-subprojects.forEach { subproject ->
-    subproject.plugins.withId("org.jetbrains.kotlin.jvm") {
-        subproject.apply(plugin = "ru.astrainteractive.gradleplugin.java.version")
+subprojects {
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        apply(plugin = "ru.astrainteractive.gradleplugin.java.version")
+        extensions.configure<KotlinJvmProjectExtension> {
+            compilerOptions {
+                // Match the Kotlin runtime bundled with the target IntelliJ Platform
+                apiVersion.set(KotlinVersion.KOTLIN_2_1)
+                languageVersion.set(KotlinVersion.KOTLIN_2_1)
+                // Without JVM default methods Kotlin emits bridges to DefaultImpls of platform interfaces
+                // (ToolWindowFactory and others), which the Plugin Verifier reports as internal API overrides.
+                // Every module is merged into one JAR, so all of them use the same mode.
+                jvmDefault.set(JvmDefaultMode.NO_COMPATIBILITY)
+            }
+        }
+    }
+    // Both the main plugin and the module plugin register this extension
+    plugins.withId("org.jetbrains.intellij.platform.module") {
+        extensions.configure<IntelliJPlatformExtension> {
+            // No Swing forms and no @NotNull assertions to instrument; the task also fails on some macOS JDK layouts
+            instrumentCode = false
+        }
+    }
+    plugins.withId("org.jetbrains.intellij.platform") {
+        extensions.configure<IntelliJPlatformExtension> {
+            instrumentCode = false
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.makeevrserg.compose.html.preview.core.BackgroundCoroutineFeature
 import com.makeevrserg.compose.html.preview.core.CoroutineFeature
+import com.makeevrserg.compose.html.preview.core.IntellijDispatchers
 import com.makeevrserg.compose.html.preview.core.MainCoroutineFeature
 import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
 import com.makeevrserg.compose.html.preview.feature.PreviewFeature
@@ -44,6 +45,8 @@ import kotlin.time.Duration.Companion.seconds
 @Service(Service.Level.PROJECT)
 class PreviewProjectService(project: Project, private val coroutineScope: CoroutineScope) : Disposable {
     private val projectDependencies = ProjectDependencies(project)
+
+    private val dispatchers = IntellijDispatchers()
 
     val previewFunctionDetector = PreviewFunctionDetector(AnnotationFqnResolver())
 
@@ -86,7 +89,7 @@ class PreviewProjectService(project: Project, private val coroutineScope: Corout
             clock = Clock.systemDefaultZone(),
             previewUrlFactory = PreviewUrlFactory()
         ),
-        coroutineFeature = MainCoroutineFeature(coroutineScope)
+        coroutineFeature = MainCoroutineFeature(coroutineScope, dispatchers.main)
     )
 
     private val editorTracker = EditorTracker(
@@ -107,7 +110,7 @@ class PreviewProjectService(project: Project, private val coroutineScope: Corout
     }
 
     /** Child scope for UI that lives shorter than the project, for example the tool window content. */
-    fun createMainCoroutineFeature(): CoroutineFeature = MainCoroutineFeature(coroutineScope)
+    fun createMainCoroutineFeature(): CoroutineFeature = MainCoroutineFeature(coroutineScope, dispatchers.main)
 
     override fun dispose() = Unit
 
