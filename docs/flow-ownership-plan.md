@@ -44,7 +44,7 @@
 Открытый вопрос (не решён в рамках пункта): исключение из `runTask` при запуске стоп-таски в `finally` лаунчера
 пробросится наружу и убьёт `stateIn`-цепочку. Сегодня поведение такое же; логгера в `api`-модулях нет.
 
-### 2. `EditorTracker` на `callbackFlow` + `mapLatest` — НЕ НАЧАТО
+### 2. `EditorTracker` на `callbackFlow` + `mapLatest` — СДЕЛАНО
 
 Проблема. `events` это `Channel(UNLIMITED)`, который никогда не закрывается. Если `scan` бросит не-cancellation
 исключение, `coroutineScope` в `trackEvents` умирает, а слушатели остаются на `listenerDisposable` и продолжают
@@ -103,5 +103,10 @@
 - 2026-09-06: пункт 1 сделан. `GradleTaskRunner.run()` cold flow, `ExternalSystemGradleTaskRunner` на `callbackFlow`
   с `try/finally` (подписка и `ProcessListener` освобождаются вместе, в том числе если `runTask` бросил),
   `RunOutputForwarder.detach()` с защитой от гонки со стартом процесса, `AnnouncedBaseUrlParser` вместо
-  `DevServerRunListener`, удалены `DevServerProcessListener`, `SilentProcessListener`. Тесты server:api: 45, все зелёные.
-  Следующий: пункт 2.
+  `DevServerRunListener`, удалены `DevServerProcessListener`, `SilentProcessListener`. Тесты server:api: 44, все зелёные.
+- 2026-09-06: пункт 2 сделан. Политика «что и когда сканировать» вынесена в чистый `ScanScheduler` (`preview:api`,
+  `source/`), 7 тестов на виртуальном времени. `EditorTracker` держит два `callbackFlow` (`selectedFiles`,
+  `editedFiles`) с `Disposer.newDisposable` в теле и `awaitClose { dispose }`; `track()` это suspend до отмены,
+  `mapLatest` вместо `scanJob`/`cancelAndJoin`. В `core:api` добавлен `CoroutineLifecycle(scope, block)`: запускает
+  в `onEnable`, отменяет в `onDisable`; `IntellijPreviewModule.lifecycle` стал `CompositeLifecycle`. `EditorEvent` и
+  канал удалены. Следующий: пункт 3.
