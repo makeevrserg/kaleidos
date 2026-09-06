@@ -130,8 +130,36 @@ Only runs started by the plugin are stopped; a dev server started from a termina
 - `./gradlew :plugin:buildPlugin` builds the distribution into `plugin/build/distributions`.
 - `./gradlew :plugin:verifyPlugin` runs the IntelliJ Plugin Verifier.
 - `./gradlew detekt` runs static analysis.
+- `./gradlew test` runs the unit tests of the plain Kotlin components.
 
 Requirements: IntelliJ IDEA 2025.1 or newer, JDK 21 to build.
+
+#### Modules
+
+`:plugin` holds `plugin.xml`, the resources and the IntelliJ entry points: the line marker contributor, the gutter
+action, the tool window factory, the startup activity and the project service. Everything else lives under
+`:components`. A component with an `api` module is plain Kotlin: it compiles against the stdlib and coroutines
+bundled with the platform, knows nothing about IntelliJ and is tested with `kotlin.test`. Its `intellij` module
+holds the adapters that implement the ports of the `api` module with platform APIs.
+
+| Component | `api` | `intellij` |
+|---|---|---|
+| `core` | coroutine features, `Lifecycle`, `PreviewDispatchers` | `ProjectDependencies`, EDT dispatchers |
+| `host` | host models, `PreviewHostSelector`, `PreviewHostLocator` port | IDE module model readers |
+| `server` | `DevServerController`, output parsing, `GradleTaskRunner` port | `ExternalSystemUtil` runner |
+| `preview` | `PreviewStore` contract, state, reducer, `PreviewFeature`, notifier and tool window ports | editor and tool window trackers, port implementations |
+| `psi` | | `@Preview` detection on Kotlin PSI |
+| `ui` | | tool window panel, JCEF browser, actions |
+
+Every component is merged into the plugin JAR through `pluginComposedModule` in `plugin/build.gradle.kts`.
+
+#### Dependency injection
+
+Dependencies are wired by hand through constructors; there is no DI framework and no service locator inside the
+components. Each component has a `di/…Module` class that builds its object graph from the modules it depends on and
+exposes the services other components need. `RootModule` in `:plugin` creates the modules in dependency order and
+aggregates their `Lifecycle`s. The project-level `PreviewProjectService` owns the `RootModule`; platform entry points,
+which IntelliJ creates without constructors, reach the graph through that service only.
 
 ### Gratitude
 
