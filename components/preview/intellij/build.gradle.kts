@@ -15,6 +15,8 @@ dependencies {
         intellijIdeaCommunity(providers.gradleProperty("intellij.version"))
     }
 
+    implementation(projects.components.core.api)
     implementation(projects.components.core.intellij)
     implementation(projects.components.preview.api)
+    implementation(projects.components.psi)
 }
