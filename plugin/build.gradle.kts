@@ -2,14 +2,7 @@ import org.gradle.process.CommandLineArgumentProvider
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.intellij.platform)
-}
-
-repositories {
-    mavenCentral()
-    intellijPlatform {
-        defaultRepositories()
-    }
+    id("org.jetbrains.intellij.platform")
 }
 
 dependencies {

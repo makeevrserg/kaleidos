@@ -3,8 +3,6 @@
 kotlin-version = "2.3.20" # https://github.com/JetBrains/kotlin
 # Bundled with IntelliJ Platform 2025.1 (lib/util-8.jar); plain modules compile against them, nothing is packaged
 kotlinx-coroutines = "1.8.0" # https://github.com/Kotlin/kotlinx.coroutines
-# IntelliJ
-intellij-platform-gradle = "2.18.1" # https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 # klibs
 klibs-gradleplugin = "2.0.0" # https://github.com/makeevrserg/gradle-plugin
 
@@ -19,9 +17,6 @@ tests-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref =
 [plugins]
 # Kotlin
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }
-# IntelliJ
-intellij-platform = { id = "org.jetbrains.intellij.platform", version.ref = "intellij-platform-gradle" }
-intellij-platform-module = { id = "org.jetbrains.intellij.platform.module", version.ref = "intellij-platform-gradle" }
 # klibs - core
 klibs-gradle-detekt = { id = "ru.astrainteractive.gradleplugin.detekt", version.ref = "klibs-gradleplugin" }
 klibs-gradle-java-version = { id = "ru.astrainteractive.gradleplugin.java.version", version.ref = "klibs-gradleplugin" }

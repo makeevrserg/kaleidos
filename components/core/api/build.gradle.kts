@@ -3,10 +3,6 @@ plugins {
     `java-test-fixtures`
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     // Provided by the IntelliJ Platform at runtime
     compileOnly(libs.kotlin.stdlib)
