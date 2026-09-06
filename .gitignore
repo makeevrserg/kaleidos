@@ -1,18 +1,17 @@
-.gradle
-.idea
-.kotlin
-.intellijPlatform
-local.properties
+### Gradle ###
+.gradle/
+.kotlin/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+local.properties
+
+### IntelliJ Platform Gradle Plugin ###
+.intellijPlatform/
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -42,5 +41,13 @@ bin/
 ### VS Code ###
 .vscode/
 
-### Mac OS ###
+### macOS ###
 .DS_Store
+
+### AI agents ###
+AGENTS.md
+CLAUDE.md
+.claude/
+
+### Local notes ###
+WORKLOG.md
