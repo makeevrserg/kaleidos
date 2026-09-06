@@ -35,6 +35,7 @@ class IntellijPreviewModule(
         projectDependencies = intellijCoreModule.projectDependencies,
         fileScanner = psiModule.previewFileScanner,
         contract = previewModule.previewStore,
+        mainContext = coreModule.dispatchers.main,
         coroutineFeature = coreModule.backgroundCoroutineFeature
     )
 
