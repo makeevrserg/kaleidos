@@ -28,3 +28,4 @@ include(
     ":components:preview:intellij",
 )
 include(":components:psi")
+include(":components:ui")
