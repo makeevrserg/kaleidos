@@ -73,7 +73,7 @@ class PreviewFeature(
         launch {
             val resolution = resolveHost(target, force = retryAfterFailure)
             if (resolution is PreviewHostResolution.Found) {
-                devServerController.ensureRunning(resolution.host, retryAfterFailure)
+                devServerController.requestRunning(resolution.host, retryAfterFailure)
             }
         }
     }
@@ -111,9 +111,7 @@ class PreviewFeature(
         }
     }
 
-    override fun onStopServer() {
-        launch { devServerController.stop() }
-    }
+    override fun onStopServer() = devServerController.stop()
 
     override fun onSourceChanged(changedFileName: String) {
         mutableState.update { current -> reducer.markChanged(current, changedFileName) }

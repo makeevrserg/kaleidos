@@ -13,11 +13,3 @@ sealed interface DevServerState {
 
     data class Failed(val reason: String) : DevServerState
 }
-
-fun DevServerState.hostOrNull(): PreviewHost? {
-    return when (this) {
-        is DevServerState.Starting -> host
-        is DevServerState.Running -> host
-        DevServerState.Stopped, is DevServerState.Failed -> null
-    }
-}
