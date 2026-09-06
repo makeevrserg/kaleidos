@@ -43,6 +43,8 @@ class DefaultDevServerControllerTest {
 
     private val taskRunner = FakeGradleTaskRunner()
 
+    private val detachedServerStopper = FakeDetachedServerStopper()
+
     private val originResolver = DevServerOriginResolver(
         kobwebConfReader = KobwebConfReader(ioContext = EmptyCoroutineContext),
         healthCheck = healthCheck
@@ -52,6 +54,7 @@ class DefaultDevServerControllerTest {
         return DefaultDevServerController(
             launcher = DevServerLauncher(
                 gradleTaskRunner = taskRunner,
+                detachedServerStopper = detachedServerStopper,
                 healthCheck = healthCheck,
                 originResolver = originResolver,
                 urlDetector = DevServerUrlDetector(),
@@ -75,7 +78,7 @@ class DefaultDevServerControllerTest {
     private suspend fun TestScope.requestWebpackLaunch(controller: DevServerController): StartedRun {
         controller.requestRunning(webpackHost, retryAfterFailure = false)
         runCurrent()
-        return taskRunner.devServerRuns.last()
+        return taskRunner.startedRuns.last()
     }
 
     private suspend fun TestScope.startWebpackServer(controller: DevServerController): StartedRun {
@@ -116,7 +119,7 @@ class DefaultDevServerControllerTest {
         requestWebpackLaunch(controller)
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
-        assertEquals(1, taskRunner.devServerRuns.size)
+        assertEquals(1, taskRunner.startedRuns.size)
     }
 
     @Test
@@ -127,7 +130,7 @@ class DefaultDevServerControllerTest {
         controller.requestRunning(webpackHost, retryAfterFailure = true)
         runCurrent()
 
-        assertEquals(1, taskRunner.devServerRuns.size)
+        assertEquals(1, taskRunner.startedRuns.size)
         assertTrue(taskRunner.stoppedExecutionNames.isEmpty())
     }
 
@@ -153,7 +156,7 @@ class DefaultDevServerControllerTest {
         runCurrent()
 
         assertEquals(DevServerState.Starting(kobwebHost), controller.state.value)
-        val run = taskRunner.devServerRuns.single()
+        val run = taskRunner.startedRuns.single()
         assertEquals(":instances:web-preview-kobweb:kobwebStart", run.config.qualifiedTaskName)
     }
 
@@ -168,7 +171,7 @@ class DefaultDevServerControllerTest {
 
             assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
             assertEquals(DevServerState.Starting(kobwebHost), controller.state.value)
-            val run = taskRunner.devServerRuns.last()
+            val run = taskRunner.startedRuns.last()
             assertEquals(":instances:web-preview-kobweb:kobwebStart", run.config.qualifiedTaskName)
         }
 
@@ -181,7 +184,7 @@ class DefaultDevServerControllerTest {
         runCurrent()
 
         assertIs<DevServerState.Failed>(controller.state.value)
-        assertEquals(1, taskRunner.devServerRuns.size)
+        assertEquals(1, taskRunner.startedRuns.size)
     }
 
     @Test
@@ -193,7 +196,7 @@ class DefaultDevServerControllerTest {
         runCurrent()
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
-        assertEquals(2, taskRunner.devServerRuns.size)
+        assertEquals(2, taskRunner.startedRuns.size)
     }
 
     @Test
@@ -203,7 +206,7 @@ class DefaultDevServerControllerTest {
 
         adoptKobwebServer(controller)
 
-        assertEquals(1, taskRunner.devServerRuns.size)
+        assertEquals(1, taskRunner.startedRuns.size)
     }
 
     @Test
@@ -215,7 +218,7 @@ class DefaultDevServerControllerTest {
         runCurrent()
 
         assertIs<DevServerState.Failed>(controller.state.value)
-        assertEquals(1, taskRunner.devServerRuns.size)
+        assertEquals(1, taskRunner.startedRuns.size)
     }
 
     @Test
@@ -242,7 +245,7 @@ class DefaultDevServerControllerTest {
         runCurrent()
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
-        assertEquals(2, taskRunner.devServerRuns.size)
+        assertEquals(2, taskRunner.startedRuns.size)
     }
 
     @Test
@@ -257,7 +260,7 @@ class DefaultDevServerControllerTest {
         runCurrent()
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
-        assertEquals(2, taskRunner.devServerRuns.size)
+        assertEquals(2, taskRunner.startedRuns.size)
         assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
     }
 

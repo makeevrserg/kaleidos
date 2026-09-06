@@ -12,6 +12,9 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Attaches to the process of the run named [executionName] as soon as the platform reports it and
  * forwards its console output until [detach].
+ *
+ * The run is marked to be destroyed silently when the project closes: the plugin owns it, so the
+ * platform must not ask the user whether to terminate it.
  */
 class RunOutputForwarder(
     private val executionName: String,
@@ -23,6 +26,7 @@ class RunOutputForwarder(
 
     override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
         if (env.runProfile.name != executionName) return
+        handler.putUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE, true)
         handler.addProcessListener(this)
         attachedHandler.set(handler)
         // The process may start on another thread while the owner detaches; never leave the listener behind

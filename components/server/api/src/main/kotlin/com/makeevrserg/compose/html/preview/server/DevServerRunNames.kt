@@ -7,7 +7,5 @@ import com.makeevrserg.compose.html.preview.host.PreviewHost
  * carrying them are ever stopped by the plugin.
  */
 object DevServerRunNames {
-    const val STOP_TASK = "Compose HTML Preview stop"
-
     fun devServer(host: PreviewHost): String = "Compose HTML Preview dev server (${host.displayName})"
 }

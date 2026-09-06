@@ -9,6 +9,7 @@ import com.makeevrserg.compose.html.preview.server.DevServerUrlDetector
 import com.makeevrserg.compose.html.preview.server.GradleTaskRunner
 import com.makeevrserg.compose.html.preview.server.HttpDevServerHealthCheck
 import com.makeevrserg.compose.html.preview.server.KobwebConfReader
+import com.makeevrserg.compose.html.preview.server.KobwebServerStopper
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -29,6 +30,10 @@ class ServerModule(
     val devServerController: DevServerController = DefaultDevServerController(
         launcher = DevServerLauncher(
             gradleTaskRunner = gradleTaskRunner,
+            detachedServerStopper = KobwebServerStopper(
+                ioContext = coreModule.dispatchers.io,
+                stopTimeout = DETACHED_SERVER_STOP_TIMEOUT
+            ),
             healthCheck = healthCheck,
             originResolver = originResolver,
             urlDetector = DevServerUrlDetector(),
@@ -44,5 +49,6 @@ class ServerModule(
         val HEALTH_CHECK_TIMEOUT = 2.seconds
         val DEV_SERVER_STARTUP_TIMEOUT = 5.minutes
         val DEV_SERVER_POLL_INTERVAL = 1.seconds
+        val DETACHED_SERVER_STOP_TIMEOUT = 10.seconds
     }
 }

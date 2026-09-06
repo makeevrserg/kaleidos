@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -26,6 +25,7 @@ import kotlin.time.Duration
  */
 class DevServerLauncher(
     private val gradleTaskRunner: GradleTaskRunner,
+    private val detachedServerStopper: DetachedServerStopper,
     private val healthCheck: DevServerHealthCheck,
     private val originResolver: DevServerOriginResolver,
     private val urlDetector: DevServerUrlDetector,
@@ -55,14 +55,12 @@ class DevServerLauncher(
     }
 
     /**
-     * Terminates the run and, for servers that outlive it such as Kobweb's, runs the stop task. Nobody
-     * waits for the stop task to finish: the flow is dropped as soon as the task is handed to the platform.
+     * The detached server goes first: stopping it needs nothing from the IDE, while the run may already
+     * have been destroyed by the platform when the project is closing.
      */
     private suspend fun stopRun(host: PreviewHost) {
+        if (host.kind.isServerDetached) detachedServerStopper.stop(host)
         gradleTaskRunner.stop(DevServerRunNames.devServer(host))
-        val stopTask = host.kind.stopTask ?: return
-        val stopConfig = DevServerLaunchConfig.forHost(host, taskName = stopTask, arguments = "")
-        gradleTaskRunner.run(stopConfig, DevServerRunNames.STOP_TASK).firstOrNull()
     }
 
     /** The origin the run announced or, before the announcement, the one expected for the module. */

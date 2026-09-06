@@ -6,15 +6,16 @@ package com.makeevrserg.compose.html.preview.host
  * initialises Silk.
  *
  * @param arguments `--continuous` and `-t` keep Gradle recompiling on changes so the page live-reloads
- * @param stopTask task that stops a server outliving the Gradle run; null when killing the run is enough
+ * @param isServerDetached true when the server is a separate process that outlives the Gradle run and
+ * has to be stopped on its own; false when killing the run is enough
  */
 enum class DevServerKind(
     val startTask: String,
     val arguments: String,
-    val stopTask: String?
+    val isServerDetached: Boolean
 ) {
-    KOBWEB(startTask = "kobwebStart", arguments = "-t", stopTask = "kobwebStop"),
-    WEBPACK(startTask = "jsBrowserDevelopmentRun", arguments = "--continuous", stopTask = null);
+    KOBWEB(startTask = "kobwebStart", arguments = "-t", isServerDetached = true),
+    WEBPACK(startTask = "jsBrowserDevelopmentRun", arguments = "--continuous", isServerDetached = false);
 
     companion object {
         fun detect(taskNames: Set<String>): DevServerKind? {

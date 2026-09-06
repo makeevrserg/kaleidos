@@ -40,8 +40,11 @@ class DevServerLauncherTest {
 
     private val taskRunner = FakeGradleTaskRunner()
 
+    private val detachedServerStopper = FakeDetachedServerStopper()
+
     private val launcher = DevServerLauncher(
         gradleTaskRunner = taskRunner,
+        detachedServerStopper = detachedServerStopper,
         healthCheck = healthCheck,
         originResolver = DevServerOriginResolver(
             kobwebConfReader = KobwebConfReader(ioContext = EmptyCoroutineContext),
@@ -69,7 +72,7 @@ class DevServerLauncherTest {
     private fun TestScope.launchWebpackServer(): Job {
         val collector = collectStates(webpackHost)
         runCurrent()
-        taskRunner.devServerRuns.single().serverComesUp("http://localhost:8085")
+        taskRunner.startedRuns.single().serverComesUp("http://localhost:8085")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
         return collector
@@ -110,7 +113,7 @@ class DevServerLauncherTest {
         runCurrent()
 
         assertEquals(listOf<DevServerState>(DevServerState.Starting(webpackHost)), states)
-        val run = taskRunner.devServerRuns.single()
+        val run = taskRunner.startedRuns.single()
         assertEquals(":instances:web-preview:jsBrowserDevelopmentRun", run.config.qualifiedTaskName)
         assertEquals("--continuous", run.config.arguments)
         assertEquals("/project", run.config.rootProjectPath)
@@ -129,7 +132,7 @@ class DevServerLauncherTest {
         val collector = collectStates(webpackHost)
         runCurrent()
 
-        taskRunner.devServerRuns.single().exit(isSuccess = false)
+        taskRunner.startedRuns.single().exit(isSuccess = false)
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 
@@ -161,7 +164,7 @@ class DevServerLauncherTest {
         runCurrent()
         advanceTimeBy(STARTUP_TIMEOUT + POLL_INTERVAL)
         runCurrent()
-        val run = taskRunner.devServerRuns.single()
+        val run = taskRunner.startedRuns.single()
 
         run.serverComesUp("http://localhost:8086")
         run.exit(isSuccess = true)
@@ -174,7 +177,7 @@ class DevServerLauncherTest {
     fun GIVEN_kobweb_run_finishes_but_server_keeps_answering_WHEN_exit_reported_THEN_still_running() = runTest {
         val collector = collectStates(kobwebHost)
         runCurrent()
-        val run = taskRunner.devServerRuns.single()
+        val run = taskRunner.startedRuns.single()
         run.serverComesUp("http://localhost:8086")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
@@ -190,7 +193,7 @@ class DevServerLauncherTest {
     fun GIVEN_run_finishes_and_server_is_gone_WHEN_exit_reported_THEN_stopped_and_nothing_to_stop() = runTest {
         val collector = collectStates(webpackHost)
         runCurrent()
-        val run = taskRunner.devServerRuns.single()
+        val run = taskRunner.startedRuns.single()
         run.serverComesUp("http://localhost:8085")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
@@ -202,14 +205,14 @@ class DevServerLauncherTest {
         assertEquals(DevServerState.Stopped, states.last())
         assertTrue(collector.isCompleted)
         assertTrue(taskRunner.stoppedExecutionNames.isEmpty())
-        assertEquals(1, taskRunner.startedRuns.size)
+        assertTrue(detachedServerStopper.stoppedHosts.isEmpty())
     }
 
     @Test
-    fun GIVEN_running_kobweb_server_WHEN_collector_cancelled_THEN_run_terminated_and_stop_task_executed() = runTest {
+    fun GIVEN_running_kobweb_server_WHEN_collector_cancelled_THEN_run_and_detached_server_stopped() = runTest {
         val collector = collectStates(kobwebHost)
         runCurrent()
-        taskRunner.devServerRuns.single().serverComesUp("http://localhost:8086")
+        taskRunner.startedRuns.single().serverComesUp("http://localhost:8086")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 
@@ -217,9 +220,7 @@ class DevServerLauncherTest {
         runCurrent()
 
         assertEquals(listOf(DevServerRunNames.devServer(kobwebHost)), taskRunner.stoppedExecutionNames)
-        val stopRun = taskRunner.startedRuns.last()
-        assertEquals(DevServerRunNames.STOP_TASK, stopRun.executionName)
-        assertEquals(":instances:web-preview-kobweb:kobwebStop", stopRun.config.qualifiedTaskName)
+        assertEquals(listOf(kobwebHost), detachedServerStopper.stoppedHosts)
     }
 
     @Test
@@ -230,7 +231,7 @@ class DevServerLauncherTest {
         runCurrent()
 
         assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
-        assertEquals(1, taskRunner.startedRuns.size)
+        assertTrue(detachedServerStopper.stoppedHosts.isEmpty())
     }
 
     @Test

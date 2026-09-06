@@ -112,8 +112,10 @@ reload. The plugin recognises such a module by its `kobwebStart` task and runs `
 from `server.port` in `.kobweb/conf.yaml` of the module. Give the module a distinct port so it does not collide
 with the real site.
 
-The Kobweb server is a separate process that outlives the Gradle run, so **Stop Dev Server** runs `kobwebStop`
-for it: without that, stopping the run in the IDE would leave the server on the port. The plugin also re-checks
+The Kobweb server is a separate process that outlives the Gradle run, so stopping the run alone would leave the
+server on the port. The plugin does what `kobwebStop` does, without Gradle: it reads the process id from
+`.kobweb/server/state.yaml` of the module, asks the process to terminate and kills it after 10 seconds if it has
+not. This also works while the project is closing, when no Gradle task can run any more. The plugin also re-checks
 the port when the Gradle task finishes successfully, so a server that keeps running is shown as running.
 
 ### Tool window actions

@@ -95,7 +95,9 @@ class ExternalSystemGradleTaskRunner(
         }
     }
 
+    /** A closing project has no runs left: the platform destroyed them before disposing the project. */
     override suspend fun stop(executionName: String) {
+        if (projectDependencies.project.isDisposed) return
         val handlers = withContext(mainContext) { findRunningHandlers(executionName) }
         withContext(backgroundContext) {
             handlers.forEach { handler -> handler.destroyProcess() }

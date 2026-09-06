@@ -11,10 +11,6 @@ class FakeGradleTaskRunner : GradleTaskRunner {
 
     val stoppedExecutionNames = mutableListOf<String>()
 
-    /** Runs started with a dev server execution name, in start order. */
-    val devServerRuns: List<StartedRun>
-        get() = startedRuns.filter { run -> run.executionName != DevServerRunNames.STOP_TASK }
-
     /** A run is recorded when collected, like the real runner hands the task over on collection. */
     override fun run(config: DevServerLaunchConfig, executionName: String): Flow<GradleRunEvent> = flow {
         val events = Channel<GradleRunEvent>(Channel.UNLIMITED)
