@@ -1,11 +1,12 @@
 package com.makeevrserg.compose.html.preview.server.di
 
 import com.makeevrserg.compose.html.preview.core.di.CoreModule
+import com.makeevrserg.compose.html.preview.server.DefaultDevServerController
 import com.makeevrserg.compose.html.preview.server.DevServerController
-import com.makeevrserg.compose.html.preview.server.DevServerHealthCheck
 import com.makeevrserg.compose.html.preview.server.DevServerOriginResolver
 import com.makeevrserg.compose.html.preview.server.DevServerUrlDetector
 import com.makeevrserg.compose.html.preview.server.GradleTaskRunner
+import com.makeevrserg.compose.html.preview.server.HttpDevServerHealthCheck
 import com.makeevrserg.compose.html.preview.server.KobwebConfReader
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -14,12 +15,12 @@ class ServerModule(
     coreModule: CoreModule,
     gradleTaskRunner: GradleTaskRunner
 ) {
-    private val healthCheck = DevServerHealthCheck(
+    private val healthCheck = HttpDevServerHealthCheck(
         ioContext = coreModule.dispatchers.io,
         connectTimeout = HEALTH_CHECK_TIMEOUT
     )
 
-    val devServerController = DevServerController(
+    val devServerController: DevServerController = DefaultDevServerController(
         healthCheck = healthCheck,
         gradleTaskRunner = gradleTaskRunner,
         originResolver = DevServerOriginResolver(
