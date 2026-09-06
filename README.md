@@ -41,10 +41,11 @@ according to the module dependencies imported by the last Gradle sync.
 - Still several, or none: the tool window explains what was found and what to change. A Gradle sync that has not
   finished yet gives the same message; press **Refresh Preview** once it is done.
 
-A server that is already running is reused: Kobweb's port is read from `.kobweb/conf.yaml` of the module, and
-the port a module announced earlier in the session is remembered. Switching to a file of another module clears
-the page at once and shows a spinner until that module's server answers; the previous server keeps running, so
-switching back is instant.
+A Kobweb server that is already running is reused: its port is read from `.kobweb/conf.yaml` of the module, so a
+server left from a terminal or an earlier IDE session is adopted instead of started again. Switching to a file of
+another module clears the page at once and shows a spinner until that module's server answers; the server the plugin
+started for the previous module is stopped, so the plugin owns at most one dev server per project. Closing the
+project stops that server as well: a run started by the plugin never outlives it.
 
 ### Stale previews
 
@@ -122,7 +123,8 @@ the port when the Gradle task finishes successfully, so a server that keeps runn
   available, for example under Remote Development.
 - Gear menu: **Restart Dev Server**, **Stop Dev Server**, **Open DevTools**.
 
-Only runs started by the plugin are stopped; a dev server started from a terminal is left untouched.
+Only runs started by the plugin are stopped, whether by **Stop Dev Server**, by a switch to another module or by
+closing the project; a dev server started from a terminal is left untouched.
 
 ### Development
 
@@ -146,7 +148,7 @@ holds the adapters that implement the ports of the `api` module with platform AP
 |---|---|---|
 | `core` | coroutine features, `Lifecycle`, `PreviewDispatchers` | `ProjectDependencies`, EDT dispatchers |
 | `host` | host models, `PreviewHostSelector`, `PreviewHostLocator` port | IDE module model readers |
-| `server` | `DevServerController`, output parsing, `GradleTaskRunner` port | `ExternalSystemUtil` runner |
+| `server` | `DevServerLauncher` (one run as a cold flow), `DevServerController`, output parsing, `GradleTaskRunner` port | `ExternalSystemUtil` runner |
 | `preview` | `PreviewStore` contract, state, reducer, `PreviewFeature`, notifier and tool window ports | editor and tool window trackers, port implementations |
 | `psi` | | `@Preview` detection on Kotlin PSI |
 | `ui` | | tool window panel, JCEF browser, actions |
