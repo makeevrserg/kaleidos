@@ -27,6 +27,7 @@ dependencies {
         pluginComposedModule(implementation(projects.components.server.intellij))
         pluginComposedModule(implementation(projects.components.preview.api))
         pluginComposedModule(implementation(projects.components.preview.intellij))
+        pluginComposedModule(implementation(projects.components.psi))
     }
 }
 

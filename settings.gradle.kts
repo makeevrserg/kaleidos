@@ -27,3 +27,4 @@ include(
     ":components:preview:api",
     ":components:preview:intellij",
 )
+include(":components:psi")
