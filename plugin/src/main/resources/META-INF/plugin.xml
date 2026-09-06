@@ -32,6 +32,10 @@
     <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.kotlin</depends>
     <depends>com.intellij.gradle</depends>
+    <!-- The embedded browser moved out of the platform core into the "Web Browser (JCEF)" plugin in 2026.2 -->
+    <dependencies>
+        <module name="intellij.platform.ui.jcef"/>
+    </dependencies>
 
     <!-- Only PSI is used, no resolve, so both K1 and K2 modes of the Kotlin plugin are supported. -->
     <extensions defaultExtensionNs="org.jetbrains.kotlin">

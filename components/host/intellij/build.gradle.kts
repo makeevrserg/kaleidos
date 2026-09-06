@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity(providers.gradleProperty("intellij.version"))
+        intellijIdea(providers.gradleProperty("intellij.version"))
         // Gradle module model of the IDE
         bundledPlugins("com.intellij.gradle")
     }

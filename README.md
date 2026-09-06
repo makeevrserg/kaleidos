@@ -136,7 +136,7 @@ closing the project; a dev server started from a terminal is left untouched.
 - `./gradlew detekt` runs static analysis.
 - `./gradlew test` runs the unit tests of the plain Kotlin components.
 
-Requirements: IntelliJ IDEA 2025.1 or newer, JDK 21 to build.
+Requirements: IntelliJ IDEA 2026.2 or newer, JDK 25 to build.
 
 #### Modules
 

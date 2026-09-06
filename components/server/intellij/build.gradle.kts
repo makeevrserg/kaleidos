@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity(providers.gradleProperty("intellij.version"))
+        intellijIdea(providers.gradleProperty("intellij.version"))
         // Gradle task execution through the external system API
         bundledPlugins("com.intellij.gradle")
     }

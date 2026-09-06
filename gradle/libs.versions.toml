@@ -1,8 +1,7 @@
 [versions]
 # Kotlin
 kotlin-version = "2.3.20" # https://github.com/JetBrains/kotlin
-# Bundled with IntelliJ Platform 2025.1 (lib/util-8.jar); plain modules compile against them, nothing is packaged
-kotlinx-coroutines = "1.8.0" # https://github.com/Kotlin/kotlinx.coroutines
+kotlinx-coroutines = "1.10.2" # https://github.com/Kotlin/kotlinx.coroutines
 # klibs
 klibs-gradleplugin = "2.0.0" # https://github.com/makeevrserg/gradle-plugin
 

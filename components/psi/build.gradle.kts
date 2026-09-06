@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity(providers.gradleProperty("intellij.version"))
+        intellijIdea(providers.gradleProperty("intellij.version"))
         // Kotlin PSI; the Kotlin plugin itself depends on the Java plugin
         bundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
     }

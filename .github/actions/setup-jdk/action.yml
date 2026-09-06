@@ -4,8 +4,8 @@ inputs:
   java-version:
     description: "JDK version to install"
     required: false
-    # IntelliJ Platform 2025.1 runs on Java 21, and the project compiles for it (klibs.java.* in gradle.properties)
-    default: "21"
+    # IntelliJ Platform 2026.2 runs on Java 25, and the project compiles for it (klibs.java.* in gradle.properties)
+    default: "25"
 runs:
   using: "composite"
   steps:

@@ -7,8 +7,9 @@ plugins {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity(providers.gradleProperty("intellij.version"))
+        intellijIdea(providers.gradleProperty("intellij.version"))
         bundledPlugins("com.intellij.java", "org.jetbrains.kotlin", "com.intellij.gradle")
+        bundledModules("intellij.platform.ui.jcef", "intellij.libraries.jcef")
         pluginVerifier()
         // Every component is merged into the plugin JAR; a plain project dependency lands in lib/modules
         // and is not loaded. The list is explicit so no module is pulled in by accident.
