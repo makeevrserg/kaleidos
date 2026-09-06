@@ -1,9 +1,7 @@
 package com.makeevrserg.compose.html.preview.host
 
 /**
- * How a preview module serves its page, detected from the Gradle tasks of the module. Kobweb comes
- * first: a Kobweb application also exposes the plain Kotlin/JS tasks, but only its own server
- * initialises Silk.
+ * How a module serves the generated preview page, and what has to happen to stop it again.
  *
  * @param arguments `--continuous` and `-t` keep Gradle recompiling on changes so the page live-reloads
  * @param isServerDetached true when the server is a separate process that outlives the Gradle run and
@@ -15,11 +13,5 @@ enum class DevServerKind(
     val isServerDetached: Boolean
 ) {
     KOBWEB(startTask = "kobwebStart", arguments = "-t", isServerDetached = true),
-    WEBPACK(startTask = "jsBrowserDevelopmentRun", arguments = "--continuous", isServerDetached = false);
-
-    companion object {
-        fun detect(taskNames: Set<String>): DevServerKind? {
-            return entries.firstOrNull { kind -> kind.startTask in taskNames }
-        }
-    }
+    WEBPACK(startTask = "jsBrowserDevelopmentRun", arguments = "--continuous", isServerDetached = false)
 }

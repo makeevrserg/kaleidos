@@ -2,8 +2,10 @@ package com.makeevrserg.compose.html.preview.server
 
 import com.makeevrserg.compose.html.preview.host.DevServerKind
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
+import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.options
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class DevServerLaunchConfigTest {
 
@@ -11,8 +13,7 @@ class DevServerLaunchConfigTest {
     fun GIVEN_subproject_host_WHEN_forHost_THEN_task_is_qualified_with_gradle_path() {
         val config = DevServerLaunchConfig.forHost(
             host = host(":instances:web-preview", DevServerKind.WEBPACK),
-            taskName = "jsBrowserDevelopmentRun",
-            arguments = "--continuous"
+            options = options(devServerPort = 8301)
         )
 
         assertEquals(":instances:web-preview:jsBrowserDevelopmentRun", config.qualifiedTaskName)
@@ -22,12 +23,16 @@ class DevServerLaunchConfigTest {
 
     @Test
     fun GIVEN_root_project_host_WHEN_forHost_THEN_task_is_addressed_as_root_task() {
-        val config = DevServerLaunchConfig.forHost(
-            host = host("", DevServerKind.KOBWEB),
-            taskName = "kobwebStart",
-            arguments = "-t"
-        )
+        val config = DevServerLaunchConfig.forHost(host("", DevServerKind.KOBWEB), options())
 
         assertEquals(":kobwebStart", config.qualifiedTaskName)
+    }
+
+    @Test
+    fun GIVEN_generated_sources_WHEN_forHost_THEN_the_run_gets_the_init_script_and_the_task_arguments() {
+        val config = DevServerLaunchConfig.forHost(host(":instances:web-app", DevServerKind.KOBWEB), options())
+
+        assertEquals("--init-script \"${PreviewHostFixtures.INIT_SCRIPT_PATH}\" -t", config.scriptParameters)
+        assertTrue(config.scriptParameters.endsWith(config.arguments))
     }
 }

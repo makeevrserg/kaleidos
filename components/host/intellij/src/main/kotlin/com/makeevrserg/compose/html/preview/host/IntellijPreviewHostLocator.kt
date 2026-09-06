@@ -12,7 +12,7 @@ import kotlin.coroutines.CoroutineContext
  * from the event dispatch thread
  */
 class IntellijPreviewHostLocator(
-    private val gradleModuleCatalog: GradleModuleCatalog,
+    private val structureReader: PreviewProjectStructureReader,
     private val graphReader: ModuleDependencyGraphReader,
     private val selector: PreviewHostSelector,
     private val backgroundContext: CoroutineContext
@@ -22,8 +22,8 @@ class IntellijPreviewHostLocator(
      * Until the first Gradle sync has populated the module model, every file looks like it belongs to
      * no Gradle module; that case gets its own explanation.
      */
-    private fun notFound(filePath: String, graph: ModuleDependencyGraph): PreviewHostResolution {
-        val reason = if (graph.dependencies.isEmpty()) {
+    private fun notFound(filePath: String, structure: PreviewProjectStructure): PreviewHostResolution {
+        val reason = if (!structure.isImported) {
             PreviewHostSelector.GRADLE_NOT_IMPORTED
         } else {
             "${Path.of(filePath).fileName} is not part of a Gradle module"
@@ -31,15 +31,11 @@ class IntellijPreviewHostLocator(
         return PreviewHostResolution.NotFound(reason)
     }
 
-    override suspend fun locate(filePath: String): PreviewHostResolution = withContext(backgroundContext) {
-        readAction {
-            val graph = graphReader.read()
-            val fileModuleDirectory = graphReader.moduleDirectoryOf(filePath)
-            if (fileModuleDirectory == null) {
-                notFound(filePath, graph)
-            } else {
-                selector.select(fileModuleDirectory, gradleModuleCatalog.read(), graph)
-            }
-        }
+    override suspend fun locate(filePath: String): PreviewHostResolution {
+        val structure = structureReader.read()
+        val fileModuleDirectory = withContext(backgroundContext) {
+            readAction { graphReader.moduleDirectoryOf(filePath) }
+        } ?: return notFound(filePath, structure)
+        return selector.select(fileModuleDirectory, structure)
     }
 }

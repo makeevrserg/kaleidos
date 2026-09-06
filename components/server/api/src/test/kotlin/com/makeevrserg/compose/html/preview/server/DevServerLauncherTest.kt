@@ -3,6 +3,7 @@ package com.makeevrserg.compose.html.preview.server
 import com.makeevrserg.compose.html.preview.host.DevServerKind
 import com.makeevrserg.compose.html.preview.host.PreviewHost
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
+import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.options
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.toList
@@ -59,7 +60,7 @@ class DevServerLauncherTest {
 
     /** Collects into [states] in the background; `runCurrent` and `advanceTimeBy` drive the launch. */
     private fun TestScope.collectStates(host: PreviewHost): Job {
-        return backgroundScope.launch { launcher.launch(host).toList(states) }
+        return backgroundScope.launch { launcher.launch(host, options()).toList(states) }
     }
 
     /** Simulates the dev server printing its origin and answering at it. */

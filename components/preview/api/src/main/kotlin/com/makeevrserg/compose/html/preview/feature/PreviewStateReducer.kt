@@ -22,7 +22,7 @@ class PreviewStateReducer(
         val previewUrl = when {
             target == null || host == null || running == null -> null
             target.previews.isEmpty() || running.host != host -> null
-            else -> previewUrlFactory.create(running.baseUrl, target)
+            else -> previewUrlFactory.create(running.baseUrl, host.kind, target)
         }
         return copy(previewUrl = previewUrl)
     }

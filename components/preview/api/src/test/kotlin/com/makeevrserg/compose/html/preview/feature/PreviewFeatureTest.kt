@@ -9,7 +9,9 @@ import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.previewFunct
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.previewHost
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.running
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.target
+import com.makeevrserg.compose.html.preview.host.PreviewHost
 import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
+import com.makeevrserg.compose.html.preview.server.DevServerLaunchOptions
 import com.makeevrserg.compose.html.preview.server.DevServerState
 import com.makeevrserg.compose.html.preview.url.PreviewUrlFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,9 +38,27 @@ class PreviewFeatureTest {
 
     private val notifier = FakePreviewNotifier()
 
+    private val previewHarness = FakePreviewHarness()
+
+    private fun runningRequest(host: PreviewHost, retryAfterFailure: Boolean): RunningRequest {
+        return RunningRequest(
+            host = host,
+            options = DevServerLaunchOptions(
+                initScriptPath = FakePreviewHarness.INIT_SCRIPT_DIRECTORY + host.gradlePath,
+                devServerPort = FakePreviewHarness.PORT
+            ),
+            retryAfterFailure = retryAfterFailure
+        )
+    }
+
     private fun TestScope.createFeature(): PreviewFeature {
         return PreviewFeature(
             devServerController = devServerController,
+            serverLauncher = PreviewServerLauncher(
+                previewHarness = previewHarness,
+                devServerController = devServerController,
+                previewNotifier = notifier
+            ),
             hostLocator = hostLocator,
             toolWindowPresenter = toolWindowPresenter,
             previewNotifier = notifier,
@@ -78,7 +98,7 @@ class PreviewFeatureTest {
         val feature = createVisibleFeatureWithCardFile()
 
         assertEquals(listOf(CARD_FILE), hostLocator.locatedFiles)
-        assertEquals(listOf(RunningRequest(previewHost, false)), devServerController.runningRequests)
+        assertEquals(listOf(runningRequest(previewHost, false)), devServerController.runningRequests)
         assertEquals(hostFound, feature.state.value.target?.host)
     }
 
@@ -121,7 +141,7 @@ class PreviewFeatureTest {
             runCurrent()
 
             assertEquals(listOf(CARD_FILE, BUTTON_FILE), hostLocator.locatedFiles)
-            assertEquals(listOf(RunningRequest(otherHost, false)), devServerController.runningRequests)
+            assertEquals(listOf(runningRequest(otherHost, false)), devServerController.runningRequests)
             assertEquals(PreviewHostResolution.Found(otherHost), feature.state.value.target?.host)
         }
 
@@ -153,7 +173,7 @@ class PreviewFeatureTest {
         feature.onReconnect()
         runCurrent()
 
-        assertEquals(listOf(RunningRequest(previewHost, true)), devServerController.runningRequests)
+        assertEquals(listOf(runningRequest(previewHost, true)), devServerController.runningRequests)
         assertEquals(hostFound, feature.state.value.target?.host)
     }
 
@@ -167,7 +187,7 @@ class PreviewFeatureTest {
         runCurrent()
 
         assertEquals(1, toolWindowPresenter.showCount)
-        assertEquals(listOf(RunningRequest(previewHost, true)), devServerController.runningRequests)
+        assertEquals(listOf(runningRequest(previewHost, true)), devServerController.runningRequests)
         assertEquals("app.CardPreview", feature.state.value.target?.focusedFqn)
     }
 
@@ -193,7 +213,7 @@ class PreviewFeatureTest {
         feature.onToolWindowVisibilityChanged(isVisible = true)
         runCurrent()
 
-        assertEquals(listOf(RunningRequest(previewHost, true)), devServerController.runningRequests)
+        assertEquals(listOf(runningRequest(previewHost, true)), devServerController.runningRequests)
     }
 
     @Test
@@ -214,7 +234,7 @@ class PreviewFeatureTest {
         runCurrent()
 
         assertEquals(2, hostLocator.locatedFiles.size)
-        assertEquals(RunningRequest(previewHost, true), devServerController.runningRequests.last())
+        assertEquals(runningRequest(previewHost, true), devServerController.runningRequests.last())
     }
 
     @Test
@@ -254,7 +274,10 @@ class PreviewFeatureTest {
         devServerController.mutableState.value = running
         runCurrent()
 
-        assertEquals("http://localhost:8085/?preview=app.CardPreview", feature.state.value.previewUrl)
+        assertEquals(
+            "http://localhost:8085/compose-html-preview.html?preview=app.CardPreview",
+            feature.state.value.previewUrl
+        )
         assertEquals(running, feature.state.value.serverState)
     }
 

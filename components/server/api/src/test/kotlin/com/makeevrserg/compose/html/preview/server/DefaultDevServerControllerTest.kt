@@ -4,6 +4,7 @@ import com.makeevrserg.compose.html.preview.core.TestCoroutineFeature
 import com.makeevrserg.compose.html.preview.host.DevServerKind
 import com.makeevrserg.compose.html.preview.host.PreviewHost
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
+import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.options
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -76,7 +77,7 @@ class DefaultDevServerControllerTest {
     }
 
     private suspend fun TestScope.requestWebpackLaunch(controller: DevServerController): StartedRun {
-        controller.requestRunning(webpackHost, retryAfterFailure = false)
+        controller.requestRunning(webpackHost, options(), retryAfterFailure = false)
         runCurrent()
         return taskRunner.startedRuns.last()
     }
@@ -98,7 +99,7 @@ class DefaultDevServerControllerTest {
 
     private suspend fun TestScope.adoptKobwebServer(controller: DevServerController) {
         healthCheck.aliveUrls += "http://localhost:8086"
-        controller.requestRunning(kobwebHost, retryAfterFailure = false)
+        controller.requestRunning(kobwebHost, options(), retryAfterFailure = false)
         runCurrent()
         assertRunning(controller, kobwebHost, "http://localhost:8086")
     }
@@ -127,7 +128,7 @@ class DefaultDevServerControllerTest {
         val controller = createController()
         requestWebpackLaunch(controller)
 
-        controller.requestRunning(webpackHost, retryAfterFailure = true)
+        controller.requestRunning(webpackHost, options(), retryAfterFailure = true)
         runCurrent()
 
         assertEquals(1, taskRunner.startedRuns.size)
@@ -139,7 +140,7 @@ class DefaultDevServerControllerTest {
         val controller = createController()
         adoptKobwebServer(controller)
 
-        controller.requestRunning(kobwebHost, retryAfterFailure = true)
+        controller.requestRunning(kobwebHost, options(), retryAfterFailure = true)
         runCurrent()
 
         assertRunning(controller, kobwebHost, "http://localhost:8086")
@@ -152,7 +153,7 @@ class DefaultDevServerControllerTest {
         adoptKobwebServer(controller)
         healthCheck.aliveUrls.clear()
 
-        controller.requestRunning(kobwebHost, retryAfterFailure = false)
+        controller.requestRunning(kobwebHost, options(), retryAfterFailure = false)
         runCurrent()
 
         assertEquals(DevServerState.Starting(kobwebHost), controller.state.value)
@@ -166,7 +167,7 @@ class DefaultDevServerControllerTest {
             val controller = createController()
             startWebpackServer(controller)
 
-            controller.requestRunning(kobwebHost, retryAfterFailure = false)
+            controller.requestRunning(kobwebHost, options(), retryAfterFailure = false)
             runCurrent()
 
             assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
@@ -180,7 +181,7 @@ class DefaultDevServerControllerTest {
         val controller = createController()
         failWebpackLaunch(controller)
 
-        controller.requestRunning(webpackHost, retryAfterFailure = false)
+        controller.requestRunning(webpackHost, options(), retryAfterFailure = false)
         runCurrent()
 
         assertIs<DevServerState.Failed>(controller.state.value)
@@ -192,7 +193,7 @@ class DefaultDevServerControllerTest {
         val controller = createController()
         failWebpackLaunch(controller)
 
-        controller.requestRunning(webpackHost, retryAfterFailure = true)
+        controller.requestRunning(webpackHost, options(), retryAfterFailure = true)
         runCurrent()
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
@@ -214,7 +215,7 @@ class DefaultDevServerControllerTest {
         val controller = createController()
         failWebpackLaunch(controller)
 
-        controller.requestRunning(kobwebHost, retryAfterFailure = false)
+        controller.requestRunning(kobwebHost, options(), retryAfterFailure = false)
         runCurrent()
 
         assertIs<DevServerState.Failed>(controller.state.value)
@@ -241,7 +242,7 @@ class DefaultDevServerControllerTest {
         runCurrent()
         healthCheck.aliveUrls.clear()
 
-        controller.requestRunning(webpackHost, retryAfterFailure = false)
+        controller.requestRunning(webpackHost, options(), retryAfterFailure = false)
         runCurrent()
 
         assertEquals(DevServerState.Starting(webpackHost), controller.state.value)
@@ -253,7 +254,7 @@ class DefaultDevServerControllerTest {
         val controller = createController()
         val firstRun = requestWebpackLaunch(controller)
 
-        controller.restart(webpackHost)
+        controller.restart(webpackHost, options())
         runCurrent()
         firstRun.exit(isSuccess = false)
         advanceTimeBy(POLL_INTERVAL)

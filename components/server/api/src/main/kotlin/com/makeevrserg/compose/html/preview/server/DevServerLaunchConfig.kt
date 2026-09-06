@@ -11,19 +11,25 @@ data class DevServerLaunchConfig(
     val rootProjectPath: String,
     val gradlePath: String,
     val taskName: String,
-    val arguments: String
+    val arguments: String,
+    val initScriptPath: String
 ) {
     /** Root tasks are addressed as `:task`: a bare name would run the task in every subproject. */
     val qualifiedTaskName: String
         get() = "$gradlePath:$taskName"
 
+    /** Quoted, because a project can live under a path with spaces in it. */
+    val scriptParameters: String
+        get() = "--init-script \"$initScriptPath\" $arguments"
+
     companion object {
-        fun forHost(host: PreviewHost, taskName: String, arguments: String): DevServerLaunchConfig {
+        fun forHost(host: PreviewHost, options: DevServerLaunchOptions): DevServerLaunchConfig {
             return DevServerLaunchConfig(
                 rootProjectPath = host.rootProjectPath,
                 gradlePath = host.gradlePath,
-                taskName = taskName,
-                arguments = arguments
+                taskName = host.kind.startTask,
+                arguments = host.kind.arguments,
+                initScriptPath = options.initScriptPath
             )
         }
     }

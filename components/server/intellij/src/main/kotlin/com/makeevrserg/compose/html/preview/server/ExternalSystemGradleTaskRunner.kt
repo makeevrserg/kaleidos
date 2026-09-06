@@ -39,7 +39,7 @@ class ExternalSystemGradleTaskRunner(
         val settings = ExternalSystemTaskExecutionSettings()
         settings.externalProjectPath = config.rootProjectPath
         settings.taskNames = listOf(config.qualifiedTaskName)
-        settings.scriptParameters = config.arguments
+        settings.scriptParameters = config.scriptParameters
         settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
         settings.executionName = executionName
         return settings

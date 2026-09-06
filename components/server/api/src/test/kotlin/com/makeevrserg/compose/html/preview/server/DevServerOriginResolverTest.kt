@@ -2,6 +2,7 @@ package com.makeevrserg.compose.html.preview.server
 
 import com.makeevrserg.compose.html.preview.host.DevServerKind
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
+import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.options
 import kotlinx.coroutines.test.runTest
 import java.nio.file.Files
 import java.nio.file.Path
@@ -37,24 +38,29 @@ class DevServerOriginResolverTest {
 
     @Test
     fun GIVEN_kobweb_module_never_run_WHEN_expected_THEN_origin_from_conf() = runTest {
-        assertEquals("http://localhost:8086", resolver.expected(kobwebHost))
+        assertEquals("http://localhost:8086", resolver.expected(kobwebHost, options()))
     }
 
     @Test
-    fun GIVEN_webpack_module_never_run_WHEN_expected_THEN_unknown() = runTest {
-        assertNull(resolver.expected(webpackHost))
+    fun GIVEN_webpack_module_WHEN_expected_THEN_the_port_the_plugin_chose() = runTest {
+        assertEquals("http://localhost:8301", resolver.expected(webpackHost, options(devServerPort = 8301)))
+    }
+
+    @Test
+    fun GIVEN_webpack_module_without_a_port_WHEN_expected_THEN_unknown() = runTest {
+        assertNull(resolver.expected(webpackHost, options()))
     }
 
     @Test
     fun GIVEN_server_answers_at_expected_origin_WHEN_findAlive_THEN_origin() = runTest {
         healthCheck.aliveUrls += "http://localhost:8086"
 
-        assertEquals("http://localhost:8086", resolver.findAlive(kobwebHost))
+        assertEquals("http://localhost:8086", resolver.findAlive(kobwebHost, options()))
     }
 
     @Test
     fun GIVEN_nothing_answers_WHEN_findAlive_THEN_null() = runTest {
-        assertNull(resolver.findAlive(kobwebHost))
-        assertNull(resolver.findAlive(webpackHost))
+        assertNull(resolver.findAlive(kobwebHost, options()))
+        assertNull(resolver.findAlive(webpackHost, options(devServerPort = 8301)))
     }
 }

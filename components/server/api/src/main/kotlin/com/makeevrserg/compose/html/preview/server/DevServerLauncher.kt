@@ -131,14 +131,13 @@ class DevServerLauncher(
      * The run is stopped on every exit of this function except its own: cancellation of the collector,
      * and any failure of the flow itself, must not leave a Gradle build behind.
      */
-    private suspend fun ProducerScope<DevServerState>.launchAndServe(host: PreviewHost) {
+    private suspend fun ProducerScope<DevServerState>.launchAndServe(
+        host: PreviewHost,
+        options: DevServerLaunchOptions
+    ) {
         send(DevServerState.Starting(host))
-        val config = DevServerLaunchConfig.forHost(
-            host = host,
-            taskName = host.kind.startTask,
-            arguments = host.kind.arguments
-        )
-        val expectedBaseUrl = originResolver.expected(host)
+        val config = DevServerLaunchConfig.forHost(host, options)
+        val expectedBaseUrl = originResolver.expected(host, options)
         val run = DevServerRunSignals(
             announcedBaseUrl = CompletableDeferred(),
             exit = CompletableDeferred()
@@ -157,12 +156,12 @@ class DevServerLauncher(
      * Completes on its own only when the run exits and leaves no server behind; otherwise it stays
      * active until cancelled, and cancellation stops the run.
      */
-    fun launch(host: PreviewHost): Flow<DevServerState> = channelFlow {
-        val adoptedBaseUrl = originResolver.findAlive(host)
+    fun launch(host: PreviewHost, options: DevServerLaunchOptions): Flow<DevServerState> = channelFlow {
+        val adoptedBaseUrl = originResolver.findAlive(host, options)
         if (adoptedBaseUrl != null) {
             send(DevServerState.Running(host, adoptedBaseUrl))
             awaitCancellation()
         }
-        launchAndServe(host)
+        launchAndServe(host, options)
     }
 }

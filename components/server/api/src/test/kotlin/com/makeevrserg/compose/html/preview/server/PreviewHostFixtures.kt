@@ -5,6 +5,8 @@ import com.makeevrserg.compose.html.preview.host.PreviewHost
 import java.nio.file.Path
 
 object PreviewHostFixtures {
+    const val INIT_SCRIPT_PATH = "/project/build/compose-html-preview/compose-html-preview.init.gradle"
+
     fun host(gradlePath: String, kind: DevServerKind, directory: Path? = null): PreviewHost {
         return PreviewHost(
             gradlePath = gradlePath,
@@ -12,5 +14,9 @@ object PreviewHostFixtures {
             rootProjectPath = "/project",
             kind = kind
         )
+    }
+
+    fun options(devServerPort: Int? = null): DevServerLaunchOptions {
+        return DevServerLaunchOptions(initScriptPath = INIT_SCRIPT_PATH, devServerPort = devServerPort)
     }
 }

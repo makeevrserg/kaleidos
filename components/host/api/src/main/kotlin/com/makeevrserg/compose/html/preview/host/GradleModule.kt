@@ -11,4 +11,7 @@ data class GradleModule(
     val directory: String,
     val rootProjectPath: String,
     val taskNames: Set<String>
-)
+) {
+    val displayName: String
+        get() = gradlePath.ifEmpty { "The root project" }
+}

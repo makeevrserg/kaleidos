@@ -7,6 +7,7 @@ import com.makeevrserg.compose.html.preview.core.di.IntellijCoreModule
 import com.makeevrserg.compose.html.preview.core.lifecycle.Lifecycle
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
 import com.makeevrserg.compose.html.preview.feature.di.IntellijPreviewModule
+import com.makeevrserg.compose.html.preview.harness.di.HarnessModule
 import com.makeevrserg.compose.html.preview.host.di.HostModule
 import com.makeevrserg.compose.html.preview.psi.di.PsiModule
 import com.makeevrserg.compose.html.preview.server.di.IntellijServerModule
@@ -31,11 +32,20 @@ class RootModule(
 
     private val intellijCoreModule = IntellijCoreModule(project = project)
 
-    val psiModule = PsiModule()
+    val psiModule = PsiModule(
+        coreModule = coreModule,
+        intellijCoreModule = intellijCoreModule
+    )
 
     private val hostModule = HostModule(
         coreModule = coreModule,
         intellijCoreModule = intellijCoreModule
+    )
+
+    private val harnessModule = HarnessModule(
+        coreModule = coreModule,
+        projectPreviewSource = psiModule.projectPreviewSource,
+        structureReader = hostModule.projectStructureReader
     )
 
     private val intellijServerModule = IntellijServerModule(
@@ -53,7 +63,8 @@ class RootModule(
         intellijCoreModule = intellijCoreModule,
         psiModule = psiModule,
         serverModule = serverModule,
-        hostModule = hostModule
+        hostModule = hostModule,
+        harnessModule = harnessModule
     )
 
     val previewStore: PreviewStore = intellijPreviewModule.previewModule.previewStore

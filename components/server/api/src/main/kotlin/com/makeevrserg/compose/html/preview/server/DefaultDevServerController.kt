@@ -30,13 +30,19 @@ class DefaultDevServerController(
 
     override val state: StateFlow<DevServerState> = request
         .flatMapLatest { launchRequest ->
-            if (launchRequest == null) flowOf(DevServerState.Stopped) else launcher.launch(launchRequest.host)
+            if (launchRequest == null) {
+                flowOf(DevServerState.Stopped)
+            } else {
+                launcher.launch(launchRequest.host, launchRequest.options)
+            }
         }
         .stateIn(coroutineFeature, SharingStarted.Eagerly, DevServerState.Stopped)
 
     /** Every request is distinct, so asking for a module again after its server stopped launches again. */
-    private fun requestLaunch(host: PreviewHost) {
-        request.update { previous -> DevServerLaunchRequest(host, attempt = (previous?.attempt ?: 0) + 1) }
+    private fun requestLaunch(host: PreviewHost, options: DevServerLaunchOptions) {
+        request.update { previous ->
+            DevServerLaunchRequest(host = host, options = options, attempt = (previous?.attempt ?: 0) + 1)
+        }
     }
 
     private suspend fun isAlreadyServing(current: DevServerState, host: PreviewHost): Boolean {
@@ -55,21 +61,27 @@ class DefaultDevServerController(
     private suspend fun isLaunchBlocked(
         current: DevServerState,
         host: PreviewHost,
+        options: DevServerLaunchOptions,
         retryAfterFailure: Boolean
     ): Boolean {
         if (current !is DevServerState.Failed || retryAfterFailure) return false
-        return originResolver.findAlive(host) == null
+        return originResolver.findAlive(host, options) == null
     }
 
-    override suspend fun requestRunning(host: PreviewHost, retryAfterFailure: Boolean) {
+    override suspend fun requestRunning(
+        host: PreviewHost,
+        options: DevServerLaunchOptions,
+        retryAfterFailure: Boolean
+    ) {
         val current = state.value
-        if (isAlreadyServing(current, host) || isLaunchBlocked(current, host, retryAfterFailure)) return
-        requestLaunch(host)
+        if (isAlreadyServing(current, host)) return
+        if (isLaunchBlocked(current, host, options, retryAfterFailure)) return
+        requestLaunch(host, options)
     }
 
     override fun stop() {
         request.value = null
     }
 
-    override fun restart(host: PreviewHost) = requestLaunch(host)
+    override fun restart(host: PreviewHost, options: DevServerLaunchOptions) = requestLaunch(host, options)
 }

@@ -1,15 +1,18 @@
 package com.makeevrserg.compose.html.preview.host
 
 /**
- * Picks the module that serves the previews of a file, the way the official Compose preview finds
- * the Gradle module of a file, extended to library modules: any module with a dev server task that
- * contains the file or depends on its module qualifies. Real applications of the project usually
- * qualify too, so a module whose path mentions "preview" wins when several remain.
+ * Picks the module whose dev server shows the previews of a file. Nothing is configured and nothing has
+ * to be written by hand: the plugin generates the preview page into the module it picks here.
+ *
+ * A Kotlin/JS browser module previews its own files, which is also what makes previews of `internal`
+ * functions work. A Kobweb library cannot: the code that registers the styles of Silk components is
+ * generated for applications only, so an application of the build that depends on the module serves it.
  */
 class PreviewHostSelector {
 
-    private fun GradleModule.toHostCandidate(): HostCandidate? {
-        return DevServerKind.detect(taskNames)?.let { kind -> HostCandidate(module = this, kind = kind) }
+    private fun GradleModule.toCandidate(): HostCandidate? {
+        val kind = GradleModuleKind.detect(taskNames).devServerKind ?: return null
+        return HostCandidate(module = this, kind = kind)
     }
 
     private fun HostCandidate.toPreviewHost(): PreviewHost {
@@ -21,18 +24,9 @@ class PreviewHostSelector {
         )
     }
 
-    private fun List<HostCandidate>.toDisplayNames(): String {
-        return joinToString { candidate -> candidate.toPreviewHost().displayName }
-    }
-
-    private fun List<HostCandidate>.serving(
-        fileModuleDirectory: String,
-        graph: ModuleDependencyGraph
-    ): List<HostCandidate> {
-        return filter { candidate ->
-            candidate.module.directory == fileModuleDirectory ||
-                graph.dependsOn(candidate.module.directory, fileModuleDirectory)
-        }
+    private fun List<HostCandidate>.preferOwnModule(fileModuleDirectory: String): List<HostCandidate> {
+        val ownModule = filter { candidate -> candidate.module.directory == fileModuleDirectory }
+        return ownModule.ifEmpty { this }
     }
 
     private fun List<HostCandidate>.preferPreviewModules(): List<HostCandidate> {
@@ -42,40 +36,49 @@ class PreviewHostSelector {
         return previewModules.ifEmpty { this }
     }
 
-    private fun List<HostCandidate>.preferOwnModule(fileModuleDirectory: String): List<HostCandidate> {
-        val ownModule = filter { candidate -> candidate.module.directory == fileModuleDirectory }
-        return ownModule.ifEmpty { this }
+    /** Shortest path first, then alphabetically, so the same module is picked on every lookup. */
+    private fun List<HostCandidate>.firstStable(): HostCandidate? {
+        return minWithOrNull(
+            compareBy({ candidate -> candidate.module.gradlePath.length }, { candidate -> candidate.module.gradlePath })
+        )
     }
 
-    private fun noCandidateReason(servers: List<HostCandidate>): String {
-        if (servers.isEmpty()) {
-            return "No Kotlin/JS browser or Kobweb module found in the project. " +
-                "Add a preview module with a dev server, see the plugin README."
+    /**
+     * Applications that can show the file: the module itself when it can serve a page, and every module
+     * that depends on it. A Kobweb library is served by Kobweb applications only.
+     */
+    private fun servingCandidates(
+        fileModule: GradleModule,
+        structure: PreviewProjectStructure
+    ): List<HostCandidate> {
+        val isKobwebLibrary = GradleModuleKind.detect(fileModule.taskNames) == GradleModuleKind.KOBWEB_LIBRARY
+        return structure.modules
+            .mapNotNull { module -> module.toCandidate() }
+            .filter { candidate -> !isKobwebLibrary || candidate.kind == DevServerKind.KOBWEB }
+            .filter { candidate -> structure.reaches(candidate.module.directory, fileModule.directory) }
+    }
+
+    private fun noCandidateReason(fileModule: GradleModule): String {
+        val isKobwebLibrary = GradleModuleKind.detect(fileModule.taskNames) == GradleModuleKind.KOBWEB_LIBRARY
+        if (isKobwebLibrary) {
+            return "No Kobweb application of this project depends on ${fileModule.displayName}. " +
+                "Kobweb components are styled by the generated entry point of an application, so one of " +
+                "your Kobweb applications has to depend on this module."
         }
-        return "No module with a dev server depends on the module of this file. " +
-            "The preview module has to depend on it. Modules with a dev server: ${servers.toDisplayNames()}"
+        return "${fileModule.displayName} has no Kotlin/JS browser target and no module that has one " +
+            "depends on it, so there is nothing that could render the preview."
     }
 
-    private fun ambiguousReason(candidates: List<HostCandidate>): String {
-        return "Several modules could serve the preview: ${candidates.toDisplayNames()}. " +
-            "Give the preview module a path containing \"preview\"."
-    }
-
-    fun select(
-        fileModuleDirectory: String,
-        modules: List<GradleModule>,
-        graph: ModuleDependencyGraph
-    ): PreviewHostResolution {
-        if (modules.isEmpty()) return PreviewHostResolution.NotFound(GRADLE_NOT_IMPORTED)
-        val servers = modules.mapNotNull { module -> module.toHostCandidate() }
-        val candidates = servers.serving(fileModuleDirectory, graph)
-            .preferPreviewModules()
+    fun select(fileModuleDirectory: String, structure: PreviewProjectStructure): PreviewHostResolution {
+        if (!structure.isImported) return PreviewHostResolution.NotFound(GRADLE_NOT_IMPORTED)
+        val fileModule = structure.modules.firstOrNull { module -> module.directory == fileModuleDirectory }
+            ?: return PreviewHostResolution.NotFound(GRADLE_NOT_IMPORTED)
+        val candidate = servingCandidates(fileModule, structure)
             .preferOwnModule(fileModuleDirectory)
-        return when (candidates.size) {
-            0 -> PreviewHostResolution.NotFound(noCandidateReason(servers))
-            1 -> PreviewHostResolution.Found(candidates.single().toPreviewHost())
-            else -> PreviewHostResolution.NotFound(ambiguousReason(candidates))
-        }
+            .preferPreviewModules()
+            .firstStable()
+            ?: return PreviewHostResolution.NotFound(noCandidateReason(fileModule))
+        return PreviewHostResolution.Found(candidate.toPreviewHost())
     }
 
     companion object {

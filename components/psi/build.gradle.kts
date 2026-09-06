@@ -11,4 +11,7 @@ dependencies {
     }
 
     implementation(projects.components.preview.api)
+    implementation(projects.components.harness.api)
+    implementation(projects.components.core.api)
+    implementation(projects.components.core.intellij)
 }

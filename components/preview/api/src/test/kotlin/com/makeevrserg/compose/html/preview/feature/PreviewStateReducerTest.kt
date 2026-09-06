@@ -52,7 +52,10 @@ class PreviewStateReducerTest {
         assertEquals(hostFound, state.target?.host)
         assertEquals(2, state.target?.previews?.size)
         assertEquals(SourceState.Changed("CardPreview.kt", now), state.sourceState)
-        assertEquals("http://localhost:8085/?preview=app.CardPreview,app.DarkCardPreview", state.previewUrl)
+        assertEquals(
+            "http://localhost:8085/compose-html-preview.html?preview=app.CardPreview,app.DarkCardPreview",
+            state.previewUrl
+        )
     }
 
     @Test
@@ -79,7 +82,10 @@ class PreviewStateReducerTest {
         val state = reducer.focus(servedState(), previewFunction("CardPreview"))
 
         assertEquals("app.CardPreview", state.target?.focusedFqn)
-        assertEquals("http://localhost:8085/?preview=app.CardPreview#app.CardPreview", state.previewUrl)
+        assertEquals(
+            "http://localhost:8085/compose-html-preview.html?preview=app.CardPreview#app.CardPreview",
+            state.previewUrl
+        )
     }
 
     @Test
@@ -98,7 +104,7 @@ class PreviewStateReducerTest {
 
         val state = reducer.attachHost(selected, CARD_FILE, hostFound)
 
-        assertEquals("http://localhost:8085/?preview=app.CardPreview", state.previewUrl)
+        assertEquals("http://localhost:8085/compose-html-preview.html?preview=app.CardPreview", state.previewUrl)
     }
 
     @Test

@@ -12,9 +12,15 @@ object GradleModuleFixtures {
         )
     }
 
-    fun webpackModule(gradlePath: String): GradleModule = module(gradlePath, setOf(DevServerKind.WEBPACK.startTask))
+    fun jsBrowserModule(gradlePath: String): GradleModule = module(gradlePath, setOf("jsBrowserTest"))
 
-    fun kobwebModule(gradlePath: String): GradleModule = module(gradlePath, setOf(DevServerKind.KOBWEB.startTask))
+    fun kobwebApplication(gradlePath: String): GradleModule {
+        return module(gradlePath, setOf("jsBrowserTest", "kobwebStart"))
+    }
+
+    fun kobwebLibrary(gradlePath: String): GradleModule {
+        return module(gradlePath, setOf("jsBrowserTest", "kobwebGenerateLibraryMetadata"))
+    }
 
     /** Direct dependencies by Gradle path, converted to the directory keys the graph uses. */
     fun graph(vararg edges: Pair<String, String>): ModuleDependencyGraph {
@@ -22,5 +28,9 @@ object GradleModuleFixtures {
             .groupBy(keySelector = { edge -> module(edge.first).directory })
             .mapValues { entry -> entry.value.map { edge -> module(edge.second).directory }.toSet() }
         return ModuleDependencyGraph(dependencies)
+    }
+
+    fun structure(modules: List<GradleModule>, vararg edges: Pair<String, String>): PreviewProjectStructure {
+        return PreviewProjectStructure(modules = modules, dependencies = graph(*edges))
     }
 }

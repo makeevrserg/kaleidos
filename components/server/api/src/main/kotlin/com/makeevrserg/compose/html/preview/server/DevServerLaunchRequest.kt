@@ -7,5 +7,6 @@ import com.makeevrserg.compose.html.preview.host.PreviewHost
  */
 data class DevServerLaunchRequest(
     val host: PreviewHost,
+    val options: DevServerLaunchOptions,
     val attempt: Int
 )

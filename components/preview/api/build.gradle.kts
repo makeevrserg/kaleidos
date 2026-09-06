@@ -9,6 +9,7 @@ dependencies {
 
     api(projects.components.host.api)
     api(projects.components.server.api)
+    api(projects.components.harness.api)
     implementation(projects.components.core.api)
 
     testImplementation(libs.kotlin.stdlib)

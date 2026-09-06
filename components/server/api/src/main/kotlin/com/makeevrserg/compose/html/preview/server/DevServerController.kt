@@ -18,10 +18,10 @@ interface DevServerController {
      * @param retryAfterFailure true for explicit user requests such as Refresh, false for automatic
      * checks triggered by editor events; automatic checks never relaunch after a failed launch
      */
-    suspend fun requestRunning(host: PreviewHost, retryAfterFailure: Boolean)
+    suspend fun requestRunning(host: PreviewHost, options: DevServerLaunchOptions, retryAfterFailure: Boolean)
 
     /** Stops the server the plugin started for the current module; adopted servers keep running. */
     fun stop()
 
-    fun restart(host: PreviewHost)
+    fun restart(host: PreviewHost, options: DevServerLaunchOptions)
 }

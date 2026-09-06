@@ -4,6 +4,7 @@ import com.makeevrserg.compose.html.preview.core.di.CoreModule
 import com.makeevrserg.compose.html.preview.core.di.IntellijCoreModule
 import com.makeevrserg.compose.html.preview.core.lifecycle.CoroutineLifecycle
 import com.makeevrserg.compose.html.preview.core.lifecycle.Lifecycle
+import com.makeevrserg.compose.html.preview.harness.di.HarnessModule
 import com.makeevrserg.compose.html.preview.host.di.HostModule
 import com.makeevrserg.compose.html.preview.notification.IntellijPreviewNotifier
 import com.makeevrserg.compose.html.preview.psi.di.PsiModule
@@ -28,12 +29,14 @@ class IntellijPreviewModule(
     intellijCoreModule: IntellijCoreModule,
     psiModule: PsiModule,
     serverModule: ServerModule,
-    hostModule: HostModule
+    hostModule: HostModule,
+    harnessModule: HarnessModule
 ) {
     val previewModule = PreviewModule(
         coreModule = coreModule,
         serverModule = serverModule,
         previewHostLocator = hostModule.previewHostLocator,
+        previewHarness = harnessModule.previewHarness,
         toolWindowPresenter = IntellijPreviewToolWindowPresenter(intellijCoreModule.projectDependencies),
         previewNotifier = IntellijPreviewNotifier(intellijCoreModule.project)
     )

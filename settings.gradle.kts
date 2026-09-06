@@ -39,6 +39,7 @@ include(
     ":components:server:api",
     ":components:server:intellij",
 )
+include(":components:harness:api")
 include(
     ":components:preview:api",
     ":components:preview:intellij",

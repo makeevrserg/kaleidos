@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class PreviewFeature(
     private val devServerController: DevServerController,
+    private val serverLauncher: PreviewServerLauncher,
     private val hostLocator: PreviewHostLocator,
     private val toolWindowPresenter: PreviewToolWindowPresenter,
     private val previewNotifier: PreviewNotifier,
@@ -78,9 +79,8 @@ class PreviewFeature(
 
     private suspend fun connect(request: PreviewConnectRequest) {
         val resolution = resolveHost(request.target, force = request.retryAfterFailure)
-        if (resolution is PreviewHostResolution.Found) {
-            devServerController.requestRunning(resolution.host, request.retryAfterFailure)
-        }
+        if (resolution !is PreviewHostResolution.Found) return
+        serverLauncher.requestRunning(resolution.host, request.retryAfterFailure)
     }
 
     /**
@@ -125,7 +125,7 @@ class PreviewFeature(
         val target = mutableState.value.target ?: return
         launch {
             val resolution = resolveHost(target, force = true)
-            if (resolution is PreviewHostResolution.Found) devServerController.restart(resolution.host)
+            if (resolution is PreviewHostResolution.Found) serverLauncher.restart(resolution.host)
         }
     }
 
