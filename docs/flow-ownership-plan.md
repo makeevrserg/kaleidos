@@ -99,4 +99,9 @@
 
 ## Журнал
 
-- 2026-09-06: аудит проведён, план записан. Пункт 1 в работе.
+- 2026-09-06: аудит проведён, план записан.
+- 2026-09-06: пункт 1 сделан. `GradleTaskRunner.run()` cold flow, `ExternalSystemGradleTaskRunner` на `callbackFlow`
+  с `try/finally` (подписка и `ProcessListener` освобождаются вместе, в том числе если `runTask` бросил),
+  `RunOutputForwarder.detach()` с защитой от гонки со стартом процесса, `AnnouncedBaseUrlParser` вместо
+  `DevServerRunListener`, удалены `DevServerProcessListener`, `SilentProcessListener`. Тесты server:api: 45, все зелёные.
+  Следующий: пункт 2.

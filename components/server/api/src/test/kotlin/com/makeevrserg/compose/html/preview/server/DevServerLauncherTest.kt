@@ -61,7 +61,7 @@ class DevServerLauncherTest {
 
     /** Simulates the dev server printing its origin and answering at it. */
     private fun StartedRun.serverComesUp(baseUrl: String) {
-        listener.onOutput("Loopback: $baseUrl/\n")
+        printOutput("Loopback: $baseUrl/\n")
         healthCheck.aliveUrls += baseUrl
     }
 
@@ -129,7 +129,7 @@ class DevServerLauncherTest {
         val collector = collectStates(webpackHost)
         runCurrent()
 
-        taskRunner.devServerRuns.single().listener.onExited(isSuccess = false)
+        taskRunner.devServerRuns.single().exit(isSuccess = false)
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 
@@ -164,7 +164,7 @@ class DevServerLauncherTest {
         val run = taskRunner.devServerRuns.single()
 
         run.serverComesUp("http://localhost:8086")
-        run.listener.onExited(isSuccess = true)
+        run.exit(isSuccess = true)
         runCurrent()
 
         assertEquals(DevServerState.Running(kobwebHost, "http://localhost:8086"), states.last())
@@ -179,7 +179,7 @@ class DevServerLauncherTest {
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 
-        run.listener.onExited(isSuccess = true)
+        run.exit(isSuccess = true)
         runCurrent()
 
         assertEquals(DevServerState.Running(kobwebHost, "http://localhost:8086"), states.last())
@@ -196,7 +196,7 @@ class DevServerLauncherTest {
         runCurrent()
         healthCheck.aliveUrls.clear()
 
-        run.listener.onExited(isSuccess = true)
+        run.exit(isSuccess = true)
         runCurrent()
 
         assertEquals(DevServerState.Stopped, states.last())

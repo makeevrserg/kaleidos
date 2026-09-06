@@ -68,7 +68,7 @@ class DefaultDevServerControllerTest {
 
     /** Simulates the dev server printing its origin and answering at it. */
     private fun StartedRun.serverComesUp(baseUrl: String) {
-        listener.onOutput("Loopback: $baseUrl/\n")
+        printOutput("Loopback: $baseUrl/\n")
         healthCheck.aliveUrls += baseUrl
     }
 
@@ -87,7 +87,7 @@ class DefaultDevServerControllerTest {
     }
 
     private suspend fun TestScope.failWebpackLaunch(controller: DevServerController) {
-        requestWebpackLaunch(controller).listener.onExited(isSuccess = false)
+        requestWebpackLaunch(controller).exit(isSuccess = false)
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
         assertIs<DevServerState.Failed>(controller.state.value)
@@ -252,7 +252,7 @@ class DefaultDevServerControllerTest {
 
         controller.restart(webpackHost)
         runCurrent()
-        firstRun.listener.onExited(isSuccess = false)
+        firstRun.exit(isSuccess = false)
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 

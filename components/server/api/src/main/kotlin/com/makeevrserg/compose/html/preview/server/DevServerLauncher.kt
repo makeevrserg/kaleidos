@@ -2,12 +2,16 @@ package com.makeevrserg.compose.html.preview.server
 
 import com.makeevrserg.compose.html.preview.host.PreviewHost
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
@@ -28,32 +32,37 @@ class DevServerLauncher(
     private val startupTimeout: Duration,
     private val pollInterval: Duration
 ) {
-    private suspend fun startRun(host: PreviewHost, config: DevServerLaunchConfig): DevServerRunSignals {
-        val signals = DevServerRunSignals(
-            announcedBaseUrl = CompletableDeferred(),
-            exit = CompletableDeferred()
-        )
-        gradleTaskRunner.start(
-            config = config,
-            executionName = DevServerRunNames.devServer(host),
-            listener = DevServerRunListener(
-                urlDetector = urlDetector,
-                onBaseUrlAnnounced = { baseUrl -> signals.announcedBaseUrl.complete(baseUrl) },
-                onExited = { isSuccess -> signals.exit.complete(isSuccess) }
-            )
-        )
-        return signals
+    /**
+     * Collecting the run is what hands the task to the platform, so the observer is launched as a
+     * child of the flow and dies with it. It turns the event stream into the two facts the launch
+     * waits for: the announced origin and the exit.
+     */
+    private fun CoroutineScope.observeRun(
+        host: PreviewHost,
+        config: DevServerLaunchConfig,
+        signals: DevServerRunSignals
+    ): Job = launch {
+        val parser = AnnouncedBaseUrlParser(urlDetector)
+        gradleTaskRunner.run(config, DevServerRunNames.devServer(host)).collect { event ->
+            when (event) {
+                GradleRunEvent.Started -> Unit
+                is GradleRunEvent.Output -> parser.feed(event.text)?.let { baseUrl ->
+                    signals.announcedBaseUrl.complete(baseUrl)
+                }
+                is GradleRunEvent.Exited -> signals.exit.complete(event.isSuccess)
+            }
+        }
     }
 
-    /** Terminates the run and, for servers that outlive it such as Kobweb's, runs the stop task. */
+    /**
+     * Terminates the run and, for servers that outlive it such as Kobweb's, runs the stop task. Nobody
+     * waits for the stop task to finish: the flow is dropped as soon as the task is handed to the platform.
+     */
     private suspend fun stopRun(host: PreviewHost) {
         gradleTaskRunner.stop(DevServerRunNames.devServer(host))
         val stopTask = host.kind.stopTask ?: return
-        gradleTaskRunner.start(
-            config = DevServerLaunchConfig.forHost(host, taskName = stopTask, arguments = ""),
-            executionName = DevServerRunNames.STOP_TASK,
-            listener = SilentProcessListener
-        )
+        val stopConfig = DevServerLaunchConfig.forHost(host, taskName = stopTask, arguments = "")
+        gradleTaskRunner.run(stopConfig, DevServerRunNames.STOP_TASK).firstOrNull()
     }
 
     /** The origin the run announced or, before the announcement, the one expected for the module. */
@@ -131,7 +140,11 @@ class DevServerLauncher(
             arguments = host.kind.arguments
         )
         val expectedBaseUrl = originResolver.expected(host)
-        val run = startRun(host, config)
+        val run = DevServerRunSignals(
+            announcedBaseUrl = CompletableDeferred(),
+            exit = CompletableDeferred()
+        )
+        observeRun(host, config, run)
         var isRunOwned = true
         try {
             serve(host, run, expectedBaseUrl, config)

@@ -3,13 +3,16 @@ package com.makeevrserg.compose.html.preview.server
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.util.Disposer
 import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import kotlin.coroutines.CoroutineContext
@@ -41,30 +44,19 @@ class ExternalSystemGradleTaskRunner(
         return settings
     }
 
-    private fun DevServerProcessListener.asTaskCallback(subscription: Disposable): TaskCallback {
+    /** The outcome ends the flow: nothing is reported after the task has finished. */
+    private fun ProducerScope<GradleRunEvent>.createTaskCallback(): TaskCallback {
         return object : TaskCallback {
             override fun onSuccess() {
-                Disposer.dispose(subscription)
-                onExited(isSuccess = true)
+                trySend(GradleRunEvent.Exited(isSuccess = true))
+                close()
             }
 
             override fun onFailure() {
-                Disposer.dispose(subscription)
-                onExited(isSuccess = false)
+                trySend(GradleRunEvent.Exited(isSuccess = false))
+                close()
             }
         }
-    }
-
-    /**
-     * The process handler of a run only exists once the platform has started it, so the output is
-     * captured through the execution topic. The subscription ends when the process is found or, for
-     * runs that never start, when the task reports its outcome.
-     */
-    private fun subscribeToOutput(executionName: String, listener: DevServerProcessListener): Disposable {
-        val subscription = Disposer.newDisposable("Compose HTML Preview run output")
-        val forwarder = RunOutputForwarder(executionName, listener) { Disposer.dispose(subscription) }
-        projectDependencies.messageBus.connect(subscription).subscribe(ExecutionManager.EXECUTION_TOPIC, forwarder)
-        return subscription
     }
 
     private fun findRunningHandlers(executionName: String): List<ProcessHandler> {
@@ -74,22 +66,32 @@ class ExternalSystemGradleTaskRunner(
             .filterNot { handler -> handler.isProcessTerminated }
     }
 
-    override suspend fun start(
-        config: DevServerLaunchConfig,
-        executionName: String,
-        listener: DevServerProcessListener
-    ) {
-        withContext(mainContext) {
-            val subscription = subscribeToOutput(executionName, listener)
-            ExternalSystemUtil.runTask(
-                createSettings(config, executionName),
-                DefaultRunExecutor.EXECUTOR_ID,
-                projectDependencies.project,
-                GradleConstants.SYSTEM_ID,
-                listener.asTaskCallback(subscription),
-                ProgressExecutionMode.IN_BACKGROUND_ASYNC,
-                false
-            )
+    /**
+     * The process handler of a run only exists once the platform has started it, so the output is
+     * captured through the execution topic. Subscription and listener are released together when the
+     * flow ends, whether the run finished, the collector left or `runTask` failed.
+     */
+    override fun run(config: DevServerLaunchConfig, executionName: String): Flow<GradleRunEvent> = callbackFlow {
+        val forwarder = RunOutputForwarder(executionName) { text -> trySend(GradleRunEvent.Output(text)) }
+        val subscription = Disposer.newDisposable("Compose HTML Preview run output")
+        try {
+            projectDependencies.messageBus.connect(subscription).subscribe(ExecutionManager.EXECUTION_TOPIC, forwarder)
+            withContext(mainContext) {
+                ExternalSystemUtil.runTask(
+                    createSettings(config, executionName),
+                    DefaultRunExecutor.EXECUTOR_ID,
+                    projectDependencies.project,
+                    GradleConstants.SYSTEM_ID,
+                    createTaskCallback(),
+                    ProgressExecutionMode.IN_BACKGROUND_ASYNC,
+                    false
+                )
+            }
+            trySend(GradleRunEvent.Started)
+            awaitClose()
+        } finally {
+            Disposer.dispose(subscription)
+            forwarder.detach()
         }
     }
 
