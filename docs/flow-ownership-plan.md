@@ -74,7 +74,7 @@
 `requests.filterNotNull().mapLatest { resolveHost(); requestRunning() }.launchIn(this)`. Тесты `PreviewFeatureTest`
 уже покрывают контракт; добавить тест «второй запрос отменяет первый resolve».
 
-### 4. `PreviewPanel`: загрузки страницы как flow — НЕ НАЧАТО (низкий приоритет)
+### 4. `PreviewPanel`: загрузки страницы как flow — СДЕЛАНО
 
 `PreviewBrowser.pageLoads(): Flow<String>` как `callbackFlow` с `awaitClose { removeLoadHandler }` вместо
 `addPageLoadListener`; панель делает `combine(contract.state, browser.pageLoads())` с одним `render`, уходит
@@ -120,3 +120,9 @@
   `IntellijPreviewModule.lifecycle` это один `CoroutineLifecycle` с `supervisorScope { launch × 3 }`.
   `IntellijCoreModule.listenerDisposable` и его `lifecycle` удалены, `RootModule` и `PreviewProjectService` без
   `parentDisposable`; `RootModule.lifecycle` = `intellijPreviewModule.lifecycle`. Следующий: пункт 4.
+- 2026-09-06: пункт 4 сделан. `PreviewBrowser.pageLoads(): Flow<String>` вместо `addPageLoadListener`;
+  `JcefPreviewBrowser` снимает `CefLoadHandler` в `awaitClose` (с проверкой `isDisposed`: tool window может
+  освободить браузер раньше отмены scope), `UnsupportedPreviewBrowser` отдаёт `MutableSharedFlow`. Панель собирает
+  загрузки в своём EDT-scope, `launch {}`-прыжок исчез. Мутабельные поля view-state (`loadedUrl`, `pageLoads`,
+  `isPageLoading`, `serverStatusText`) оставлены: свести их в `combine` + reducer это отдельная переделка UI, не
+  владение ресурсом. `PageLoadListener` удалён. Все пункты плана закрыты.

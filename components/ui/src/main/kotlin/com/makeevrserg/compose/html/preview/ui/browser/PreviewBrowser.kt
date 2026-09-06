@@ -1,6 +1,7 @@
 package com.makeevrserg.compose.html.preview.ui.browser
 
 import com.intellij.openapi.Disposable
+import kotlinx.coroutines.flow.Flow
 import javax.swing.JComponent
 
 /**
@@ -18,5 +19,9 @@ interface PreviewBrowser : Disposable {
 
     fun openDevTools()
 
-    fun addPageLoadListener(listener: PageLoadListener)
+    /**
+     * URLs of finished main-frame loads, live reloads included. Cold: the browser is observed only
+     * while collected. May emit off the event dispatch thread.
+     */
+    fun pageLoads(): Flow<String>
 }

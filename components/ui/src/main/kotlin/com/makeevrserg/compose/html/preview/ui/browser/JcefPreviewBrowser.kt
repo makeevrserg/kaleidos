@@ -2,6 +2,9 @@ package com.makeevrserg.compose.html.preview.ui.browser
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowser
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
@@ -20,13 +23,18 @@ class JcefPreviewBrowser(
 
     override fun openDevTools() = jbCefBrowser.openDevtools()
 
-    override fun addPageLoadListener(listener: PageLoadListener) {
+    /** The tool window may dispose the browser before the collector is cancelled; a disposed client has no handlers. */
+    override fun pageLoads(): Flow<String> = callbackFlow {
         val loadHandler = object : CefLoadHandlerAdapter() {
             override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-                if (frame.isMain) listener.onPageLoaded(browser.url.orEmpty())
+                if (frame.isMain) trySend(browser.url.orEmpty())
             }
         }
         jbCefBrowser.jbCefClient.addLoadHandler(loadHandler, jbCefBrowser.cefBrowser)
+        awaitClose {
+            if (jbCefBrowser.isDisposed) return@awaitClose
+            jbCefBrowser.jbCefClient.removeLoadHandler(loadHandler, jbCefBrowser.cefBrowser)
+        }
     }
 
     override fun dispose() = Disposer.dispose(jbCefBrowser)

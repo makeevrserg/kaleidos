@@ -11,9 +11,9 @@ import com.makeevrserg.compose.html.preview.feature.PreviewState
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
 import com.makeevrserg.compose.html.preview.feature.SourceState
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowser
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import java.awt.CardLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -24,7 +24,8 @@ import javax.swing.SwingConstants
  * preview module is looked up, its dev server starts or the page loads, the page once it answers, a
  * banner while sources are newer than the page, and the server status in a footer. Switching to a
  * file served by another module drops the old page at once instead of leaving it on screen until the
- * new server is up. Nothing is loaded while the tool window is hidden. Event dispatch thread only.
+ * new server is up. Nothing is loaded while the tool window is hidden. Event dispatch thread only:
+ * [coroutineFeature] runs on it, so both the store state and the page loads are rendered there.
  */
 class PreviewPanel(
     private val contract: PreviewStore,
@@ -79,9 +80,12 @@ class PreviewPanel(
         .addToBottom(statusLabel)
 
     init {
-        browser.addPageLoadListener(::onPageLoaded)
         contract.state
             .onEach(::render)
+            .launchIn(this)
+        browser.pageLoads()
+            .filter { url -> url.startsWith("http") }
+            .onEach { onPageLoaded() }
             .launchIn(this)
     }
 
@@ -90,15 +94,11 @@ class PreviewPanel(
         statusLabel.icon = if (isPageLoading) AnimatedIcon.Default.INSTANCE else null
     }
 
-    /** JCEF reports loads off the EDT; the counters and the footer are only touched on it. */
-    private fun onPageLoaded(url: String) {
-        if (!url.startsWith("http")) return
-        launch {
-            pageLoads++
-            isPageLoading = false
-            contract.onPageLoaded(isReload = pageLoads > 1)
-            renderStatus()
-        }
+    private fun onPageLoaded() {
+        pageLoads++
+        isPageLoading = false
+        contract.onPageLoaded(isReload = pageLoads > 1)
+        renderStatus()
     }
 
     private fun renderBanner(sourceState: SourceState) {
