@@ -82,8 +82,10 @@ class DevServerLauncher(
     }
 
     /**
-     * A successful exit does not mean the server is gone: Kobweb leaves its server running after
-     * `kobwebStart` returns. The port decides. Returns only once nothing of the run is left to stop.
+     * An exit of the run does not mean the server is gone: Kobweb's server is a separate process that
+     * stays up after `kobwebStart` returns, and also after the run is killed, by the user in the Run
+     * tool window or by the platform when the project closes. The port decides: a server that still
+     * answers stays owned until cancellation stops it. Returns only once nothing is left to stop.
      */
     private suspend fun ProducerScope<DevServerState>.serveAfterExit(
         host: PreviewHost,
@@ -92,18 +94,17 @@ class DevServerLauncher(
         qualifiedTaskName: String
     ) {
         val isSuccess = run.exit.await()
+        val survivingBaseUrl = candidateBaseUrl(run, expectedBaseUrl)
+            ?.takeIf { candidate -> healthCheck.isAlive(candidate) }
+        if (survivingBaseUrl != null) {
+            send(DevServerState.Running(host, survivingBaseUrl))
+            awaitCancellation()
+        }
         if (!isSuccess) {
             send(DevServerState.Failed("Gradle task '$qualifiedTaskName' failed. See the Run tool window for details."))
             return
         }
-        val survivingBaseUrl = candidateBaseUrl(run, expectedBaseUrl)
-            ?.takeIf { candidate -> healthCheck.isAlive(candidate) }
-        if (survivingBaseUrl == null) {
-            send(DevServerState.Stopped)
-            return
-        }
-        send(DevServerState.Running(host, survivingBaseUrl))
-        awaitCancellation()
+        send(DevServerState.Stopped)
     }
 
     /** Suspends while the run is alive; returns normally only when the run has exited on its own. */

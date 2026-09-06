@@ -89,7 +89,7 @@
 Не трогать: `GradleModuleCatalog`, `ModuleDependencyGraphReader`, `IntellijPreviewHostLocator`, `PreviewFileScanner`,
 `KobwebConfReader`, actions, line marker — stateless запросы, flow им не нужен.
 
-### 6. Закрытие проекта: остановка без Gradle и без диалога — В РАБОТЕ
+### 6. Закрытие проекта: остановка без Gradle и без диалога — СДЕЛАНО
 
 Найдено smoke-тестом в sandbox после пунктов 1–5: проект закрыт, а Kobweb-сервер на 8086 остался жить.
 Причины. (а) Платформа при закрытии проекта первой находит наш continuous-ран `kobwebStart -t` и показывает
@@ -105,8 +105,14 @@
 - `RunOutputForwarder.processStarted` ставит `ProcessHandler.SILENTLY_DESTROY_ON_CLOSE`: платформа убивает наш ран
   при закрытии молча, без диалога.
 - `ExternalSystemGradleTaskRunner.stop` выходит сразу, если `project.isDisposed`: ранов уже нет.
-- Тест `KobwebServerStopperTest` на реальном процессе (`sleep 60`) и `runBlocking`.
-- Проверка: smoke в sandbox — после `closeAndDispose` порт 8086 должен перестать отвечать, диалога в логе нет.
+- Лаунчер после выхода рана (любого, в том числе убитого платформой) сначала проверяет, отвечает ли сервер, и если да,
+  остаётся владельцем (`Running` + `awaitCancellation`), а не выходит из flow как «ничего не осталось». Без этого
+  Kobweb-сервер терялся: платформа убивает ран до отмены scope, лаунчер получал `Exited(false)` и завершался.
+- Тест `KobwebServerStopperTest` на реальном процессе (`sleep 60`) и `runBlocking`; тест лаунчера
+  «run killed but server answers → still owned → stopped on cancel».
+- `ExternalSystemGradleTaskRunner` пишет INFO в idea.log: исход рана, остановка, пропуск при disposed проекте.
+- Проверено smoke в sandbox: после `closeAndDispose` ран убит платформой молча (без диалога), сервер остаётся
+  `Running` под владением, при dispose stopper гасит его, порт 8086 перестаёт отвечать через 2 с.
 
 Ограничение: при выходе из IDE `finally` выполняется асинхронно после отмены scope; `destroy()` отправляется
 немедленно, но гарантии до завершения JVM нет.
@@ -150,4 +156,6 @@
   владение ресурсом. `PageLoadListener` удалён.
 - 2026-09-06: smoke в sandbox (Robot, копия EmpireSmp): открытие файла → скан → host → `kobwebStart` → `Running`
   без клика, переключение файла пересчитало target, SEVERE от плагина 0. Но после закрытия проекта сервер на 8086
-  остался: добавлен пункт 6, в работе.
+  остался: добавлен пункт 6.
+- 2026-09-06: пункт 6 сделан и подтверждён вторым и третьим smoke. Все пункты плана закрыты. Полный прогон:
+  `./gradlew detekt test :plugin:buildPlugin` зелёный.

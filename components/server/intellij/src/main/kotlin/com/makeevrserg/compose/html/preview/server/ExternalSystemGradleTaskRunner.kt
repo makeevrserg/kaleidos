@@ -3,6 +3,7 @@ package com.makeevrserg.compose.html.preview.server
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
@@ -45,14 +46,16 @@ class ExternalSystemGradleTaskRunner(
     }
 
     /** The outcome ends the flow: nothing is reported after the task has finished. */
-    private fun ProducerScope<GradleRunEvent>.createTaskCallback(): TaskCallback {
+    private fun ProducerScope<GradleRunEvent>.createTaskCallback(executionName: String): TaskCallback {
         return object : TaskCallback {
             override fun onSuccess() {
+                LOG.info("Run '$executionName' finished successfully")
                 trySend(GradleRunEvent.Exited(isSuccess = true))
                 close()
             }
 
             override fun onFailure() {
+                LOG.info("Run '$executionName' failed or was terminated")
                 trySend(GradleRunEvent.Exited(isSuccess = false))
                 close()
             }
@@ -82,7 +85,7 @@ class ExternalSystemGradleTaskRunner(
                     DefaultRunExecutor.EXECUTOR_ID,
                     projectDependencies.project,
                     GradleConstants.SYSTEM_ID,
-                    createTaskCallback(),
+                    createTaskCallback(executionName),
                     ProgressExecutionMode.IN_BACKGROUND_ASYNC,
                     false
                 )
@@ -97,10 +100,18 @@ class ExternalSystemGradleTaskRunner(
 
     /** A closing project has no runs left: the platform destroyed them before disposing the project. */
     override suspend fun stop(executionName: String) {
-        if (projectDependencies.project.isDisposed) return
+        if (projectDependencies.project.isDisposed) {
+            LOG.info("Not stopping '$executionName': the project is disposed and its runs are already gone")
+            return
+        }
         val handlers = withContext(mainContext) { findRunningHandlers(executionName) }
+        LOG.info("Stopping '$executionName': ${handlers.size} running process(es)")
         withContext(backgroundContext) {
             handlers.forEach { handler -> handler.destroyProcess() }
         }
+    }
+
+    private companion object {
+        val LOG = Logger.getInstance(ExternalSystemGradleTaskRunner::class.java)
     }
 }

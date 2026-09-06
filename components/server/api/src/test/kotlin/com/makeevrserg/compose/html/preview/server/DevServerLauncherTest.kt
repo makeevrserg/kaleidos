@@ -190,6 +190,25 @@ class DevServerLauncherTest {
     }
 
     @Test
+    fun GIVEN_kobweb_run_killed_but_server_answers_WHEN_collector_cancelled_THEN_server_still_stopped() = runTest {
+        val collector = collectStates(kobwebHost)
+        runCurrent()
+        val run = taskRunner.startedRuns.single()
+        run.serverComesUp("http://localhost:8086")
+        advanceTimeBy(POLL_INTERVAL)
+        runCurrent()
+
+        run.exit(isSuccess = false)
+        runCurrent()
+        val stateAfterKill = states.last()
+        collector.cancel()
+        runCurrent()
+
+        assertEquals(DevServerState.Running(kobwebHost, "http://localhost:8086"), stateAfterKill)
+        assertEquals(listOf(kobwebHost), detachedServerStopper.stoppedHosts)
+    }
+
+    @Test
     fun GIVEN_run_finishes_and_server_is_gone_WHEN_exit_reported_THEN_stopped_and_nothing_to_stop() = runTest {
         val collector = collectStates(webpackHost)
         runCurrent()
