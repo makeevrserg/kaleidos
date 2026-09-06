@@ -19,4 +19,5 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.tests.kotlin.test)
+    testImplementation(testFixtures(projects.components.core.api))
 }
