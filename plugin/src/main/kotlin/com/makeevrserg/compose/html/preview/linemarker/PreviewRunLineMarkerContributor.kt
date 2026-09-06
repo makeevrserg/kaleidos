@@ -22,7 +22,7 @@ class PreviewRunLineMarkerContributor : RunLineMarkerContributor() {
         if (element !is LeafPsiElement || element.elementType != KtTokens.IDENTIFIER) return null
         val function = element.parent as? KtNamedFunction ?: return null
         if (function.nameIdentifier != element) return null
-        val detector = element.project.service<PreviewProjectService>().previewFunctionDetector
+        val detector = element.project.service<PreviewProjectService>().rootModule.psiModule.previewFunctionDetector
         val previewFunction = detector.detect(function) ?: return null
         val actions = arrayOf<AnAction>(ShowPreviewAction(previewFunction))
         return Info(PreviewIcons.Gutter, actions) { "Show preview of ${previewFunction.name}" }

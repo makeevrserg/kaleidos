@@ -19,16 +19,12 @@ import kotlinx.coroutines.cancel
 class PreviewToolWindowFactory : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val service = project.service<PreviewProjectService>()
-        val contract = service.feature
-        val browser = service.previewBrowserFactory.create()
-        val panelScope = service.createMainCoroutineFeature()
-        val panel = PreviewPanel(
-            contract = contract,
-            browser = browser,
-            texts = service.previewStateTexts,
-            coroutineFeature = panelScope
-        )
+        val rootModule = project.service<PreviewProjectService>().rootModule
+        val contract = rootModule.previewStore
+        val uiModule = rootModule.uiModule
+        val browser = uiModule.previewBrowserFactory.create()
+        val panelScope = uiModule.createPanelCoroutineFeature()
+        val panel = uiModule.createPreviewPanel(browser, panelScope)
         // No display name: the tool window shows only its own title, not the file name
         val content = ContentFactory.getInstance().createContent(panel.component, "", false)
         Disposer.register(toolWindow.disposable, browser)
@@ -45,7 +41,7 @@ class PreviewToolWindowFactory : ToolWindowFactory, DumbAware {
             DefaultActionGroup(
                 RestartDevServerAction(contract),
                 StopDevServerAction(contract),
-                OpenDevToolsAction(panel, service.previewBrowserFactory.isJcefSupported)
+                OpenDevToolsAction(panel, uiModule.previewBrowserFactory.isJcefSupported)
             )
         )
     }

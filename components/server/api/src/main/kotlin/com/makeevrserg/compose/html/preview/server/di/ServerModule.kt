@@ -1,0 +1,40 @@
+package com.makeevrserg.compose.html.preview.server.di
+
+import com.makeevrserg.compose.html.preview.core.di.CoreModule
+import com.makeevrserg.compose.html.preview.server.DevServerController
+import com.makeevrserg.compose.html.preview.server.DevServerHealthCheck
+import com.makeevrserg.compose.html.preview.server.DevServerOriginResolver
+import com.makeevrserg.compose.html.preview.server.DevServerUrlDetector
+import com.makeevrserg.compose.html.preview.server.GradleTaskRunner
+import com.makeevrserg.compose.html.preview.server.KobwebConfReader
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+class ServerModule(
+    coreModule: CoreModule,
+    gradleTaskRunner: GradleTaskRunner
+) {
+    private val healthCheck = DevServerHealthCheck(
+        ioContext = coreModule.dispatchers.io,
+        connectTimeout = HEALTH_CHECK_TIMEOUT
+    )
+
+    val devServerController = DevServerController(
+        healthCheck = healthCheck,
+        gradleTaskRunner = gradleTaskRunner,
+        originResolver = DevServerOriginResolver(
+            kobwebConfReader = KobwebConfReader(ioContext = coreModule.dispatchers.io),
+            healthCheck = healthCheck
+        ),
+        urlDetector = DevServerUrlDetector(),
+        startupTimeout = DEV_SERVER_STARTUP_TIMEOUT,
+        pollInterval = DEV_SERVER_POLL_INTERVAL,
+        coroutineFeature = coreModule.backgroundCoroutineFeature
+    )
+
+    private companion object {
+        val HEALTH_CHECK_TIMEOUT = 2.seconds
+        val DEV_SERVER_STARTUP_TIMEOUT = 5.minutes
+        val DEV_SERVER_POLL_INTERVAL = 1.seconds
+    }
+}

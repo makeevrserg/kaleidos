@@ -17,6 +17,7 @@ dependencies {
         bundledPlugins("com.intellij.gradle")
     }
 
+    implementation(projects.components.core.api)
     implementation(projects.components.core.intellij)
     implementation(projects.components.server.api)
 }

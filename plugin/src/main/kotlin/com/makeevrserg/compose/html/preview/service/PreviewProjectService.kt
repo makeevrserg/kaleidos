@@ -3,121 +3,26 @@ package com.makeevrserg.compose.html.preview.service
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.makeevrserg.compose.html.preview.core.BackgroundCoroutineFeature
-import com.makeevrserg.compose.html.preview.core.CoroutineFeature
-import com.makeevrserg.compose.html.preview.core.IntellijDispatchers
-import com.makeevrserg.compose.html.preview.core.MainCoroutineFeature
-import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
-import com.makeevrserg.compose.html.preview.feature.PreviewFeature
-import com.makeevrserg.compose.html.preview.feature.PreviewStateReducer
-import com.makeevrserg.compose.html.preview.feature.PreviewStore
-import com.makeevrserg.compose.html.preview.host.GradleModuleCatalog
-import com.makeevrserg.compose.html.preview.host.IntellijPreviewHostLocator
-import com.makeevrserg.compose.html.preview.host.ModuleDependencyGraphReader
-import com.makeevrserg.compose.html.preview.host.PreviewHostSelector
-import com.makeevrserg.compose.html.preview.notification.IntellijPreviewNotifier
-import com.makeevrserg.compose.html.preview.psi.AnnotationFqnResolver
-import com.makeevrserg.compose.html.preview.psi.PreviewFileScanner
-import com.makeevrserg.compose.html.preview.psi.PreviewFunctionDetector
-import com.makeevrserg.compose.html.preview.server.DevServerController
-import com.makeevrserg.compose.html.preview.server.DevServerHealthCheck
-import com.makeevrserg.compose.html.preview.server.DevServerOriginResolver
-import com.makeevrserg.compose.html.preview.server.DevServerUrlDetector
-import com.makeevrserg.compose.html.preview.server.ExternalSystemGradleTaskRunner
-import com.makeevrserg.compose.html.preview.server.KobwebConfReader
-import com.makeevrserg.compose.html.preview.source.EditorTracker
-import com.makeevrserg.compose.html.preview.source.SourceChangeTracker
-import com.makeevrserg.compose.html.preview.source.ToolWindowVisibilityTracker
-import com.makeevrserg.compose.html.preview.toolwindow.IntellijPreviewToolWindowPresenter
-import com.makeevrserg.compose.html.preview.ui.PreviewStateTexts
-import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowserFactory
-import com.makeevrserg.compose.html.preview.url.PreviewUrlFactory
+import com.makeevrserg.compose.html.preview.di.RootModule
 import kotlinx.coroutines.CoroutineScope
-import java.time.Clock
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 /**
- * Composition root of the plugin for one project. IntelliJ instantiates it lazily and cancels
- * [coroutineScope] when the project closes; everything else is wired manually through constructors.
- * It is also the [Disposable] parent of listeners that must not outlive the project.
+ * Holds the object graph of the plugin for one project. IntelliJ instantiates it lazily and cancels
+ * [coroutineScope] when the project closes; the graph itself is wired in [RootModule]. Entry points
+ * created by the platform without constructors ([com.intellij.openapi.actionSystem.AnAction],
+ * tool window factories, line marker contributors) reach the graph through this service.
  */
 @Service(Service.Level.PROJECT)
-class PreviewProjectService(project: Project, private val coroutineScope: CoroutineScope) : Disposable {
-    private val projectDependencies = ProjectDependencies(project)
-
-    private val dispatchers = IntellijDispatchers()
-
-    val previewFunctionDetector = PreviewFunctionDetector(AnnotationFqnResolver())
-
-    val previewBrowserFactory = PreviewBrowserFactory()
-
-    val previewStateTexts = PreviewStateTexts()
-
-    private val healthCheck = DevServerHealthCheck(
-        ioContext = dispatchers.io,
-        connectTimeout = HEALTH_CHECK_TIMEOUT
+class PreviewProjectService(project: Project, coroutineScope: CoroutineScope) : Disposable {
+    val rootModule = RootModule(
+        project = project,
+        coroutineScope = coroutineScope,
+        parentDisposable = this
     )
-
-    private val devServerController = DevServerController(
-        healthCheck = healthCheck,
-        gradleTaskRunner = ExternalSystemGradleTaskRunner(
-            projectDependencies = projectDependencies,
-            mainContext = dispatchers.main,
-            backgroundContext = dispatchers.default
-        ),
-        originResolver = DevServerOriginResolver(
-            kobwebConfReader = KobwebConfReader(ioContext = dispatchers.io),
-            healthCheck = healthCheck
-        ),
-        urlDetector = DevServerUrlDetector(),
-        startupTimeout = DEV_SERVER_STARTUP_TIMEOUT,
-        pollInterval = DEV_SERVER_POLL_INTERVAL,
-        coroutineFeature = BackgroundCoroutineFeature(coroutineScope)
-    )
-
-    val feature: PreviewStore = PreviewFeature(
-        devServerController = devServerController,
-        hostLocator = IntellijPreviewHostLocator(
-            gradleModuleCatalog = GradleModuleCatalog(projectDependencies),
-            graphReader = ModuleDependencyGraphReader(projectDependencies),
-            selector = PreviewHostSelector(),
-            backgroundContext = dispatchers.default
-        ),
-        toolWindowPresenter = IntellijPreviewToolWindowPresenter(projectDependencies),
-        previewNotifier = IntellijPreviewNotifier(project),
-        reducer = PreviewStateReducer(
-            clock = Clock.systemDefaultZone(),
-            previewUrlFactory = PreviewUrlFactory()
-        ),
-        coroutineFeature = MainCoroutineFeature(coroutineScope, dispatchers.main)
-    )
-
-    private val editorTracker = EditorTracker(
-        projectDependencies = projectDependencies,
-        fileScanner = PreviewFileScanner(previewFunctionDetector),
-        contract = feature,
-        coroutineFeature = BackgroundCoroutineFeature(coroutineScope)
-    )
-
-    private val sourceChangeTracker = SourceChangeTracker(projectDependencies, feature)
-
-    private val toolWindowVisibilityTracker = ToolWindowVisibilityTracker(projectDependencies, feature)
 
     init {
-        editorTracker.start(parentDisposable = this)
-        sourceChangeTracker.start(parentDisposable = this)
-        toolWindowVisibilityTracker.start(parentDisposable = this)
+        rootModule.lifecycle.onEnable()
     }
 
-    /** Child scope for UI that lives shorter than the project, for example the tool window content. */
-    fun createMainCoroutineFeature(): CoroutineFeature = MainCoroutineFeature(coroutineScope, dispatchers.main)
-
-    override fun dispose() = Unit
-
-    private companion object {
-        val HEALTH_CHECK_TIMEOUT = 2.seconds
-        val DEV_SERVER_STARTUP_TIMEOUT = 5.minutes
-        val DEV_SERVER_POLL_INTERVAL = 1.seconds
-    }
+    override fun dispose() = rootModule.lifecycle.onDisable()
 }

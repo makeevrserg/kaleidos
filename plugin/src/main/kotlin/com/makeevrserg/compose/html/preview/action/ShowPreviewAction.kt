@@ -24,6 +24,6 @@ class ShowPreviewAction(
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        project.service<PreviewProjectService>().feature.onFocusPreview(previewFunction)
+        project.service<PreviewProjectService>().rootModule.previewStore.onFocusPreview(previewFunction)
     }
 }
