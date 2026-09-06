@@ -1,11 +1,9 @@
 package com.makeevrserg.compose.html.preview.di
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.makeevrserg.compose.html.preview.core.IntellijDispatchers
 import com.makeevrserg.compose.html.preview.core.di.CoreModule
 import com.makeevrserg.compose.html.preview.core.di.IntellijCoreModule
-import com.makeevrserg.compose.html.preview.core.lifecycle.CompositeLifecycle
 import com.makeevrserg.compose.html.preview.core.lifecycle.Lifecycle
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
 import com.makeevrserg.compose.html.preview.feature.di.IntellijPreviewModule
@@ -18,13 +16,12 @@ import kotlinx.coroutines.CoroutineScope
 import java.time.Clock
 
 /**
- * Composition root for one project. Modules are created in dependency order; [lifecycle] enables
- * them in that order and disables them in reverse.
+ * Composition root for one project. Modules are created in dependency order; [lifecycle] brings up
+ * the components with side effects and takes them down again.
  */
 class RootModule(
     project: Project,
-    coroutineScope: CoroutineScope,
-    parentDisposable: Disposable
+    coroutineScope: CoroutineScope
 ) {
     private val coreModule = CoreModule(
         coroutineScope = coroutineScope,
@@ -32,10 +29,7 @@ class RootModule(
         clock = Clock.systemDefaultZone()
     )
 
-    private val intellijCoreModule = IntellijCoreModule(
-        project = project,
-        parentDisposable = parentDisposable
-    )
+    private val intellijCoreModule = IntellijCoreModule(project = project)
 
     val psiModule = PsiModule()
 
@@ -69,10 +63,5 @@ class RootModule(
         previewStore = previewStore
     )
 
-    val lifecycle: Lifecycle = CompositeLifecycle(
-        listOf(
-            intellijCoreModule.lifecycle,
-            intellijPreviewModule.lifecycle
-        )
-    )
+    val lifecycle: Lifecycle = intellijPreviewModule.lifecycle
 }

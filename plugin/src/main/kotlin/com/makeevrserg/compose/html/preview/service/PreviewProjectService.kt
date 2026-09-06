@@ -16,8 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 class PreviewProjectService(project: Project, coroutineScope: CoroutineScope) : Disposable {
     val rootModule = RootModule(
         project = project,
-        coroutineScope = coroutineScope,
-        parentDisposable = this
+        coroutineScope = coroutineScope
     )
 
     init {

@@ -1,6 +1,7 @@
 package com.makeevrserg.compose.html.preview.server
 
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
 import kotlin.coroutines.CoroutineContext
@@ -22,13 +23,17 @@ class HttpDevServerHealthCheck(
 
     /**
      * Any HTTP answer counts as alive: webpack-dev-server serves the page for every route, and an
-     * error page still proves the process listens on the port.
+     * error page still proves the process listens on the port. Only I/O failures mean "not alive";
+     * cancellation and programming errors propagate.
      */
     override suspend fun isAlive(url: String): Boolean = withContext(ioContext) {
-        runCatching {
+        try {
             val connection = openConnection(url)
             connection.responseCode
             connection.disconnect()
-        }.isSuccess
+            true
+        } catch (_: IOException) {
+            false
+        }
     }
 }

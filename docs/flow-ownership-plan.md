@@ -80,7 +80,7 @@
 `addPageLoadListener`; панель делает `combine(contract.state, browser.pageLoads())` с одним `render`, уходит
 `launch {}` для прыжка на EDT и часть мутабельных полей. Утечки нет, JCEF умирает вместе с окном; это стиль.
 
-### 5. Мелочи — НЕ НАЧАТО
+### 5. Мелочи — СДЕЛАНО
 
 - `HttpDevServerHealthCheck.isAlive`: `runCatching` ловит `CancellationException`; заменить на `catch (IOException)`.
 - `ToolWindowVisibilityTracker`, `SourceChangeTracker`: перевести на `callbackFlow` только ради единообразия
@@ -115,3 +115,8 @@
   позволяет прервать lookup новым запросом; тест «stale lookup dropped» добавлен, PreviewFeatureTest: 18.
   `launch { toolWindowPresenter.show() }` в `onFocusPreview` оставлен: это прыжок на EDT, не ресурс.
   Следующий: пункт 5 (мелочи), затем 4 по желанию.
+- 2026-09-06: пункт 5 сделан. `HttpDevServerHealthCheck` ловит только `IOException`. `SourceChangeTracker` и
+  `ToolWindowVisibilityTracker` отдают `callbackFlow` и `suspend fun track()`, как `EditorTracker`.
+  `IntellijPreviewModule.lifecycle` это один `CoroutineLifecycle` с `supervisorScope { launch × 3 }`.
+  `IntellijCoreModule.listenerDisposable` и его `lifecycle` удалены, `RootModule` и `PreviewProjectService` без
+  `parentDisposable`; `RootModule.lifecycle` = `intellijPreviewModule.lifecycle`. Следующий: пункт 4.
