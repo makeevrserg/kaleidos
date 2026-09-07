@@ -44,6 +44,8 @@ class DefaultDevServerControllerTest {
 
     private val detachedServerStopper = FakeDetachedServerStopper(healthCheck)
 
+    private val portListenerLookup = FakePortListenerLookup()
+
     private val originResolver = DevServerOriginResolver(
         kobwebConfReader = KobwebConfReader(ioContext = EmptyCoroutineContext),
         kobwebServerStateReader = KobwebServerStateReader(ioContext = EmptyCoroutineContext),
@@ -57,6 +59,7 @@ class DefaultDevServerControllerTest {
                 detachedServerStopper = detachedServerStopper,
                 healthCheck = healthCheck,
                 originResolver = originResolver,
+                portListenerLookup = portListenerLookup,
                 urlDetector = DevServerUrlDetector(),
                 startupTimeout = STARTUP_TIMEOUT,
                 pollInterval = POLL_INTERVAL

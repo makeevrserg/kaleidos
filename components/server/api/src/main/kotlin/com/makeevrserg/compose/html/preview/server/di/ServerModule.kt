@@ -11,6 +11,9 @@ import com.makeevrserg.compose.html.preview.server.HttpDevServerHealthCheck
 import com.makeevrserg.compose.html.preview.server.KobwebConfReader
 import com.makeevrserg.compose.html.preview.server.KobwebServerStateReader
 import com.makeevrserg.compose.html.preview.server.KobwebServerStopper
+import com.makeevrserg.compose.html.preview.server.LsofPortListenerCommand
+import com.makeevrserg.compose.html.preview.server.NetstatPortListenerCommand
+import com.makeevrserg.compose.html.preview.server.OsPortListenerLookup
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -24,6 +27,14 @@ class ServerModule(
     )
 
     private val kobwebServerStateReader = KobwebServerStateReader(ioContext = coreModule.dispatchers.io)
+
+    private val isWindows = System.getProperty(OS_NAME_PROPERTY).orEmpty().startsWith(WINDOWS_OS_NAME)
+
+    private val portListenerLookup = OsPortListenerLookup(
+        command = if (isWindows) NetstatPortListenerCommand() else LsofPortListenerCommand(),
+        ioContext = coreModule.dispatchers.io,
+        timeout = PORT_LISTENER_TIMEOUT
+    )
 
     private val originResolver = DevServerOriginResolver(
         kobwebConfReader = KobwebConfReader(ioContext = coreModule.dispatchers.io),
@@ -41,6 +52,7 @@ class ServerModule(
             ),
             healthCheck = healthCheck,
             originResolver = originResolver,
+            portListenerLookup = portListenerLookup,
             urlDetector = DevServerUrlDetector(),
             startupTimeout = DEV_SERVER_STARTUP_TIMEOUT,
             pollInterval = DEV_SERVER_POLL_INTERVAL
@@ -51,7 +63,10 @@ class ServerModule(
     )
 
     private companion object {
+        const val OS_NAME_PROPERTY = "os.name"
+        const val WINDOWS_OS_NAME = "Windows"
         val HEALTH_CHECK_TIMEOUT = 2.seconds
+        val PORT_LISTENER_TIMEOUT = 3.seconds
         val DEV_SERVER_STARTUP_TIMEOUT = 5.minutes
         val DEV_SERVER_POLL_INTERVAL = 1.seconds
         val DETACHED_SERVER_STOP_TIMEOUT = 10.seconds

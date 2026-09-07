@@ -41,6 +41,8 @@ class DevServerLauncherTest {
 
     private val detachedServerStopper = FakeDetachedServerStopper(healthCheck)
 
+    private val portListenerLookup = FakePortListenerLookup()
+
     private val launcher = DevServerLauncher(
         gradleTaskRunner = taskRunner,
         detachedServerStopper = detachedServerStopper,
@@ -50,6 +52,7 @@ class DevServerLauncherTest {
             kobwebServerStateReader = KobwebServerStateReader(ioContext = EmptyCoroutineContext),
             healthCheck = healthCheck
         ),
+        portListenerLookup = portListenerLookup,
         urlDetector = DevServerUrlDetector(),
         startupTimeout = STARTUP_TIMEOUT,
         pollInterval = POLL_INTERVAL
@@ -131,6 +134,43 @@ class DevServerLauncherTest {
         assertTrue(state.reason.contains("http://localhost:8086"), state.reason)
         assertTrue(state.reason.contains(kobwebHost.displayName), state.reason)
         assertTrue(taskRunner.startedRuns.isEmpty())
+    }
+
+    /** Whose program it is decides whether the user stops it, so the message has to say. */
+    @Test
+    fun GIVEN_foreign_program_this_machine_names_WHEN_collected_THEN_failure_names_it_and_how_to_stop_it() =
+        runTest {
+            healthCheck.aliveUrls += "http://localhost:8086"
+            portListenerLookup.listenersByPort[8086] = PortListener(
+                pid = 4242,
+                commandLine = "java -jar /tmp/copy/instances/web-app/.kobweb/server/server.jar",
+                stopCommand = "kill 4242"
+            )
+
+            collectStates(kobwebHost)
+            runCurrent()
+
+            val state = assertIs<DevServerState.Failed>(states.last())
+            assertTrue(state.reason.contains("4242"), state.reason)
+            assertTrue(state.reason.contains(".kobweb/server/server.jar"), state.reason)
+            assertTrue(state.reason.contains("kill 4242"), state.reason)
+        }
+
+    @Test
+    fun GIVEN_foreign_program_without_a_command_line_WHEN_collected_THEN_failure_names_the_process_alone() = runTest {
+        healthCheck.aliveUrls += "http://localhost:8086"
+        portListenerLookup.listenersByPort[8086] = PortListener(
+            pid = 4242,
+            commandLine = null,
+            stopCommand = "kill 4242"
+        )
+
+        collectStates(kobwebHost)
+        runCurrent()
+
+        val state = assertIs<DevServerState.Failed>(states.last())
+        assertTrue(state.reason.contains("It is process 4242."), state.reason)
+        assertTrue(state.reason.contains("kill 4242"), state.reason)
     }
 
     @Test

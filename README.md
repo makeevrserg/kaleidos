@@ -114,7 +114,8 @@ Two things are worth knowing:
   Dev Server** to replace it with one the plugin builds and runs.
 - Only the server the module recorded for itself is adopted. Anything else answering on the same address — the
   Kobweb server of another module of the build, which declares the same default port, or one left over from another
-  project — is reported instead of used: its page knows nothing about the previews of this module.
+  project — is reported instead of used: its page knows nothing about the previews of this module. The tool window
+  names that program, with its process id and the command that ends it, and leaves the ending to you.
 
 ## ♻️ Stale previews
 

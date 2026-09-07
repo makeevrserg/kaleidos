@@ -30,6 +30,7 @@ class DevServerLauncher(
     private val detachedServerStopper: DetachedServerStopper,
     private val healthCheck: DevServerHealthCheck,
     private val originResolver: DevServerOriginResolver,
+    private val portListenerLookup: PortListenerLookup,
     private val urlDetector: DevServerUrlDetector,
     private val startupTimeout: Duration,
     private val pollInterval: Duration
@@ -65,9 +66,26 @@ class DevServerLauncher(
         gradleTaskRunner.stop(DevServerRunNames.devServer(host))
     }
 
-    private fun foreignOriginReason(host: PreviewHost, baseUrl: String): String {
-        return "Another program is already listening at $baseUrl, where the dev server of " +
-            "${host.displayName} would answer. Stop it, or give the module a port of its own."
+    private fun listenerDescription(listener: PortListener): String {
+        val commandLine = listener.commandLine ?: return "It is process ${listener.pid}."
+        return "It is process ${listener.pid}: $commandLine"
+    }
+
+    /**
+     * Names the program in the way of the operating system, so the user can tell their own server from
+     * something they forgot about without going looking for it. A machine that does not say who holds
+     * the port leaves the address to speak for itself.
+     */
+    private suspend fun foreignOriginReason(host: PreviewHost, baseUrl: String): String {
+        val address = "Another program is already listening at $baseUrl, where the dev server of " +
+            "${host.displayName} would answer."
+        val listener = LocalhostOrigin.portOf(baseUrl)?.let { port -> portListenerLookup.find(port) }
+            ?: return "$address Stop it, or give the module a port of its own."
+        return listOf(
+            address,
+            listenerDescription(listener),
+            "Stop it with ${listener.stopCommand}, or give the module a port of its own."
+        ).joinToString(separator = PARAGRAPH_SEPARATOR)
     }
 
     /**
@@ -198,5 +216,9 @@ class DevServerLauncher(
             awaitCancellation()
         }
         launchAndServe(host, options, isRestart)
+    }
+
+    private companion object {
+        const val PARAGRAPH_SEPARATOR = "\n\n"
     }
 }
