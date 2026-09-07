@@ -16,36 +16,67 @@ Found bug or need a new feature? Please submit a
    in the official Compose preview. Editing the file rescans it, so new previews appear without any click.
 2. Nothing is rendered and no dev server is started while the tool window is hidden. Opening it renders the
    current file right away.
-3. The plugin finds the module that serves the previews of the file from the Gradle structure of the project
-   (see below), the way the official Compose preview finds the Gradle module of a file. Nothing is configured.
-4. If the dev server of that module is not running, the plugin starts it in the Run tool window:
-   `kobwebStart -t` for a Kobweb application, `jsBrowserDevelopmentRun --continuous` for a plain Kotlin/JS module.
-   The port is taken from the output of the server (`Loopback: http://localhost:8085/`,
-   `A Kobweb server is now running at http://localhost:8086`), so it can be whatever the module configures.
-5. The page `http://localhost:{port}/?preview={fqn}` is loaded in JCEF, where `{fqn}` is the comma-separated list
-   of fully qualified names of the previews in the file.
-6. Every preview function also gets a gutter icon. Clicking it opens the tool window and appends `#<fqn>` to the
+3. The plugin picks the module that renders the previews from the Gradle structure of the project (see below),
+   the way the official Compose preview finds the Gradle module of a file. Nothing is configured.
+4. The plugin then **generates the preview application itself** into the `build` directories of the modules
+   involved and passes those generated sources to the run through a Gradle init script. No file of your project
+   is touched, and no other build of the project sees them (see below).
+5. If the dev server of the picked module is not running, the plugin starts it in the Run tool window:
+   `kobwebStart -t` for a Kobweb application, `jsBrowserDevelopmentRun --continuous` for a plain Kotlin/JS
+   module. The origin is read from the output of the server (`Loopback: http://localhost:8305/`,
+   `A Kobweb server is now running at http://localhost:8086`).
+6. The generated page is loaded in JCEF with the previews of the file in the query:
+   `http://localhost:{port}/compose-html-preview.html?preview={fqn,fqn}` for a plain Kotlin/JS module,
+   `http://localhost:{port}/compose-html-preview?preview={fqn,fqn}` for Kobweb. Without the parameter the same
+   page shows every preview it knows, so it doubles as a gallery.
+7. Every preview function also gets a gutter icon. Clicking it opens the tool window and appends `#<fqn>` to the
    URL so the page scrolls to that preview.
-7. Because the dev server runs in continuous mode, saving a file recompiles the bundle and the page live-reloads.
+8. Because the dev server runs in continuous mode, saving a file recompiles the bundle and the page live-reloads.
 
-### How the preview module is found
+### Which module renders the previews
 
-For the selected file the plugin takes the Gradle module the file belongs to and looks at every module of the
-build that has a dev server task: `kobwebStart` (Kobweb application) or `jsBrowserDevelopmentRun` (Kotlin/JS
-browser module). A module qualifies when it is the file's own module or depends on it, directly or transitively,
-according to the module dependencies imported by the last Gradle sync.
+For the selected file the plugin takes the Gradle module the file belongs to and decides from the tasks the last
+Gradle sync recorded:
 
-- One qualifying module: it serves the preview.
-- Several, for example the real sites of the project plus the preview application: the module whose Gradle path
-  contains `preview` wins, and among those the file's own module.
-- Still several, or none: the tool window explains what was found and what to change. A Gradle sync that has not
-  finished yet gives the same message; press **Refresh Preview** once it is done.
+- **A Kotlin/JS module with a browser target** (`js { browser() }`, `jsBrowserTest` in the sync) renders its own
+  files, library or application. For the preview run the module becomes an application: the plugin adds
+  `binaries.executable()`, leaves the `main` of the module out of that compilation, because the generated page
+  brings its own, and picks a free port between 8300 and 8399 so the preview never collides with the real
+  application of the project.
+- **A Kobweb library** cannot render its own components: the code that registers the styles of Silk components is
+  generated for Kobweb applications only. Any Kobweb application of the build that depends on the module can
+  serve it; a module whose Gradle path contains `preview` wins, otherwise the shortest path, so the same one is
+  picked every time. The generated page becomes a route of that site, which is why previews get the `@App` root
+  of the real site: theme and Silk exactly as in production. Its port comes from `.kobweb/conf.yaml`.
+- **A module without a Kotlin/JS target**, for example previews in a module shared with other platforms, is
+  rendered by a module that depends on it, by the same rules.
+- When nothing qualifies, the tool window says what was found and why it cannot render the file. A Gradle sync
+  that has not finished yet gives its own message; press **Refresh Preview** once it is done.
 
-A Kobweb server that is already running is reused: its port is read from `.kobweb/conf.yaml` of the module, so a
-server left from a terminal or an earlier IDE session is adopted instead of started again. Switching to a file of
-another module clears the page at once and shows a spinner until that module's server answers; the server the plugin
-started for the previous module is stopped, so the plugin owns at most one dev server per project. Closing the
-project stops that server as well: a run started by the plugin never outlives it.
+A dev server that already answers is reused instead of started again. Switching to a file of another module clears
+the page at once and shows a spinner until that module's server answers; the server the plugin started for the
+previous module is stopped, so the plugin owns at most one dev server per project. Closing the project stops that
+server as well: a run started by the plugin never outlives it.
+
+### What the plugin generates
+
+Everything generated lives under `build/compose-html-preview` of the module it belongs to, so it is ignored by
+version control, removed by `clean` and never mixed into your sources:
+
+- `kotlin/composehtmlpreview/generated/<module>/PreviewRegistry.kt` in **every module that owns previews** the
+  picked module can see. The registry is compiled into that module, so `internal` previews work: only the object
+  that dispatches them is public.
+- `kotlin/composehtmlpreview/generated/PreviewPage.kt` in the picked module, plus `PreviewMain.kt` and
+  `compose-html-preview.html` for a plain Kotlin/JS module or `ComposeHtmlPreviewRoute.kt` with
+  `@Page("/compose-html-preview")` for a Kobweb application.
+- `compose-html-preview.init.gradle`, the init script that adds those source directories to the build. It is
+  passed to the preview run as `--init-script`, so it affects nothing else: not your build files, not the Gradle
+  sync of the IDE, not a build you start yourself.
+
+Previews are collected from source sets that end up in the Kotlin/JS compilation — `commonMain`, `jsMain` and the
+`main` of the `kotlin("js")` plugin — and never from tests. The generated sources are rewritten before every
+launch and only when their content actually changed, so a preview you add is on the page after the next
+recompilation, while switching between two files recompiles nothing.
 
 ### Stale previews
 
@@ -56,61 +87,27 @@ stays yellow, check the Run tool window: the rebuild has probably failed with a 
 
 ### What your project has to provide
 
-The plugin does not compile anything itself. Your project needs a Kotlin/JS browser module that:
+Nothing beyond what a Compose HTML project has anyway: a module with a Kotlin/JS browser target that depends on
+Compose HTML (`org.jetbrains.compose.html:html-core`) and the Compose compiler plugin, which is what makes the
+`@Preview @Composable` functions compile in the first place. There is no preview module to write, no registry to
+maintain and no page to serve: the plugin generates all of it.
 
-- depends on the modules that contain the `@Preview` functions;
-- has `preview` in its Gradle path when other applications of the build depend on the same modules,
-  for example `:instances:web-preview`;
-- serves a page which reads the `preview` query parameter, a comma-separated list of fully qualified names, and
-  renders every matching composable through `renderComposable`, one section per preview with `id` equal to the
-  FQN so the URL fragment can scroll to it.
+Two things are worth knowing:
 
-Kotlin/JS has no annotation reflection, so the mapping from a function name to a composable has to be generated.
-A KSP processor over `@Preview` functions or a hand-written registry both work. A minimal registry looks like this:
-
-```kotlin
-data class PreviewEntry(val fqn: String, val content: @Composable () -> Unit)
-
-val previews = listOf(
-    PreviewEntry("com.example.ui.CardPreview") { CardPreview() },
-)
-
-fun main() {
-    val requested = URLSearchParams(window.location.search).get("preview").orEmpty().split(",")
-    renderComposable(rootElementId = "root") {
-        requested.forEach { fqn ->
-            Section(attrs = { id(fqn) }) {
-                previews.firstOrNull { entry -> entry.fqn == fqn }?.content?.invoke()
-                    ?: Text("Preview $fqn is not registered")
-            }
-        }
-    }
-}
-```
-
-The webpack dev server may use any port; the plugin reads it from the output of `jsBrowserDevelopmentRun`. Pick a
-fixed one only if the default `8080` collides with another server of the project:
-
-```kotlin
-kotlin {
-    js(IR) {
-        browser {
-            commonWebpackConfig {
-                devServer = devServer?.copy(port = 8085)
-            }
-        }
-    }
-}
-```
+- The `main` of the module that renders the previews is left out of the compilation of the preview run. If that
+  file also declares something else the module needs, the run fails with a compilation error in the Run tool
+  window; move the `main` into a file of its own.
+- A Kobweb server that was started outside the IDE, from a terminal for example, is adopted as it is. It was built
+  without the generated page, so its site has no `/compose-html-preview` route; press **Restart Dev Server** to
+  have the plugin run it.
 
 ### Kobweb projects
 
-Kobweb components depend on Silk, whose initialization is generated by the Kobweb Gradle plugin, so the preview page
-has to be a small Kobweb application: the same `@App` root as your site (theme, Silk) and one `@Page("/")` that
-reads the `preview` parameter. The Kobweb dev server then plays the role of the webpack dev server, including live
-reload. The plugin recognises such a module by its `kobwebStart` task and runs `kobwebStart -t`; the port comes
-from `server.port` in `.kobweb/conf.yaml` of the module. Give the module a distinct port so it does not collide
-with the real site.
+Kobweb components depend on Silk, whose styles are registered by the entry point the Kobweb Gradle plugin generates
+for an application, so previews of a Kobweb library are served by a Kobweb application of the build. The plugin adds
+its page to that application as a `@Page("/compose-html-preview")` route, which the Kobweb code generation picks up
+from the generated source directory like any page of the site, and runs `kobwebStart -t`; the port comes from
+`server.port` in `.kobweb/conf.yaml` of the module.
 
 The Kobweb server is a separate process that outlives the Gradle run, so stopping the run alone would leave the
 server on the port. The plugin does what `kobwebStop` does, without Gradle: it reads the process id from
@@ -149,10 +146,11 @@ holds the adapters that implement the ports of the `api` module with platform AP
 | Component | `api` | `intellij` |
 |---|---|---|
 | `core` | coroutine features, `Lifecycle`, `PreviewDispatchers` | `ProjectDependencies`, EDT dispatchers |
-| `host` | host models, `PreviewHostSelector`, `PreviewHostLocator` port | IDE module model readers |
+| `host` | host models, `PreviewHostSelector`, `PreviewProjectStructureReader` and `PreviewHostLocator` ports | IDE module model readers |
 | `server` | `DevServerLauncher` (one run as a cold flow), `DevServerController`, output parsing, `GradleTaskRunner` port | `ExternalSystemUtil` runner |
+| `harness` | generators of the registry, the page and the init script, the plan behind them, `ProjectPreviewSource` port | |
 | `preview` | `PreviewStore` contract, state, reducer, `PreviewFeature`, notifier and tool window ports | editor and tool window trackers, port implementations |
-| `psi` | | `@Preview` detection on Kotlin PSI |
+| `psi` | | `@Preview` detection on Kotlin PSI, project-wide preview scan |
 | `ui` | | tool window panel, JCEF browser, actions |
 
 Every component is merged into the plugin JAR through `pluginComposedModule` in `plugin/build.gradle.kts`.

@@ -42,7 +42,7 @@ class PreviewStateTexts {
             target == null -> "Open a Kotlin file with @Preview functions"
             target.previews.isEmpty() -> "No @Preview functions in ${target.fileName}"
             host is PreviewHostResolution.NotFound ->
-                "<html><center>Cannot find the preview module.<br>${host.reason}</center></html>"
+                "<html><center>Nothing in this project can render the preview.<br>${host.reason}</center></html>"
             serverState is DevServerState.Failed ->
                 "<html><center>Dev server failed.<br>${serverState.reason}<br><br>" +
                     "Press Refresh Preview to try again.</center></html>"
@@ -55,7 +55,7 @@ class PreviewStateTexts {
         val host = (state.target?.host as? PreviewHostResolution.Found)?.host
         val starting = state.serverState as? DevServerState.Starting
         return when {
-            host == null -> "Looking for the preview module…"
+            host == null -> "Looking for the module that can render the previews…"
             starting != null && starting.host == host -> "Starting ${host.kind.startTask} in ${host.displayName}…"
             else -> "Connecting to the dev server of ${host.displayName}…"
         }

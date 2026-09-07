@@ -13,6 +13,10 @@ import com.makeevrserg.compose.html.preview.host.DevServerKind
  * `configureEach` then reaches the source set whenever the module creates it. The host of a plain
  * Kotlin/JS preview additionally becomes an application: the module may well be a library, and a library
  * has no dev server to run.
+ *
+ * Its webpack configuration, on the other hand, is applied after the build script has run, because Kotlin
+ * applies those in order and the last one wins: a module that names its own bundle or fixes its own port
+ * would otherwise serve the preview page from somewhere the plugin does not look.
  */
 class PreviewInitScriptFactory(private val layout: HarnessLayout) {
 
@@ -103,27 +107,34 @@ class PreviewInitScriptFactory(private val layout: HarnessLayout) {
         const val MAP_ENTRY_SEPARATOR = ","
 
         val SCRIPT_BODY = listOf(
+            "def configurePreviewServer = { project, injection ->",
+            "    def kotlin = project.extensions.getByName('kotlin')",
+            "    kotlin.js { target ->",
+            "        target.browser { browser ->",
+            "            browser.commonWebpackConfig { config ->",
+            "                config.outputFileName = injection.outputFileName",
+            "                def devServer = config.devServer",
+            "                if (devServer == null) {",
+            "                    devServer = config.getClass().getClassLoader()",
+            "                        .loadClass('org.jetbrains.kotlin.gradle.targets.js.webpack." +
+                "KotlinWebpackConfig\$DevServer')",
+            "                        .getDeclaredConstructor().newInstance()",
+            "                    config.devServer = devServer",
+            "                }",
+            "                devServer.port = injection.devServerPort",
+            "                devServer.open = false",
+            "            }",
+            "        }",
+            "    }",
+            "}",
+            "",
             "def injectPreviewSources = { project, injection, sourceSetName ->",
             "    def kotlin = project.extensions.getByName('kotlin')",
             "    if (injection.devServerPort != null) {",
-            "        kotlin.js { target ->",
-            "            target.browser { browser ->",
-            "                browser.commonWebpackConfig { config ->",
-            "                    config.outputFileName = injection.outputFileName",
-            "                    def devServer = config.devServer",
-            "                    if (devServer == null) {",
-            "                        devServer = config.getClass().getClassLoader()",
-            "                            .loadClass('org.jetbrains.kotlin.gradle.targets.js.webpack." +
-                "KotlinWebpackConfig\$DevServer')",
-            "                            .getDeclaredConstructor().newInstance()",
-            "                        config.devServer = devServer",
-            "                    }",
-            "                    devServer.port = injection.devServerPort",
-            "                    devServer.open = false",
-            "                }",
-            "            }",
-            "            target.binaries.executable()",
-            "        }",
+            "        kotlin.js { target -> target.binaries.executable() }",
+            "        // Applied after the build script of the module: the last webpack configuration wins,",
+            "        // and the page has to be served under the name and on the port the plugin expects.",
+            "        project.afterEvaluate { evaluated -> configurePreviewServer(evaluated, injection) }",
             "    }",
             "    kotlin.sourceSets.configureEach { sourceSet ->",
             "        if (sourceSet.name != sourceSetName) return",
