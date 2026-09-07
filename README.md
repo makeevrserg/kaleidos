@@ -109,9 +109,12 @@ Two things are worth knowing:
 - The `main` of the module that renders the previews is left out of the compilation of the preview run. If that file
   also declares something else the module needs, the run fails with a compilation error in the Run tool window; move
   the `main` into a file of its own.
-- A dev server that was started outside the IDE, from a terminal for example, is adopted as it is. It was built
-  without the generated page, so the tool window says that the server does not serve it; press **Restart Dev
-  Server** to have the plugin run it.
+- A dev server of the module that was started outside the IDE, from a terminal for example, is adopted as it is. It
+  was built without the generated page, so the tool window says that the server does not serve it; press **Restart
+  Dev Server** to replace it with one the plugin builds and runs.
+- Only the server the module recorded for itself is adopted. Anything else answering on the same address — the
+  Kobweb server of another module of the build, which declares the same default port, or one left over from another
+  project — is reported instead of used: its page knows nothing about the previews of this module.
 
 ## ♻️ Stale previews
 

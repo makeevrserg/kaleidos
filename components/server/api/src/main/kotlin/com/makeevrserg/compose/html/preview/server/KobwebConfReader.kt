@@ -7,7 +7,8 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * The Kobweb server takes its port from `.kobweb/conf.yaml` and outlives the Gradle run, so the
- * origin is known before the task starts and a server left from a previous IDE session is adopted.
+ * origin is known before the task starts and a server left from a previous IDE session can be
+ * recognised there.
  */
 class KobwebConfReader(private val ioContext: CoroutineContext) {
 
@@ -17,7 +18,7 @@ class KobwebConfReader(private val ioContext: CoroutineContext) {
     suspend fun readBaseUrl(moduleDirectory: String): String = withContext(ioContext) {
         val conf = Path.of(moduleDirectory, KOBWEB_DIRECTORY, CONF_FILE_NAME)
         val port = runCatching { Files.readString(conf) }.map(::parsePort).getOrNull() ?: DEFAULT_PORT
-        "http://localhost:$port"
+        LocalhostOrigin.ofPort(port)
     }
 
     private companion object {

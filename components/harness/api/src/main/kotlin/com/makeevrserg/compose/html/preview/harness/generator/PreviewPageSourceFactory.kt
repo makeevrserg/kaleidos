@@ -75,7 +75,10 @@ class PreviewPageSourceFactory(private val naming: HarnessNaming) {
             add("@Composable")
             add("private fun RenderPreview(fqn: String) {")
             addAll(dispatch)
-            add("    Text(\"Preview \$fqn is not known to the plugin, reopen the file it is declared in\")")
+            add(
+                "    Text(\"Preview \$fqn is not in this build of the page: the dev server has not " +
+                    "compiled it yet. Press Restart Dev Server if it stays that way.\")"
+            )
             add("}")
         }
     }

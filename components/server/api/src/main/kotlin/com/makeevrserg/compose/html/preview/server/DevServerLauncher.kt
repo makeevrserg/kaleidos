@@ -16,12 +16,14 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
 
 /**
- * One dev server as a cold flow: collecting [launch] adopts a server that already answers or starts the
- * Gradle task of the module, and cancelling the collector stops what was started. The run belongs to the
- * collecting coroutine, so a closed project or a switch to another module can never leave it behind.
+ * One dev server as a cold flow: collecting [launch] adopts the server of the module when it already
+ * answers or starts the Gradle task of the module, and cancelling the collector stops what was started.
+ * The run belongs to the collecting coroutine, so a closed project or a switch to another module can
+ * never leave it behind.
  *
- * Only runs started here are stopped. An adopted server, from a terminal or an earlier IDE session, is
- * left untouched.
+ * Only runs started here are stopped. A server the plugin did not start, from a terminal or an earlier
+ * IDE session, is adopted as it is and left untouched, until the user asks for a restart: that is a
+ * request to replace exactly such a server, which is the way out of one built without the page.
  */
 class DevServerLauncher(
     private val gradleTaskRunner: GradleTaskRunner,
@@ -61,6 +63,30 @@ class DevServerLauncher(
     private suspend fun stopRun(host: PreviewHost) {
         if (host.kind.isServerDetached) detachedServerStopper.stop(host)
         gradleTaskRunner.stop(DevServerRunNames.devServer(host))
+    }
+
+    private fun foreignOriginReason(host: PreviewHost, baseUrl: String): String {
+        return "Another program is already listening at $baseUrl, where the dev server of " +
+            "${host.displayName} would answer. Stop it, or give the module a port of its own."
+    }
+
+    /**
+     * Clears the address of the module for the run about to bind it, and answers whether it is free.
+     *
+     * A restart is a request to replace whatever holds that address, so the detached server the module
+     * recorded for itself is stopped; nothing else is, which leaves a program of someone else there to
+     * be reported instead of killed. An automatic launch stops nothing at all: it follows editor
+     * events, and a server somebody may be using is not the plugin's to end without being asked.
+     */
+    private suspend fun ProducerScope<DevServerState>.freeOrigin(
+        host: PreviewHost,
+        options: DevServerLaunchOptions,
+        isRestart: Boolean
+    ): Boolean {
+        if (isRestart && host.kind.isServerDetached) detachedServerStopper.stop(host)
+        val foreignBaseUrl = originResolver.findForeign(host, options) ?: return true
+        send(DevServerState.Failed(foreignOriginReason(host, foreignBaseUrl)))
+        return false
     }
 
     /** The origin the run announced or, before the announcement, the one expected for the module. */
@@ -133,9 +159,11 @@ class DevServerLauncher(
      */
     private suspend fun ProducerScope<DevServerState>.launchAndServe(
         host: PreviewHost,
-        options: DevServerLaunchOptions
+        options: DevServerLaunchOptions,
+        isRestart: Boolean
     ) {
         send(DevServerState.Starting(host))
+        if (!freeOrigin(host, options, isRestart)) return
         val config = DevServerLaunchConfig.forHost(host, options)
         val expectedBaseUrl = originResolver.expected(host, options)
         val run = DevServerRunSignals(
@@ -155,13 +183,20 @@ class DevServerLauncher(
     /**
      * Completes on its own only when the run exits and leaves no server behind; otherwise it stays
      * active until cancelled, and cancellation stops the run.
+     *
+     * @param isRestart true when the user asked for the server of the module to be replaced: the one
+     * that answers now is what is being replaced, so it is stopped and launched again, never adopted
      */
-    fun launch(host: PreviewHost, options: DevServerLaunchOptions): Flow<DevServerState> = channelFlow {
-        val adoptedBaseUrl = originResolver.findAlive(host, options)
+    fun launch(
+        host: PreviewHost,
+        options: DevServerLaunchOptions,
+        isRestart: Boolean
+    ): Flow<DevServerState> = channelFlow {
+        val adoptedBaseUrl = if (isRestart) null else originResolver.findAlive(host, options)
         if (adoptedBaseUrl != null) {
             send(DevServerState.Running(host, adoptedBaseUrl))
             awaitCancellation()
         }
-        launchAndServe(host, options)
+        launchAndServe(host, options, isRestart)
     }
 }

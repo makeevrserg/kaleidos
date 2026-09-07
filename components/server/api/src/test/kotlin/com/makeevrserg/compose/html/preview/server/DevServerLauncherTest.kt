@@ -2,6 +2,8 @@ package com.makeevrserg.compose.html.preview.server
 
 import com.makeevrserg.compose.html.preview.host.DevServerKind
 import com.makeevrserg.compose.html.preview.host.PreviewHost
+import com.makeevrserg.compose.html.preview.server.KobwebServerFixtures.writeConf
+import com.makeevrserg.compose.html.preview.server.KobwebServerFixtures.writeServerState
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.options
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,8 +17,6 @@ import kotlinx.coroutines.test.runTest
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeText
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,10 +28,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DevServerLauncherTest {
-    private val kobwebDirectory: Path = Files.createTempDirectory("kobweb-module").also { directory ->
-        directory.resolve(".kobweb").createDirectories()
-        directory.resolve(".kobweb/conf.yaml").writeText("server:\n  port: 8086\n")
-    }
+    private val kobwebDirectory: Path = Files.createTempDirectory("kobweb-module")
+        .also { directory -> writeConf(directory, port = 8086) }
 
     private val kobwebHost = host(":instances:web-preview-kobweb", DevServerKind.KOBWEB, kobwebDirectory)
 
@@ -41,7 +39,7 @@ class DevServerLauncherTest {
 
     private val taskRunner = FakeGradleTaskRunner()
 
-    private val detachedServerStopper = FakeDetachedServerStopper()
+    private val detachedServerStopper = FakeDetachedServerStopper(healthCheck)
 
     private val launcher = DevServerLauncher(
         gradleTaskRunner = taskRunner,
@@ -49,6 +47,7 @@ class DevServerLauncherTest {
         healthCheck = healthCheck,
         originResolver = DevServerOriginResolver(
             kobwebConfReader = KobwebConfReader(ioContext = EmptyCoroutineContext),
+            kobwebServerStateReader = KobwebServerStateReader(ioContext = EmptyCoroutineContext),
             healthCheck = healthCheck
         ),
         urlDetector = DevServerUrlDetector(),
@@ -59,21 +58,29 @@ class DevServerLauncherTest {
     private val states = mutableListOf<DevServerState>()
 
     /** Collects into [states] in the background; `runCurrent` and `advanceTimeBy` drive the launch. */
-    private fun TestScope.collectStates(host: PreviewHost): Job {
-        return backgroundScope.launch { launcher.launch(host, options()).toList(states) }
+    private fun TestScope.collectStates(host: PreviewHost, isRestart: Boolean = false): Job {
+        return backgroundScope.launch { launcher.launch(host, options(), isRestart).toList(states) }
     }
 
     /** Simulates the dev server printing its origin and answering at it. */
-    private fun StartedRun.serverComesUp(baseUrl: String) {
+    private fun StartedRun.serverComesUp(host: PreviewHost, baseUrl: String) {
         printOutput("Loopback: $baseUrl/\n")
         healthCheck.aliveUrls += baseUrl
+        if (host.kind.isServerDetached) detachedServerStopper.runningServers[host] = baseUrl
+    }
+
+    /** The Kobweb server of the module, up and recorded the way Kobweb records it. */
+    private fun kobwebServerRuns() {
+        writeServerState(kobwebDirectory, port = 8086, pid = ProcessHandle.current().pid())
+        healthCheck.aliveUrls += "http://localhost:8086"
+        detachedServerStopper.runningServers[kobwebHost] = "http://localhost:8086"
     }
 
     /** Launches the webpack server and brings it up; returns the collector that owns the run. */
     private fun TestScope.launchWebpackServer(): Job {
         val collector = collectStates(webpackHost)
         runCurrent()
-        taskRunner.startedRuns.single().serverComesUp("http://localhost:8085")
+        taskRunner.startedRuns.single().serverComesUp(webpackHost, "http://localhost:8085")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
         return collector
@@ -85,8 +92,8 @@ class DevServerLauncherTest {
     }
 
     @Test
-    fun GIVEN_server_answers_at_conf_origin_WHEN_collected_THEN_adopted_without_gradle() = runTest {
-        healthCheck.aliveUrls += "http://localhost:8086"
+    fun GIVEN_own_server_answers_at_conf_origin_WHEN_collected_THEN_adopted_without_gradle() = runTest {
+        kobwebServerRuns()
 
         collectStates(kobwebHost)
         runCurrent()
@@ -97,7 +104,7 @@ class DevServerLauncherTest {
 
     @Test
     fun GIVEN_adopted_server_WHEN_collector_cancelled_THEN_nothing_is_stopped() = runTest {
-        healthCheck.aliveUrls += "http://localhost:8086"
+        kobwebServerRuns()
         val collector = collectStates(kobwebHost)
         runCurrent()
 
@@ -106,6 +113,37 @@ class DevServerLauncherTest {
 
         assertTrue(taskRunner.stoppedExecutionNames.isEmpty())
         assertTrue(taskRunner.startedRuns.isEmpty())
+        assertTrue(detachedServerStopper.stoppedHosts.isEmpty())
+    }
+
+    /**
+     * The server of another Kobweb module of the build, or of another project: every Kobweb module
+     * declares the same default port, and a page from that server knows nothing of these previews.
+     */
+    @Test
+    fun GIVEN_foreign_program_at_conf_origin_WHEN_collected_THEN_failed_and_nothing_launched() = runTest {
+        healthCheck.aliveUrls += "http://localhost:8086"
+
+        collectStates(kobwebHost)
+        runCurrent()
+
+        val state = assertIs<DevServerState.Failed>(states.last())
+        assertTrue(state.reason.contains("http://localhost:8086"), state.reason)
+        assertTrue(state.reason.contains(kobwebHost.displayName), state.reason)
+        assertTrue(taskRunner.startedRuns.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_own_server_answers_WHEN_restart_THEN_it_is_stopped_and_launched_again() = runTest {
+        kobwebServerRuns()
+
+        collectStates(kobwebHost, isRestart = true)
+        runCurrent()
+
+        assertEquals(listOf<DevServerState>(DevServerState.Starting(kobwebHost)), states)
+        assertEquals(listOf(kobwebHost), detachedServerStopper.stoppedHosts)
+        val run = taskRunner.startedRuns.single()
+        assertEquals(":instances:web-preview-kobweb:kobwebStart", run.config.qualifiedTaskName)
     }
 
     @Test
@@ -167,7 +205,7 @@ class DevServerLauncherTest {
         runCurrent()
         val run = taskRunner.startedRuns.single()
 
-        run.serverComesUp("http://localhost:8086")
+        run.serverComesUp(kobwebHost, "http://localhost:8086")
         run.exit(isSuccess = true)
         runCurrent()
 
@@ -179,7 +217,7 @@ class DevServerLauncherTest {
         val collector = collectStates(kobwebHost)
         runCurrent()
         val run = taskRunner.startedRuns.single()
-        run.serverComesUp("http://localhost:8086")
+        run.serverComesUp(kobwebHost, "http://localhost:8086")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 
@@ -195,7 +233,7 @@ class DevServerLauncherTest {
         val collector = collectStates(kobwebHost)
         runCurrent()
         val run = taskRunner.startedRuns.single()
-        run.serverComesUp("http://localhost:8086")
+        run.serverComesUp(kobwebHost, "http://localhost:8086")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 
@@ -214,7 +252,7 @@ class DevServerLauncherTest {
         val collector = collectStates(webpackHost)
         runCurrent()
         val run = taskRunner.startedRuns.single()
-        run.serverComesUp("http://localhost:8085")
+        run.serverComesUp(webpackHost, "http://localhost:8085")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
         healthCheck.aliveUrls.clear()
@@ -232,7 +270,7 @@ class DevServerLauncherTest {
     fun GIVEN_running_kobweb_server_WHEN_collector_cancelled_THEN_run_and_detached_server_stopped() = runTest {
         val collector = collectStates(kobwebHost)
         runCurrent()
-        taskRunner.startedRuns.single().serverComesUp("http://localhost:8086")
+        taskRunner.startedRuns.single().serverComesUp(kobwebHost, "http://localhost:8086")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 

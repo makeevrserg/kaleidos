@@ -11,7 +11,7 @@ class RestartDevServerAction(
     private val contract: PreviewStore
 ) : AnAction(
     "Restart Dev Server",
-    "Stop the dev server started by the plugin and start it again",
+    "Stop the dev server of this module, whoever started it, and start it again",
     AllIcons.Actions.Restart
 ) {
 

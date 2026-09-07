@@ -3,6 +3,8 @@ package com.makeevrserg.compose.html.preview.server
 import com.makeevrserg.compose.html.preview.core.TestCoroutineFeature
 import com.makeevrserg.compose.html.preview.host.DevServerKind
 import com.makeevrserg.compose.html.preview.host.PreviewHost
+import com.makeevrserg.compose.html.preview.server.KobwebServerFixtures.writeConf
+import com.makeevrserg.compose.html.preview.server.KobwebServerFixtures.writeServerState
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.options
 import kotlinx.coroutines.CoroutineScope
@@ -19,8 +21,6 @@ import kotlinx.coroutines.test.runTest
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeText
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,10 +31,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultDevServerControllerTest {
-    private val kobwebDirectory: Path = Files.createTempDirectory("kobweb-module").also { directory ->
-        directory.resolve(".kobweb").createDirectories()
-        directory.resolve(".kobweb/conf.yaml").writeText("server:\n  port: 8086\n")
-    }
+    private val kobwebDirectory: Path = Files.createTempDirectory("kobweb-module")
+        .also { directory -> writeConf(directory, port = 8086) }
 
     private val kobwebHost = host(":instances:web-preview-kobweb", DevServerKind.KOBWEB, kobwebDirectory)
 
@@ -44,10 +42,11 @@ class DefaultDevServerControllerTest {
 
     private val taskRunner = FakeGradleTaskRunner()
 
-    private val detachedServerStopper = FakeDetachedServerStopper()
+    private val detachedServerStopper = FakeDetachedServerStopper(healthCheck)
 
     private val originResolver = DevServerOriginResolver(
         kobwebConfReader = KobwebConfReader(ioContext = EmptyCoroutineContext),
+        kobwebServerStateReader = KobwebServerStateReader(ioContext = EmptyCoroutineContext),
         healthCheck = healthCheck
     )
 
@@ -71,9 +70,10 @@ class DefaultDevServerControllerTest {
     private fun TestScope.createController(): DefaultDevServerController = createController(backgroundScope)
 
     /** Simulates the dev server printing its origin and answering at it. */
-    private fun StartedRun.serverComesUp(baseUrl: String) {
+    private fun StartedRun.serverComesUp(host: PreviewHost, baseUrl: String) {
         printOutput("Loopback: $baseUrl/\n")
         healthCheck.aliveUrls += baseUrl
+        if (host.kind.isServerDetached) detachedServerStopper.runningServers[host] = baseUrl
     }
 
     private suspend fun TestScope.requestWebpackLaunch(controller: DevServerController): StartedRun {
@@ -84,7 +84,7 @@ class DefaultDevServerControllerTest {
 
     private suspend fun TestScope.startWebpackServer(controller: DevServerController): StartedRun {
         val run = requestWebpackLaunch(controller)
-        run.serverComesUp("http://localhost:8085")
+        run.serverComesUp(webpackHost, "http://localhost:8085")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
         return run
@@ -97,8 +97,15 @@ class DefaultDevServerControllerTest {
         assertIs<DevServerState.Failed>(controller.state.value)
     }
 
-    private suspend fun TestScope.adoptKobwebServer(controller: DevServerController) {
+    /** The Kobweb server of the module, up and recorded the way Kobweb records it. */
+    private fun kobwebServerRuns() {
+        writeServerState(kobwebDirectory, port = 8086, pid = ProcessHandle.current().pid())
         healthCheck.aliveUrls += "http://localhost:8086"
+        detachedServerStopper.runningServers[kobwebHost] = "http://localhost:8086"
+    }
+
+    private suspend fun TestScope.adoptKobwebServer(controller: DevServerController) {
+        kobwebServerRuns()
         controller.requestRunning(kobwebHost, options(), retryAfterFailure = false)
         runCurrent()
         assertRunning(controller, kobwebHost, "http://localhost:8086")
@@ -265,6 +272,24 @@ class DefaultDevServerControllerTest {
         assertEquals(listOf(DevServerRunNames.devServer(webpackHost)), taskRunner.stoppedExecutionNames)
     }
 
+    /**
+     * The way out of a server that answers but was built without the previews of the page: adopting it
+     * again is what the user is asking the plugin to stop doing.
+     */
+    @Test
+    fun GIVEN_adopted_server_WHEN_restart_THEN_it_is_stopped_and_the_run_launched() = runTest {
+        val controller = createController()
+        adoptKobwebServer(controller)
+
+        controller.restart(kobwebHost, options())
+        runCurrent()
+
+        assertEquals(DevServerState.Starting(kobwebHost), controller.state.value)
+        assertEquals(listOf(kobwebHost), detachedServerStopper.stoppedHosts)
+        val run = taskRunner.startedRuns.single()
+        assertEquals(":instances:web-preview-kobweb:kobwebStart", run.config.qualifiedTaskName)
+    }
+
     @Test
     fun GIVEN_launch_in_progress_WHEN_owning_scope_cancelled_THEN_run_stopped() = runTest {
         val scope = CoroutineScope(backgroundScope.coroutineContext + Job(backgroundScope.coroutineContext[Job]))
@@ -283,7 +308,7 @@ class DefaultDevServerControllerTest {
         val run = requestWebpackLaunch(controller)
         val awaitedRunning = async { controller.state.filterIsInstance<DevServerState.Running>().first() }
 
-        run.serverComesUp("http://localhost:8085")
+        run.serverComesUp(webpackHost, "http://localhost:8085")
         advanceTimeBy(POLL_INTERVAL)
         runCurrent()
 

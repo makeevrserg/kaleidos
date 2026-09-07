@@ -33,15 +33,20 @@ class DefaultDevServerController(
             if (launchRequest == null) {
                 flowOf(DevServerState.Stopped)
             } else {
-                launcher.launch(launchRequest.host, launchRequest.options)
+                launcher.launch(launchRequest.host, launchRequest.options, launchRequest.isRestart)
             }
         }
         .stateIn(coroutineFeature, SharingStarted.Eagerly, DevServerState.Stopped)
 
     /** Every request is distinct, so asking for a module again after its server stopped launches again. */
-    private fun requestLaunch(host: PreviewHost, options: DevServerLaunchOptions) {
+    private fun requestLaunch(host: PreviewHost, options: DevServerLaunchOptions, isRestart: Boolean) {
         request.update { previous ->
-            DevServerLaunchRequest(host = host, options = options, attempt = (previous?.attempt ?: 0) + 1)
+            DevServerLaunchRequest(
+                host = host,
+                options = options,
+                isRestart = isRestart,
+                attempt = (previous?.attempt ?: 0) + 1
+            )
         }
     }
 
@@ -76,12 +81,14 @@ class DefaultDevServerController(
         val current = state.value
         if (isAlreadyServing(current, host)) return
         if (isLaunchBlocked(current, host, options, retryAfterFailure)) return
-        requestLaunch(host, options)
+        requestLaunch(host, options, isRestart = false)
     }
 
     override fun stop() {
         request.value = null
     }
 
-    override fun restart(host: PreviewHost, options: DevServerLaunchOptions) = requestLaunch(host, options)
+    override fun restart(host: PreviewHost, options: DevServerLaunchOptions) {
+        requestLaunch(host, options, isRestart = true)
+    }
 }

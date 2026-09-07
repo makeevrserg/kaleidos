@@ -1,13 +1,12 @@
 package com.makeevrserg.compose.html.preview.server
 
 import com.makeevrserg.compose.html.preview.host.DevServerKind
+import com.makeevrserg.compose.html.preview.server.KobwebServerFixtures.writeServerState
 import com.makeevrserg.compose.html.preview.server.PreviewHostFixtures.host
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeText
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -20,7 +19,11 @@ class KobwebServerStopperTest {
 
     private val kobwebHost = host(":instances:web-preview-kobweb", DevServerKind.KOBWEB, moduleDirectory)
 
-    private val stopper = KobwebServerStopper(ioContext = EmptyCoroutineContext, stopTimeout = 5.seconds)
+    private val stopper = KobwebServerStopper(
+        stateReader = KobwebServerStateReader(ioContext = EmptyCoroutineContext),
+        ioContext = EmptyCoroutineContext,
+        stopTimeout = 5.seconds
+    )
 
     private var serverProcess: Process? = null
 
@@ -30,16 +33,7 @@ class KobwebServerStopperTest {
         return process
     }
 
-    private fun writeState(pid: Long) {
-        moduleDirectory.resolve(".kobweb/server").createDirectories()
-        moduleDirectory.resolve(".kobweb/server/state.yaml").writeText(
-            """
-            env: "DEV"
-            port: 8086
-            pid: $pid
-            """.trimIndent()
-        )
-    }
+    private fun writeState(pid: Long) = writeServerState(moduleDirectory, port = 8086, pid = pid)
 
     @AfterTest
     fun cleanUp() {
