@@ -23,8 +23,6 @@ subprojects {
     plugins.withId("org.jetbrains.kotlin.jvm") {
         apply(plugin = "ru.astrainteractive.gradleplugin.java.version")
         extensions.configure<KotlinJvmProjectExtension> {
-            // Compile and run tests on the JDK the target platform runs on, whatever JVM Gradle itself uses
-            jvmToolchain(providers.gradleProperty("klibs.java.ktarget").get().toInt())
             compilerOptions {
                 // Match the Kotlin runtime bundled with the target IntelliJ Platform
                 apiVersion.set(KotlinVersion.KOTLIN_2_1)
