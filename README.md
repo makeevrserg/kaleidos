@@ -53,10 +53,32 @@ Gradle sync recorded:
 - When nothing qualifies, the tool window says what was found and why it cannot render the file. A Gradle sync
   that has not finished yet gives its own message; press **Refresh Preview** once it is done.
 
-A dev server that already answers is reused instead of started again. Switching to a file of another module clears
-the page at once and shows a spinner until that module's server answers; the server the plugin started for the
-previous module is stopped, so the plugin owns at most one dev server per project. Closing the project stops that
-server as well: a run started by the plugin never outlives it.
+A dev server that already answers is reused instead of started again. The server the plugin started for the previous
+module is stopped, so the plugin owns at most one dev server per project. Closing the project stops that server as
+well: a run started by the plugin never outlives it.
+
+### What the tool window shows
+
+Switching editor tabs drops the page immediately: the preview of the file you left is gone before the new file has
+even been read, and a page is put on screen only once the browser reports that it loaded, never while it is still
+loading. The tool window is in exactly one of these states:
+
+| State | When |
+|---|---|
+| Spinner, *Looking for @Preview functions in …* | the selected file is being scanned |
+| Spinner, *Looking for the module that can render the previews…* | the Gradle structure is being read |
+| Spinner, *Starting …* / *Connecting to the dev server of …* | the dev server is starting or being polled |
+| Spinner, *Loading preview…* | the page is being loaded into the embedded browser |
+| The page | the browser reported the page of the current file |
+| *Open a Kotlin file with @Preview functions* | no editor file is selected |
+| *No @Preview functions in …* | the file has none |
+| *The @Preview functions of … are in `jvmMain`, which is not compiled to Kotlin/JS* | the previews exist but their source set never reaches the page |
+| Error, *Nothing in this project can render the preview* | no module of the build can serve the file (with the reason) |
+| Error, *Dev server failed* | the Gradle run failed; **Refresh Preview** tries again |
+| Error, *The preview page could not be rendered* | the browser could not load the page: the server refused the connection, answered an HTTP error, and so on |
+
+A page the browser could not render stays loaded behind the message, so a rebuild that fixes the problem brings it
+back on its own live reload; **Refresh Preview** retries at once.
 
 ### What the plugin generates
 
