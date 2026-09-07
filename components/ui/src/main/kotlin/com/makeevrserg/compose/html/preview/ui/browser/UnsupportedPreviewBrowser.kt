@@ -22,6 +22,8 @@ class UnsupportedPreviewBrowser : PreviewBrowser {
         pageLoads.tryEmit(PageLoad.Succeeded)
     }
 
+    override fun clear() = Unit
+
     override fun reload() = Unit
 
     override fun openDevTools() = Unit

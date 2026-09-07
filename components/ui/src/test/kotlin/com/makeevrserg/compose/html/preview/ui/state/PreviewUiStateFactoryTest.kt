@@ -106,14 +106,21 @@ class PreviewUiStateFactoryTest {
         assertTrue(uiState.content.message.description.contains("Restart Dev Server"))
     }
 
-    /** A live reload can still bring the page back, so the browser keeps the address it failed on. */
+    /** The browser covers whatever is drawn where it sits, so a failure takes the address away from it. */
     @Test
-    fun GIVEN_page_the_browser_could_not_load_WHEN_ui_state_is_created_THEN_the_url_is_still_loaded() {
+    fun GIVEN_page_the_browser_could_not_load_WHEN_ui_state_is_created_THEN_the_browser_gives_up_the_url() {
         val state = PreviewUiStateFixtures.pageState(PageState.Failed("ERR_CONNECTION_REFUSED"))
 
         val uiState = factory.create(state)
 
-        assertEquals(PreviewUiStateFixtures.PREVIEW_URL, uiState.pageUrl)
+        assertNull(uiState.pageUrl)
+    }
+
+    @Test
+    fun GIVEN_dev_server_that_answered_with_another_page_WHEN_ui_state_is_created_THEN_the_browser_gives_up_the_url() {
+        val uiState = factory.create(PreviewUiStateFixtures.pageState(PageState.Foreign))
+
+        assertNull(uiState.pageUrl)
     }
 
     @Test
@@ -143,11 +150,16 @@ class PreviewUiStateFactoryTest {
         assertTrue(uiState.statusText.contains(PreviewUiStateFixtures.host.displayName))
     }
 
+    /**
+     * The browser is given the address at once and the message stays in its place until the page is
+     * there: a browser that has room covers whatever is drawn where it sits.
+     */
     @Test
-    fun GIVEN_page_that_has_not_loaded_yet_WHEN_ui_state_is_created_THEN_it_is_loaded_but_not_shown() {
+    fun GIVEN_page_that_has_not_loaded_yet_WHEN_ui_state_is_created_THEN_it_is_loaded_behind_a_message() {
         val uiState = factory.create(PreviewUiStateFixtures.pageState(PageState.Loading))
 
         assertIs<PreviewContent.Loading>(uiState.content)
+        assertTrue(uiState.content.message.description.contains(PreviewUiStateFixtures.host.displayName))
         assertEquals(PreviewUiStateFixtures.PREVIEW_URL, uiState.pageUrl)
     }
 

@@ -35,6 +35,8 @@ class JcefPreviewBrowser(
         jbCefBrowser.loadURL(url)
     }
 
+    override fun clear() = load(BLANK_PAGE)
+
     override fun reload() = jbCefBrowser.cefBrowser.reload()
 
     override fun openDevTools() = jbCefBrowser.openDevtools()
@@ -109,6 +111,7 @@ class JcefPreviewBrowser(
     override fun dispose() = Disposer.dispose(jbCefBrowser)
 
     private companion object {
+        const val BLANK_PAGE = "about:blank"
         const val HTTP_SCHEME = "http"
         const val NO_STATUS = 0
         const val FIRST_ERROR_STATUS = 400

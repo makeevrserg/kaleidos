@@ -119,6 +119,7 @@ class PreviewFeature(
     }
 
     override fun onReconnect() {
+        mutableState.update { current -> reducer.retryPage(current) }
         connectIfNeeded(retryAfterFailure = true)
     }
 
@@ -137,12 +138,6 @@ class PreviewFeature(
     }
 
     override fun onPageLoaded(load: PageLoad) {
-        mutableState.update { current ->
-            when (load) {
-                PageLoad.Succeeded -> reducer.markPageShown(current)
-                PageLoad.Foreign -> reducer.markPageForeign(current)
-                is PageLoad.Failed -> reducer.markPageFailed(current, load.reason)
-            }
-        }
+        mutableState.update { current -> reducer.markPageLoad(current, load) }
     }
 }

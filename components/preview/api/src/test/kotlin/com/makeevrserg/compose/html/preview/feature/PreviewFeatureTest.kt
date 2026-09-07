@@ -339,6 +339,19 @@ class PreviewFeatureTest {
     }
 
     @Test
+    fun GIVEN_page_that_could_not_be_rendered_WHEN_reconnect_THEN_the_browser_is_given_the_page_again() = runTest {
+        val feature = createVisibleFeatureWithCardFile()
+        devServerController.mutableState.value = running
+        runCurrent()
+        feature.onPageLoaded(PageLoad.Foreign)
+
+        feature.onReconnect()
+        runCurrent()
+
+        assertEquals(PageState.Loading, feature.state.value.pageState)
+    }
+
+    @Test
     fun GIVEN_running_server_WHEN_the_address_answers_with_another_page_THEN_the_state_says_so() = runTest {
         val feature = createVisibleFeatureWithCardFile()
         devServerController.mutableState.value = running

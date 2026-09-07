@@ -3,7 +3,7 @@ package com.makeevrserg.compose.html.preview.ui.state
 /** What fills the centre of the tool window. */
 sealed interface PreviewContent {
 
-    /** The browser shows the page at [url]. */
+    /** The browser shows the page at [url] and takes the whole area of the tool window. */
     data class Page(
         val url: String
     ) : PreviewContent

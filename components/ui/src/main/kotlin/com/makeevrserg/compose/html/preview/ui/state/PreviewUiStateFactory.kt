@@ -53,7 +53,7 @@ class PreviewUiStateFactory(
         }
     }
 
-    /** What is being waited for while the previews of the file have no page on screen yet. */
+    /** What is being waited for while the previews of the file have no page yet. */
     private fun waitingMessage(state: PreviewState, host: PreviewHost?): PreviewMessage {
         val starting = state.serverState as? DevServerState.Starting
         return when {
@@ -64,18 +64,28 @@ class PreviewUiStateFactory(
         }
     }
 
-    private fun content(state: PreviewState): PreviewContent {
+    /**
+     * The address the browser should hold. A page that failed gives it up: the browser covers whatever
+     * is drawn where it sits, and a message nobody can see is no message at all. Refresh Preview puts
+     * it back.
+     */
+    private fun pageUrl(state: PreviewState): String? {
+        return when (state.pageState) {
+            PageState.Loading, PageState.Shown -> state.previewUrl
+            PageState.Foreign, is PageState.Failed -> null
+        }
+    }
+
+    private fun content(state: PreviewState, pageUrl: String?): PreviewContent {
         val target = state.target ?: return PreviewContent.Empty(messageTexts.noSelectedFile)
         val scanContent = scanContent(target)
         if (scanContent != null) return scanContent
         val failureContent = failureContent(state)
         if (failureContent != null) return failureContent
-        val previewUrl = state.previewUrl
-        val host = (target.host as? PreviewHostResolution.Found)?.host
-        if (previewUrl == null || state.pageState !is PageState.Shown) {
-            return PreviewContent.Loading(waitingMessage(state, host))
+        if (pageUrl == null || state.pageState !is PageState.Shown) {
+            return PreviewContent.Loading(waitingMessage(state, (target.host as? PreviewHostResolution.Found)?.host))
         }
-        return PreviewContent.Page(previewUrl)
+        return PreviewContent.Page(pageUrl)
     }
 
     /** The footer stays silent while the content already explains everything. */
@@ -89,11 +99,12 @@ class PreviewUiStateFactory(
     }
 
     fun create(state: PreviewState): PreviewUiState {
-        val content = content(state)
+        val pageUrl = pageUrl(state)
+        val content = content(state, pageUrl)
         return PreviewUiState(
             banner = banner(state.sourceState),
             content = content,
-            pageUrl = state.previewUrl,
+            pageUrl = pageUrl,
             statusText = statusText(state, content)
         )
     }

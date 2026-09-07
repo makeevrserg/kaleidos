@@ -32,7 +32,7 @@ class PreviewStateReducerTest {
         val selected = reducer.select(initialState(), target())
         val withHost = reducer.attachHost(selected, CARD_FILE, hostFound)
         val served = reducer.setServerState(withHost, running)
-        return reducer.markPageShown(served)
+        return reducer.markPageLoad(served, PageLoad.Succeeded)
     }
 
     @Test
@@ -217,7 +217,7 @@ class PreviewStateReducerTest {
         val withHost = reducer.attachHost(selected, CARD_FILE, hostFound)
         val served = reducer.setServerState(withHost, running)
 
-        val state = reducer.markPageShown(served)
+        val state = reducer.markPageLoad(served, PageLoad.Succeeded)
 
         assertEquals(SourceState.UpToDate, state.sourceState)
         assertEquals(PageState.Shown, state.pageState)
@@ -227,14 +227,14 @@ class PreviewStateReducerTest {
     fun GIVEN_changed_sources_WHEN_page_loads_THEN_reloaded() {
         val changed = reducer.markChanged(servedState(), "CardPreview.kt")
 
-        val state = reducer.markPageShown(changed)
+        val state = reducer.markPageLoad(changed, PageLoad.Succeeded)
 
         assertEquals(SourceState.Reloaded(now), state.sourceState)
     }
 
     @Test
     fun GIVEN_shown_page_WHEN_it_loads_again_THEN_reloaded() {
-        val state = reducer.markPageShown(servedState())
+        val state = reducer.markPageLoad(servedState(), PageLoad.Succeeded)
 
         assertEquals(SourceState.Reloaded(now), state.sourceState)
     }
@@ -243,28 +243,44 @@ class PreviewStateReducerTest {
     fun GIVEN_no_page_WHEN_a_load_is_reported_THEN_it_is_ignored() {
         val selected = reducer.select(initialState(), target())
 
-        val state = reducer.markPageShown(selected)
+        val state = reducer.markPageLoad(selected, PageLoad.Succeeded)
 
         assertEquals(selected, state)
     }
 
     @Test
     fun GIVEN_served_file_WHEN_the_browser_cannot_render_the_page_THEN_the_reason_is_kept() {
-        val state = reducer.markPageFailed(servedState(), "ERR_CONNECTION_REFUSED")
+        val state = reducer.markPageLoad(servedState(), PageLoad.Failed("ERR_CONNECTION_REFUSED"))
 
         assertEquals(PageState.Failed("ERR_CONNECTION_REFUSED"), state.pageState)
     }
 
     @Test
     fun GIVEN_served_file_WHEN_the_address_answers_with_another_page_THEN_the_page_is_foreign() {
-        val state = reducer.markPageForeign(servedState())
+        val state = reducer.markPageLoad(servedState(), PageLoad.Foreign)
 
         assertEquals(PageState.Foreign, state.pageState)
     }
 
     @Test
+    fun GIVEN_failed_page_WHEN_the_user_retries_THEN_the_page_starts_over() {
+        val failed = reducer.markPageLoad(servedState(), PageLoad.Failed("ERR_CONNECTION_REFUSED"))
+
+        val state = reducer.retryPage(failed)
+
+        assertEquals(PageState.Loading, state.pageState)
+    }
+
+    @Test
+    fun GIVEN_shown_page_WHEN_the_user_retries_THEN_it_keeps_being_shown() {
+        val state = reducer.retryPage(servedState())
+
+        assertEquals(PageState.Shown, state.pageState)
+    }
+
+    @Test
     fun GIVEN_foreign_page_WHEN_another_file_is_selected_THEN_the_page_state_starts_over() {
-        val foreign = reducer.markPageForeign(servedState())
+        val foreign = reducer.markPageLoad(servedState(), PageLoad.Foreign)
 
         val state = reducer.select(foreign, target(filePath = BUTTON_FILE, scan = PreviewScan.Pending))
 
@@ -273,9 +289,9 @@ class PreviewStateReducerTest {
 
     @Test
     fun GIVEN_failed_page_WHEN_a_later_load_succeeds_THEN_the_page_is_shown_again() {
-        val failed = reducer.markPageFailed(servedState(), "ERR_CONNECTION_REFUSED")
+        val failed = reducer.markPageLoad(servedState(), PageLoad.Failed("ERR_CONNECTION_REFUSED"))
 
-        val state = reducer.markPageShown(failed)
+        val state = reducer.markPageLoad(failed, PageLoad.Succeeded)
 
         assertEquals(PageState.Shown, state.pageState)
     }

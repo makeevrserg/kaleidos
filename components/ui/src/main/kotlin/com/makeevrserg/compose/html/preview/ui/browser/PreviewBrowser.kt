@@ -18,6 +18,9 @@ interface PreviewBrowser : Disposable {
 
     fun load(url: String)
 
+    /** Drops whatever is on screen, so the page of one file is never seen while another is selected. */
+    fun clear()
+
     fun reload()
 
     fun openDevTools()

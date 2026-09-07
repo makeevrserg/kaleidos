@@ -55,7 +55,8 @@ class PreviewMessageTexts {
     fun pageLoading(host: PreviewHost): PreviewMessage {
         return PreviewMessage(
             title = "Loading the preview",
-            description = "Rendering the page of ${host.displayName} in the embedded browser…"
+            description = "Waiting for the page of ${host.displayName}. A dev server that is rebuilding " +
+                "the bundle answers only once it is done."
         )
     }
 

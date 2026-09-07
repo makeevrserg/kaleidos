@@ -90,8 +90,7 @@ class PreviewStateReducer(
      * The first load of a page says nothing about freshness; a later one does, whether it follows an
      * edit in the IDE or a change made on disk that the IDE never reported.
      */
-    fun markPageShown(state: PreviewState): PreviewState {
-        if (state.previewUrl == null) return state
+    private fun markPageShown(state: PreviewState): PreviewState {
         val isReload = state.pageState is PageState.Shown
         val isFresh = state.sourceState is SourceState.UpToDate && !isReload
         return state.copy(
@@ -100,13 +99,19 @@ class PreviewStateReducer(
         )
     }
 
-    fun markPageFailed(state: PreviewState, reason: String): PreviewState {
+    /** A load of a page nobody asked for, from a browser that still held one, says nothing. */
+    fun markPageLoad(state: PreviewState, load: PageLoad): PreviewState {
         if (state.previewUrl == null) return state
-        return state.copy(pageState = PageState.Failed(reason))
+        return when (load) {
+            PageLoad.Succeeded -> markPageShown(state)
+            PageLoad.Foreign -> state.copy(pageState = PageState.Foreign)
+            is PageLoad.Failed -> state.copy(pageState = PageState.Failed(load.reason))
+        }
     }
 
-    fun markPageForeign(state: PreviewState): PreviewState {
-        if (state.previewUrl == null) return state
-        return state.copy(pageState = PageState.Foreign)
+    /** An explicit retry starts the page over, so a failure stops standing in for it. */
+    fun retryPage(state: PreviewState): PreviewState {
+        if (state.pageState is PageState.Shown) return state
+        return state.copy(pageState = PageState.Loading)
     }
 }
