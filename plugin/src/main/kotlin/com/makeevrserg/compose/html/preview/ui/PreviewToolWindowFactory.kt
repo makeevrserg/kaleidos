@@ -14,7 +14,6 @@ import com.makeevrserg.compose.html.preview.ui.action.OpenInBrowserAction
 import com.makeevrserg.compose.html.preview.ui.action.RefreshPreviewAction
 import com.makeevrserg.compose.html.preview.ui.action.RestartDevServerAction
 import com.makeevrserg.compose.html.preview.ui.action.StopDevServerAction
-import kotlinx.coroutines.cancel
 
 class PreviewToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -23,12 +22,10 @@ class PreviewToolWindowFactory : ToolWindowFactory, DumbAware {
         val contract = rootModule.previewStore
         val uiModule = rootModule.uiModule
         val browser = uiModule.previewBrowserFactory.create()
-        val panelScope = uiModule.createPanelCoroutineFeature()
-        val panel = uiModule.createPreviewPanel(browser, panelScope)
+        val panel = uiModule.createPreviewPanel(browser)
         // No display name: the tool window shows only its own title, not the file name
         val content = ContentFactory.getInstance().createContent(panel.component, "", false)
         Disposer.register(toolWindow.disposable, browser)
-        Disposer.register(toolWindow.disposable) { panelScope.cancel() }
         toolWindow.contentManager.addContent(content)
 
         toolWindow.setTitleActions(

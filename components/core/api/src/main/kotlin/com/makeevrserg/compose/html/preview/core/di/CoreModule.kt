@@ -20,7 +20,4 @@ class CoreModule(
     val mainCoroutineFeature: CoroutineFeature = MainCoroutineFeature(coroutineScope, dispatchers.main)
 
     val backgroundCoroutineFeature: CoroutineFeature = BackgroundCoroutineFeature(coroutineScope)
-
-    /** Child scope for UI that lives shorter than the project, for example the tool window content. */
-    fun createMainCoroutineFeature(): CoroutineFeature = MainCoroutineFeature(coroutineScope, dispatchers.main)
 }

@@ -35,6 +35,12 @@
     <!-- The embedded browser moved out of the platform core into the "Web Browser (JCEF)" plugin in 2026.2 -->
     <dependencies>
         <module name="intellij.platform.ui.jcef"/>
+        <!-- The tool window is a Compose panel themed by Jewel; both ship with the platform -->
+        <module name="intellij.libraries.compose.runtime.desktop"/>
+        <module name="intellij.libraries.compose.foundation.desktop"/>
+        <module name="intellij.platform.jewel.foundation"/>
+        <module name="intellij.platform.jewel.ui"/>
+        <module name="intellij.platform.jewel.ideLafBridge"/>
     </dependencies>
 
     <!-- Only PSI is used, no resolve, so both K1 and K2 modes of the Kotlin plugin are supported. -->

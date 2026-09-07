@@ -8,8 +8,15 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-/** Wording of the tool window for every state, kept apart from the Swing plumbing of [PreviewPanel]. */
+/** Wording of the tool window for every state, kept apart from the composables that render it. */
 class PreviewStateTexts {
+
+    /** Footer text while the browser is loading a page the dev server already serves. */
+    val pageLoading: String = "Loading preview…"
+
+    /** Takes the place of the page on IDE runtimes without the embedded browser. */
+    val unsupportedBrowser: String = "The embedded browser (JCEF) is not available in this IDE runtime.\n" +
+        "Use Open in Browser to view the preview."
 
     private fun Instant.toClockText(): String = TIME_FORMATTER.format(atZone(ZoneId.systemDefault()))
 
@@ -42,10 +49,13 @@ class PreviewStateTexts {
             target == null -> "Open a Kotlin file with @Preview functions"
             target.previews.isEmpty() -> "No @Preview functions in ${target.fileName}"
             host is PreviewHostResolution.NotFound ->
-                "<html><center>Nothing in this project can render the preview.<br>${host.reason}</center></html>"
-            serverState is DevServerState.Failed ->
-                "<html><center>Dev server failed.<br>${serverState.reason}<br><br>" +
-                    "Press Refresh Preview to try again.</center></html>"
+                "Nothing in this project can render the preview.\n${host.reason}"
+            serverState is DevServerState.Failed -> """
+                Dev server failed.
+                ${serverState.reason}
+
+                Press Refresh Preview to try again.
+            """.trimIndent()
             else -> null
         }
     }

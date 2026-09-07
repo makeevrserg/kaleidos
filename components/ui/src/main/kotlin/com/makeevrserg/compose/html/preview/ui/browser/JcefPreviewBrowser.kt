@@ -17,7 +17,11 @@ class JcefPreviewBrowser(
 
     override val isDevToolsSupported: Boolean = true
 
-    override fun load(url: String) = jbCefBrowser.loadURL(url)
+    /** The panel may ask for a blank page while the tool window is closing the browser down. */
+    override fun load(url: String) {
+        if (jbCefBrowser.isDisposed) return
+        jbCefBrowser.loadURL(url)
+    }
 
     override fun reload() = jbCefBrowser.cefBrowser.reload()
 

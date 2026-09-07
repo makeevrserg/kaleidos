@@ -9,7 +9,9 @@ import javax.swing.JComponent
  * mode, on IDE runtimes without the embedded browser.
  */
 interface PreviewBrowser : Disposable {
-    val component: JComponent
+
+    /** Native surface hosted by the panel; null when this runtime cannot render pages at all. */
+    val component: JComponent?
 
     val isDevToolsSupported: Boolean
 
