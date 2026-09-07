@@ -7,6 +7,7 @@ import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.hostFound
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.otherHost
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.previewFunction
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.previewHost
+import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.renderable
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.running
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.target
 import com.makeevrserg.compose.html.preview.host.PreviewHost
@@ -25,6 +26,7 @@ import java.time.ZoneOffset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -107,7 +109,7 @@ class PreviewFeatureTest {
         val feature = createFeature()
         feature.onToolWindowVisibilityChanged(isVisible = true)
 
-        feature.onFileSelected(target(previews = emptyList()))
+        feature.onFileSelected(target(scan = PreviewScan.NoPreviews))
         runCurrent()
 
         assertTrue(hostLocator.locatedFiles.isEmpty())
@@ -118,7 +120,7 @@ class PreviewFeatureTest {
     fun GIVEN_host_found_WHEN_same_file_rescanned_THEN_host_is_not_looked_up_again() = runTest {
         val feature = createVisibleFeatureWithCardFile()
 
-        feature.onFileSelected(target(previews = listOf(previewFunction("CardPreview"), previewFunction("Other"))))
+        feature.onFileSelected(target(scan = renderable("CardPreview", "Other")))
         runCurrent()
 
         assertEquals(1, hostLocator.locatedFiles.size)
@@ -295,14 +297,55 @@ class PreviewFeatureTest {
     @Test
     fun GIVEN_page_shown_WHEN_source_changes_and_page_reloads_THEN_freshness_follows() = runTest {
         val feature = createVisibleFeatureWithCardFile()
+        devServerController.mutableState.value = running
+        runCurrent()
+        feature.onPageLoaded(PageLoad.Succeeded)
 
         feature.onSourceChanged("CardPreview.kt")
         val changed = feature.state.value.sourceState
-        feature.onPageLoaded(isReload = true)
+        feature.onPageLoaded(PageLoad.Succeeded)
         val reloaded = feature.state.value.sourceState
 
         assertIs<SourceState.Changed>(changed)
         assertEquals("CardPreview.kt", changed.changedFileName)
         assertIs<SourceState.Reloaded>(reloaded)
+    }
+
+    @Test
+    fun GIVEN_selection_reported_before_the_scan_WHEN_state_observed_THEN_nothing_is_looked_up_yet() = runTest {
+        hostLocator.resolutions[CARD_FILE] = hostFound
+        val feature = createFeature()
+        feature.onToolWindowVisibilityChanged(isVisible = true)
+
+        feature.onFileSelected(target(scan = PreviewScan.Pending))
+        runCurrent()
+
+        assertTrue(hostLocator.locatedFiles.isEmpty())
+        assertTrue(devServerController.runningRequests.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_shown_page_WHEN_another_file_is_selected_THEN_the_page_is_dropped_before_its_scan() = runTest {
+        val feature = createVisibleFeatureWithCardFile()
+        devServerController.mutableState.value = running
+        runCurrent()
+        feature.onPageLoaded(PageLoad.Succeeded)
+
+        feature.onFileSelected(target(filePath = BUTTON_FILE, scan = PreviewScan.Pending))
+        runCurrent()
+
+        assertNull(feature.state.value.previewUrl)
+        assertEquals(PageState.Loading, feature.state.value.pageState)
+    }
+
+    @Test
+    fun GIVEN_shown_page_WHEN_the_browser_reports_a_failure_THEN_the_reason_reaches_the_state() = runTest {
+        val feature = createVisibleFeatureWithCardFile()
+        devServerController.mutableState.value = running
+        runCurrent()
+
+        feature.onPageLoaded(PageLoad.Failed("ERR_CONNECTION_REFUSED"))
+
+        assertEquals(PageState.Failed("ERR_CONNECTION_REFUSED"), feature.state.value.pageState)
     }
 }

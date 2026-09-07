@@ -9,7 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
 interface PreviewStore {
     val state: StateFlow<PreviewState>
 
-    /** The selected editor file changed or its previews were rescanned; null when no file is selected. */
+    /**
+     * The selected editor file changed or its previews were rescanned; null when no file is selected.
+     * A newly selected file is reported twice: once with [PreviewScan.Pending] the moment the editor
+     * switches, and again with the result of its scan.
+     */
     fun onFileSelected(target: PreviewTarget?)
 
     /** Gutter icon: show the tool window and scroll the page to this preview. */
@@ -27,10 +31,6 @@ interface PreviewStore {
     /** A Kotlin source of the project changed; the rendered page may be stale. */
     fun onSourceChanged(changedFileName: String)
 
-    /**
-     * The page finished loading.
-     *
-     * @param isReload false for the first load of a URL, true for every later load such as a live reload
-     */
-    fun onPageLoaded(isReload: Boolean)
+    /** The browser finished loading the current page, whether it can show it or not. */
+    fun onPageLoaded(load: PageLoad)
 }

@@ -8,15 +8,15 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.makeevrserg.compose.html.preview.dependencies.ProjectDependencies
-import com.makeevrserg.compose.html.preview.feature.PreviewFunction
+import com.makeevrserg.compose.html.preview.feature.PreviewScan
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
 import com.makeevrserg.compose.html.preview.feature.PreviewTarget
-import com.makeevrserg.compose.html.preview.psi.PreviewFileScanner
+import com.makeevrserg.compose.html.preview.psi.SelectedFileScanner
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
@@ -25,35 +25,37 @@ import kotlin.coroutines.CoroutineContext
  * every selection change and, debounced, on every edit of that file, so new previews appear without
  * any click.
  *
+ * A newly selected file is reported twice: [PreviewScan.Pending] before the scan, so the page of the
+ * previous file leaves the tool window the moment the editor switches, and the scan result after it.
+ * A rescan of the file that is already shown skips the first report and never blanks its page.
+ *
  * Editor events are cold flows: the IDE listeners exist only while [track] runs and are removed when
- * it is cancelled, so the listeners and their consumer cannot outlive each other. `mapLatest` cancels
- * a scan that a newer selection made obsolete, so results reach the store in request order.
+ * it is cancelled, so the listeners and their consumer cannot outlive each other. `transformLatest`
+ * cancels a scan that a newer selection made obsolete, so results reach the store in request order.
  *
  * @param mainContext [com.makeevrserg.compose.html.preview.core.PreviewDispatchers.main]
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditorTracker(
     private val projectDependencies: ProjectDependencies,
-    private val fileScanner: PreviewFileScanner,
+    private val fileScanner: SelectedFileScanner,
     private val scanScheduler: ScanScheduler,
     private val contract: PreviewStore,
     private val mainContext: CoroutineContext
 ) {
-    /** A file deleted between the editor event and the scan is invalid; PSI lookup would log an error for it. */
-    private fun previewsOf(file: VirtualFile): List<PreviewFunction> {
-        if (!file.isValid) return emptyList()
-        return projectDependencies.psiManager.findFile(file)?.let(fileScanner::scan).orEmpty()
-    }
 
-    private suspend fun scan(file: VirtualFile): PreviewTarget = readAction {
-        val previews = previewsOf(file)
-        PreviewTarget(
+    private fun targetOf(file: VirtualFile, scan: PreviewScan): PreviewTarget {
+        return PreviewTarget(
             filePath = file.path,
             fileName = file.name,
-            previews = previews,
+            scan = scan,
             focusedFqn = null,
             host = null
         )
+    }
+
+    private suspend fun scan(file: VirtualFile): PreviewTarget = readAction {
+        targetOf(file, fileScanner.scan(file))
     }
 
     /**
@@ -89,8 +91,16 @@ class EditorTracker(
 
     /** Follows the editor until cancelled. Must run off the event dispatch thread: scans take a read action. */
     suspend fun track() {
-        scanScheduler.filesToScan(selectedFiles(), editedFiles())
-            .mapLatest { file -> file?.let { selected -> scan(selected) } }
+        scanScheduler.scanRequests(selectedFiles(), editedFiles())
+            .transformLatest { request ->
+                val file = request.file
+                if (file == null) {
+                    emit(null)
+                    return@transformLatest
+                }
+                if (request.isNewSelection) emit(targetOf(file, PreviewScan.Pending))
+                emit(scan(file))
+            }
             .collect(contract::onFileSelected)
     }
 }

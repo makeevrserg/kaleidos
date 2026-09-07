@@ -33,17 +33,21 @@ object PreviewFixtures {
 
     fun target(
         filePath: String = CARD_FILE,
-        previews: List<PreviewFunction> = listOf(previewFunction("CardPreview", filePath)),
+        scan: PreviewScan = PreviewScan.Renderable(listOf(previewFunction("CardPreview", filePath))),
         focusedFqn: String? = null,
         host: PreviewHostResolution? = null
     ): PreviewTarget {
         return PreviewTarget(
             filePath = filePath,
             fileName = filePath.substringAfterLast('/'),
-            previews = previews,
+            scan = scan,
             focusedFqn = focusedFqn,
             host = host
         )
+    }
+
+    fun renderable(vararg names: String, filePath: String = CARD_FILE): PreviewScan.Renderable {
+        return PreviewScan.Renderable(names.map { name -> previewFunction(name, filePath) })
     }
 
     fun initialState(): PreviewState {
@@ -52,7 +56,8 @@ object PreviewFixtures {
             previewUrl = null,
             isToolWindowVisible = false,
             sourceState = SourceState.UpToDate,
-            serverState = DevServerState.Stopped
+            serverState = DevServerState.Stopped,
+            pageState = PageState.Loading
         )
     }
 }

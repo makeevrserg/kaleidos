@@ -6,6 +6,7 @@ import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.hostFound
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.initialState
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.otherHost
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.previewFunction
+import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.renderable
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.running
 import com.makeevrserg.compose.html.preview.feature.PreviewFixtures.target
 import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
@@ -30,7 +31,8 @@ class PreviewStateReducerTest {
     private fun servedState(): PreviewState {
         val selected = reducer.select(initialState(), target())
         val withHost = reducer.attachHost(selected, CARD_FILE, hostFound)
-        return reducer.setServerState(withHost, running)
+        val served = reducer.setServerState(withHost, running)
+        return reducer.markPageShown(served)
     }
 
     @Test
@@ -45,12 +47,11 @@ class PreviewStateReducerTest {
     @Test
     fun GIVEN_served_file_WHEN_same_file_is_rescanned_THEN_host_freshness_and_url_are_kept() {
         val served = reducer.markChanged(servedState(), "CardPreview.kt")
-        val rescanned = target(previews = listOf(previewFunction("CardPreview"), previewFunction("DarkCardPreview")))
+        val rescanned = target(scan = renderable("CardPreview", "DarkCardPreview"))
 
         val state = reducer.select(served, rescanned)
 
         assertEquals(hostFound, state.target?.host)
-        assertEquals(2, state.target?.previews?.size)
         assertEquals(SourceState.Changed("CardPreview.kt", now), state.sourceState)
         assertEquals(
             "http://localhost:8085/compose-html-preview.html?preview=app.CardPreview,app.DarkCardPreview",
@@ -67,6 +68,57 @@ class PreviewStateReducerTest {
         assertNull(state.target?.host)
         assertNull(state.previewUrl)
         assertEquals(SourceState.UpToDate, state.sourceState)
+    }
+
+    @Test
+    fun GIVEN_shown_page_WHEN_another_file_is_selected_THEN_the_page_is_no_longer_shown() {
+        val state = reducer.select(servedState(), target(filePath = BUTTON_FILE, scan = PreviewScan.Pending))
+
+        assertEquals(PageState.Loading, state.pageState)
+    }
+
+    @Test
+    fun GIVEN_shown_page_WHEN_the_same_file_is_rescanned_with_the_same_previews_THEN_the_page_stays_shown() {
+        val state = reducer.select(servedState(), target())
+
+        assertEquals(PageState.Shown, state.pageState)
+    }
+
+    @Test
+    fun GIVEN_shown_page_WHEN_a_rescan_finds_another_preview_THEN_the_new_page_is_not_shown_yet() {
+        val state = reducer.select(servedState(), target(scan = renderable("CardPreview", "DarkCardPreview")))
+
+        assertEquals(PageState.Loading, state.pageState)
+    }
+
+    @Test
+    fun GIVEN_file_that_has_not_been_scanned_yet_WHEN_served_THEN_no_url() {
+        val pending = reducer.select(initialState(), target(scan = PreviewScan.Pending))
+        val withHost = reducer.attachHost(pending, CARD_FILE, hostFound)
+
+        val state = reducer.setServerState(withHost, running)
+
+        assertNull(state.previewUrl)
+    }
+
+    @Test
+    fun GIVEN_file_without_previews_WHEN_served_THEN_no_url() {
+        val selected = reducer.select(initialState(), target(scan = PreviewScan.NoPreviews))
+        val withHost = reducer.attachHost(selected, CARD_FILE, hostFound)
+
+        val state = reducer.setServerState(withHost, running)
+
+        assertNull(state.previewUrl)
+    }
+
+    @Test
+    fun GIVEN_previews_of_another_platform_WHEN_served_THEN_no_url() {
+        val selected = reducer.select(initialState(), target(scan = PreviewScan.UnsupportedSourceSet("jvmMain")))
+        val withHost = reducer.attachHost(selected, CARD_FILE, hostFound)
+
+        val state = reducer.setServerState(withHost, running)
+
+        assertNull(state.previewUrl)
     }
 
     @Test
@@ -94,7 +146,14 @@ class PreviewStateReducerTest {
 
         val state = reducer.focus(servedState(), buttonPreview)
 
-        assertEquals(target(BUTTON_FILE, listOf(buttonPreview), focusedFqn = buttonPreview.fqn), state.target)
+        assertEquals(
+            target(
+                filePath = BUTTON_FILE,
+                scan = PreviewScan.Renderable(listOf(buttonPreview)),
+                focusedFqn = buttonPreview.fqn
+            ),
+            state.target
+        )
         assertNull(state.previewUrl)
     }
 
@@ -136,16 +195,6 @@ class PreviewStateReducerTest {
     }
 
     @Test
-    fun GIVEN_file_without_previews_WHEN_served_THEN_no_url() {
-        val selected = reducer.select(initialState(), target(previews = emptyList()))
-        val withHost = reducer.attachHost(selected, CARD_FILE, hostFound)
-
-        val state = reducer.setServerState(withHost, running)
-
-        assertNull(state.previewUrl)
-    }
-
-    @Test
     fun GIVEN_served_file_WHEN_server_stops_THEN_url_dropped() {
         val state = reducer.setServerState(servedState(), DevServerState.Stopped)
 
@@ -164,24 +213,54 @@ class PreviewStateReducerTest {
 
     @Test
     fun GIVEN_up_to_date_page_WHEN_first_load_finishes_THEN_still_up_to_date() {
-        val state = reducer.markLoaded(servedState(), isReload = false)
+        val selected = reducer.select(initialState(), target())
+        val withHost = reducer.attachHost(selected, CARD_FILE, hostFound)
+        val served = reducer.setServerState(withHost, running)
+
+        val state = reducer.markPageShown(served)
 
         assertEquals(SourceState.UpToDate, state.sourceState)
+        assertEquals(PageState.Shown, state.pageState)
     }
 
     @Test
     fun GIVEN_changed_sources_WHEN_page_loads_THEN_reloaded() {
         val changed = reducer.markChanged(servedState(), "CardPreview.kt")
 
-        val state = reducer.markLoaded(changed, isReload = false)
+        val state = reducer.markPageShown(changed)
 
         assertEquals(SourceState.Reloaded(now), state.sourceState)
     }
 
     @Test
-    fun GIVEN_up_to_date_page_WHEN_live_reload_happens_THEN_reloaded() {
-        val state = reducer.markLoaded(servedState(), isReload = true)
+    fun GIVEN_shown_page_WHEN_it_loads_again_THEN_reloaded() {
+        val state = reducer.markPageShown(servedState())
 
         assertEquals(SourceState.Reloaded(now), state.sourceState)
+    }
+
+    @Test
+    fun GIVEN_no_page_WHEN_a_load_is_reported_THEN_it_is_ignored() {
+        val selected = reducer.select(initialState(), target())
+
+        val state = reducer.markPageShown(selected)
+
+        assertEquals(selected, state)
+    }
+
+    @Test
+    fun GIVEN_served_file_WHEN_the_browser_cannot_render_the_page_THEN_the_reason_is_kept() {
+        val state = reducer.markPageFailed(servedState(), "ERR_CONNECTION_REFUSED")
+
+        assertEquals(PageState.Failed("ERR_CONNECTION_REFUSED"), state.pageState)
+    }
+
+    @Test
+    fun GIVEN_failed_page_WHEN_a_later_load_succeeds_THEN_the_page_is_shown_again() {
+        val failed = reducer.markPageFailed(servedState(), "ERR_CONNECTION_REFUSED")
+
+        val state = reducer.markPageShown(failed)
+
+        assertEquals(PageState.Shown, state.pageState)
     }
 }

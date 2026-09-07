@@ -39,7 +39,8 @@ class PreviewFeature(
             previewUrl = null,
             isToolWindowVisible = false,
             sourceState = SourceState.UpToDate,
-            serverState = DevServerState.Stopped
+            serverState = DevServerState.Stopped,
+            pageState = PageState.Loading
         )
     )
 
@@ -90,7 +91,7 @@ class PreviewFeature(
     private fun connectIfNeeded(retryAfterFailure: Boolean) {
         val current = mutableState.value
         val target = current.target ?: return
-        if (target.previews.isEmpty() || !current.isToolWindowVisible) return
+        if (target.renderablePreviews.isEmpty() || !current.isToolWindowVisible) return
         connectRequests.update { previous ->
             PreviewConnectRequest(target, retryAfterFailure, attempt = (previous?.attempt ?: 0) + 1)
         }
@@ -135,7 +136,12 @@ class PreviewFeature(
         mutableState.update { current -> reducer.markChanged(current, changedFileName) }
     }
 
-    override fun onPageLoaded(isReload: Boolean) {
-        mutableState.update { current -> reducer.markLoaded(current, isReload) }
+    override fun onPageLoaded(load: PageLoad) {
+        mutableState.update { current ->
+            when (load) {
+                PageLoad.Succeeded -> reducer.markPageShown(current)
+                is PageLoad.Failed -> reducer.markPageFailed(current, load.reason)
+            }
+        }
     }
 }

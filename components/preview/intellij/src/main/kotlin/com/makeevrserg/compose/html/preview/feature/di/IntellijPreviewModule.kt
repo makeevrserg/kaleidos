@@ -43,7 +43,7 @@ class IntellijPreviewModule(
 
     private val editorTracker = EditorTracker(
         projectDependencies = intellijCoreModule.projectDependencies,
-        fileScanner = psiModule.previewFileScanner,
+        fileScanner = psiModule.selectedFileScanner,
         scanScheduler = ScanScheduler(rescanDebounce = RESCAN_DEBOUNCE),
         contract = previewModule.previewStore,
         mainContext = coreModule.dispatchers.main

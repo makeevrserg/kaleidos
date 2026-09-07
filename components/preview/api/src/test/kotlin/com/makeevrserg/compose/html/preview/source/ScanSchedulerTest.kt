@@ -3,6 +3,8 @@ package com.makeevrserg.compose.html.preview.source
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -21,10 +23,14 @@ class ScanSchedulerTest {
 
     private val editedFiles = MutableSharedFlow<String>()
 
-    private val scanned = mutableListOf<String?>()
+    private val requests = mutableListOf<ScanRequest<String>>()
+
+    private fun selection(file: String?): ScanRequest<String> = ScanRequest(file, isNewSelection = true)
+
+    private fun rescan(file: String): ScanRequest<String> = ScanRequest(file, isNewSelection = false)
 
     private fun TestScope.startCollecting() {
-        backgroundScope.launch { scheduler.filesToScan(selectedFiles, editedFiles).toList(scanned) }
+        backgroundScope.launch { scheduler.scanRequests(selectedFiles, editedFiles).toList(requests) }
         runCurrent()
     }
 
@@ -34,32 +40,32 @@ class ScanSchedulerTest {
     }
 
     @Test
-    fun GIVEN_file_selected_WHEN_collected_THEN_scanned_at_once() = runTest {
+    fun GIVEN_file_selected_WHEN_collected_THEN_scanned_at_once_as_a_new_selection() = runTest {
         selectedFiles.value = "A.kt"
 
         startCollecting()
 
-        assertEquals(listOf<String?>("A.kt"), scanned)
+        assertEquals(listOf(selection("A.kt")), requests)
     }
 
     @Test
     fun GIVEN_no_editor_WHEN_collected_THEN_null_is_reported_so_the_consumer_clears() = runTest {
         startCollecting()
 
-        assertEquals(listOf<String?>(null), scanned)
+        assertEquals(listOf(selection(null)), requests)
     }
 
     @Test
-    fun GIVEN_selected_file_edited_WHEN_debounce_passes_THEN_scanned_again() = runTest {
+    fun GIVEN_selected_file_edited_WHEN_debounce_passes_THEN_rescanned_without_clearing_the_page() = runTest {
         selectedFiles.value = "A.kt"
         startCollecting()
 
         edit("A.kt")
-        assertEquals(listOf<String?>("A.kt"), scanned)
+        assertEquals(listOf(selection("A.kt")), requests)
         advanceTimeBy(DEBOUNCE + 1.milliseconds)
         runCurrent()
 
-        assertEquals(listOf<String?>("A.kt", "A.kt"), scanned)
+        assertEquals(listOf(selection("A.kt"), rescan("A.kt")), requests)
     }
 
     @Test
@@ -75,7 +81,7 @@ class ScanSchedulerTest {
         advanceTimeBy(DEBOUNCE + 1.milliseconds)
         runCurrent()
 
-        assertEquals(listOf<String?>("A.kt", "A.kt"), scanned)
+        assertEquals(listOf(selection("A.kt"), rescan("A.kt")), requests)
     }
 
     @Test
@@ -87,7 +93,7 @@ class ScanSchedulerTest {
         advanceTimeBy(DEBOUNCE + 1.milliseconds)
         runCurrent()
 
-        assertEquals(listOf<String?>("A.kt"), scanned)
+        assertEquals(listOf(selection("A.kt")), requests)
     }
 
     @Test
@@ -101,7 +107,17 @@ class ScanSchedulerTest {
         advanceTimeBy(DEBOUNCE + 1.milliseconds)
         runCurrent()
 
-        assertEquals(listOf<String?>("A.kt", "B.kt"), scanned)
+        assertEquals(listOf(selection("A.kt"), selection("B.kt")), requests)
+    }
+
+    /** Split editors of one file report a selection change without changing the selected file. */
+    @Test
+    fun GIVEN_the_same_file_reported_twice_WHEN_scheduled_THEN_only_the_first_report_is_a_new_selection() = runTest {
+        val repeated = flowOf("A.kt", "A.kt")
+
+        val scheduled = scheduler.scanRequests(repeated, emptyFlow<String>()).toList()
+
+        assertEquals(listOf(selection("A.kt")), scheduled)
     }
 
     @Test
@@ -115,7 +131,7 @@ class ScanSchedulerTest {
         advanceTimeBy(DEBOUNCE + 1.milliseconds)
         runCurrent()
 
-        assertEquals(listOf<String?>("A.kt", null), scanned)
+        assertEquals(listOf(selection("A.kt"), selection(null)), requests)
     }
 
     private companion object {

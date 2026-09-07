@@ -1,21 +1,24 @@
 package com.makeevrserg.compose.html.preview.psi
 
 import com.intellij.openapi.module.Module
+import com.makeevrserg.compose.html.preview.feature.PreviewSourceSetCatalog
 
 /**
- * Source sets whose code the generated registry can call. The registry is compiled into the Kotlin/JS
- * compilation of the module, so a preview written for another platform, `jvmMain` for example, is not
- * a preview this plugin can render and must not reach the generated sources.
+ * Reads the source set of an IDE module and answers whether the generated registry may call its code.
  *
  * The IDE imports every source set of a Gradle module as a module of its own, named after it
- * (`project.components.ui.jsMain`), which is what the source set is read from here.
+ * (`project.components.ui.jsMain`), which is what the source set is read from here. Which of them
+ * count is [PreviewSourceSetCatalog].
  */
 class PreviewSourceSetFilter {
 
-    fun isPreviewSource(module: Module): Boolean = module.name.substringAfterLast(NAME_SEPARATOR) in PREVIEW_SOURCE_SETS
+    fun sourceSetName(module: Module): String = module.name.substringAfterLast(NAME_SEPARATOR)
+
+    fun isPreviewSource(module: Module): Boolean {
+        return sourceSetName(module) in PreviewSourceSetCatalog.previewSourceSets
+    }
 
     private companion object {
         const val NAME_SEPARATOR = '.'
-        val PREVIEW_SOURCE_SETS = setOf("commonMain", "jsMain", "main")
     }
 }

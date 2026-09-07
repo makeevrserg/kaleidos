@@ -11,5 +11,6 @@ data class PreviewState(
     val previewUrl: String?,
     val isToolWindowVisible: Boolean,
     val sourceState: SourceState,
-    val serverState: DevServerState
+    val serverState: DevServerState,
+    val pageState: PageState
 )

@@ -10,6 +10,7 @@ import com.makeevrserg.compose.html.preview.psi.PreviewFileScanner
 import com.makeevrserg.compose.html.preview.psi.PreviewFunctionDetector
 import com.makeevrserg.compose.html.preview.psi.PreviewSourceSetFilter
 import com.makeevrserg.compose.html.preview.psi.ProjectPreviewScanner
+import com.makeevrserg.compose.html.preview.psi.SelectedFileScanner
 
 class PsiModule(
     coreModule: CoreModule,
@@ -17,13 +18,21 @@ class PsiModule(
 ) {
     val previewFunctionDetector = PreviewFunctionDetector(AnnotationFqnResolver())
 
-    val previewFileScanner = PreviewFileScanner(previewFunctionDetector)
+    private val previewFileScanner = PreviewFileScanner(previewFunctionDetector)
+
+    private val previewSourceSetFilter = PreviewSourceSetFilter()
+
+    val selectedFileScanner = SelectedFileScanner(
+        projectDependencies = intellijCoreModule.projectDependencies,
+        fileScanner = previewFileScanner,
+        sourceSetFilter = previewSourceSetFilter
+    )
 
     val projectPreviewSource: ProjectPreviewSource = ProjectPreviewScanner(
         projectDependencies = intellijCoreModule.projectDependencies,
         fileFinder = KotlinSourceFileFinder(intellijCoreModule.projectDependencies),
         fileScanner = previewFileScanner,
-        sourceSetFilter = PreviewSourceSetFilter(),
+        sourceSetFilter = previewSourceSetFilter,
         entryPointDetector = EntryPointDetector(),
         backgroundContext = coreModule.dispatchers.default
     )

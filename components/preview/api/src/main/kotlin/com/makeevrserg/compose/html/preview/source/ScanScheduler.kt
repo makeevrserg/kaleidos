@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -23,17 +24,24 @@ class ScanScheduler(
     private val rescanDebounce: Duration
 ) {
     /**
-     * @param selectedFiles null when no editor is open
-     * @return null when nothing is selected, so the consumer can clear its state
+     * @param selectedFiles null when no editor is open; repeated reports of the same file, which split
+     * editors produce, are not selection changes and are dropped
      */
-    fun <File : Any> filesToScan(selectedFiles: Flow<File?>, editedFiles: Flow<File>): Flow<File?> {
-        return selectedFiles.flatMapLatest { selected ->
-            if (selected == null) return@flatMapLatest flowOf(null)
-            editedFiles
-                .filter { edited -> edited == selected }
-                .debounce(rescanDebounce)
-                .map { selected }
-                .onStart { emit(selected) }
-        }
+    fun <File : Any> scanRequests(
+        selectedFiles: Flow<File?>,
+        editedFiles: Flow<File>
+    ): Flow<ScanRequest<File>> {
+        return selectedFiles
+            .distinctUntilChanged()
+            .flatMapLatest { selected ->
+                if (selected == null) {
+                    return@flatMapLatest flowOf(ScanRequest(file = null, isNewSelection = true))
+                }
+                editedFiles
+                    .filter { edited -> edited == selected }
+                    .debounce(rescanDebounce)
+                    .map { ScanRequest(file = selected, isNewSelection = false) }
+                    .onStart { emit(ScanRequest(file = selected, isNewSelection = true)) }
+            }
     }
 }

@@ -3,16 +3,19 @@ package com.makeevrserg.compose.html.preview.feature
 import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
 
 /**
- * The file the preview follows: the selected editor file and its preview functions.
+ * The file the preview follows: the selected editor file and what a scan found in it.
  *
- * @param previews every `@Preview` function of the file in source order; empty when the file has none
  * @param focusedFqn preview the page should scroll to, set by the gutter icon
  * @param host module that serves the previews of this file; null until it has been looked up
  */
 data class PreviewTarget(
     val filePath: String,
     val fileName: String,
-    val previews: List<PreviewFunction>,
+    val scan: PreviewScan,
     val focusedFqn: String?,
     val host: PreviewHostResolution?
 )
+
+/** Previews of the file the generated page can render; empty for every other scan result. */
+val PreviewTarget.renderablePreviews: List<PreviewFunction>
+    get() = (scan as? PreviewScan.Renderable)?.previews.orEmpty()

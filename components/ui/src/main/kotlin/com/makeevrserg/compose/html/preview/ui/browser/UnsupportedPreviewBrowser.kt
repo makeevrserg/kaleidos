@@ -1,5 +1,6 @@
 package com.makeevrserg.compose.html.preview.ui.browser
 
+import com.makeevrserg.compose.html.preview.feature.PageLoad
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import javax.swing.JComponent
@@ -11,21 +12,21 @@ import javax.swing.JComponent
  * reported as finished at once, so the panel never waits for a page that cannot render.
  */
 class UnsupportedPreviewBrowser : PreviewBrowser {
-    private val loads = MutableSharedFlow<String>(extraBufferCapacity = LOAD_BUFFER)
+    private val pageLoads = MutableSharedFlow<PageLoad>(extraBufferCapacity = LOAD_BUFFER)
 
     override val component: JComponent? = null
 
     override val isDevToolsSupported: Boolean = false
 
     override fun load(url: String) {
-        loads.tryEmit(url)
+        pageLoads.tryEmit(PageLoad.Succeeded)
     }
 
     override fun reload() = Unit
 
     override fun openDevTools() = Unit
 
-    override fun pageLoads(): Flow<String> = loads
+    override fun loads(): Flow<PageLoad> = pageLoads
 
     override fun dispose() = Unit
 

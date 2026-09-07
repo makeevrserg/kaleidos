@@ -23,6 +23,7 @@ import com.makeevrserg.compose.html.preview.ui.PreviewStateTexts
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowser
 import com.makeevrserg.compose.html.preview.ui.composable.components.PreviewPageView
 import com.makeevrserg.compose.html.preview.ui.composable.components.PreviewPlaceholder
+import com.makeevrserg.compose.html.preview.ui.composable.components.PreviewPlaceholderKind
 import com.makeevrserg.compose.html.preview.ui.composable.components.PreviewSourceBanner
 import com.makeevrserg.compose.html.preview.ui.composable.components.PreviewStatusBar
 import com.makeevrserg.compose.html.preview.ui.state.PreviewContent
@@ -33,9 +34,9 @@ private const val CONTENT_TRANSITION = "preview-content"
 private const val CONTENT_WEIGHT = 1f
 
 /**
- * Content of the tool window: a spinner while the preview module is looked up, its dev server starts
- * or the page loads, the page once the server answers, a banner while the sources are newer than the
- * page, and the state of the server in the footer.
+ * Content of the tool window: a spinner while the file is scanned, the preview module is looked up,
+ * its dev server starts or the page loads, the page once the browser reports it, a banner while the
+ * sources are newer than the page, and the state of the server in the footer.
  *
  * Rendered from the last state seen while the tool window was visible. The store keeps working while
  * nobody looks at the page, and dropping a loaded page for a state change no one can see would cost
@@ -55,9 +56,6 @@ internal fun PreviewToolWindowContent(
     }
 
     val uiState = remember(visibleState) { uiStateFactory.create(visibleState) }
-    val pageUrl = (uiState.content as? PreviewContent.Page)?.url
-    var loadingUrl by remember { mutableStateOf<String?>(null) }
-    val isPageLoading = pageUrl != null && pageUrl == loadingUrl
 
     Column(
         modifier = Modifier
@@ -72,13 +70,10 @@ internal fun PreviewToolWindowContent(
         ) {
             PreviewPageView(
                 browser = browser,
-                url = pageUrl,
+                url = uiState.pageUrl,
+                isPageVisible = uiState.content is PreviewContent.Page,
                 unsupportedText = texts.unsupportedBrowser,
-                onLoadStart = { startedUrl -> loadingUrl = startedUrl },
-                onLoadEnd = { isReload ->
-                    loadingUrl = null
-                    store.onPageLoaded(isReload)
-                },
+                onLoad = store::onPageLoaded,
                 modifier = Modifier.fillMaxSize()
             )
             AnimatedContent(
@@ -91,20 +86,22 @@ internal fun PreviewToolWindowContent(
                     is PreviewContent.Page -> Box(modifier = Modifier.fillMaxSize())
                     is PreviewContent.Loading -> PreviewPlaceholder(
                         text = content.text,
-                        isLoading = true,
+                        kind = PreviewPlaceholderKind.LOADING,
                         modifier = Modifier.fillMaxSize()
                     )
-                    is PreviewContent.Message -> PreviewPlaceholder(
+                    is PreviewContent.Empty -> PreviewPlaceholder(
                         text = content.text,
-                        isLoading = false,
+                        kind = PreviewPlaceholderKind.INFO,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    is PreviewContent.Failure -> PreviewPlaceholder(
+                        text = content.text,
+                        kind = PreviewPlaceholderKind.FAILURE,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
             }
         }
-        PreviewStatusBar(
-            text = if (isPageLoading) texts.pageLoading else uiState.statusText,
-            isLoading = isPageLoading
-        )
+        PreviewStatusBar(text = uiState.statusText)
     }
 }

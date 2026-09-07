@@ -1,12 +1,9 @@
 package com.makeevrserg.compose.html.preview.ui.composable.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,21 +11,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.Text
 
 private const val STATUS_PADDING_VERTICAL = 4
 private const val STATUS_PADDING_HORIZONTAL = 8
-private const val STATUS_ICON_GAP = 6
 private const val STATUS_TRANSITION = "preview-status"
-private const val LOADING_SAMPLE = "Loading preview…"
+private const val STARTING_SAMPLE = "Starting kobwebStart in :instances:web-app, waiting for the server…"
 private const val URL_SAMPLE = "http://localhost:8080/compose-html-preview?preview=app.CardPreview"
 
-/** Footer with the state of the dev server, and a spinner while the page itself is loading. */
+/** Footer with the state of the dev server. What is being waited for is said by the placeholder above it. */
 @Composable
 internal fun PreviewStatusBar(
     text: String,
-    isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -37,12 +31,6 @@ internal fun PreviewStatusBar(
             .padding(horizontal = STATUS_PADDING_HORIZONTAL.dp, vertical = STATUS_PADDING_VERTICAL.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AnimatedVisibility(visible = isLoading) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator()
-                Spacer(modifier = Modifier.width(STATUS_ICON_GAP.dp))
-            }
-        }
         Crossfade(targetState = text, label = STATUS_TRANSITION) { current ->
             Text(
                 text = current,
@@ -56,12 +44,12 @@ internal fun PreviewStatusBar(
 
 @Preview
 @Composable
-internal fun StatusBarLoadingPreview() {
-    PreviewStatusBar(text = LOADING_SAMPLE, isLoading = true)
+internal fun StatusBarStartingPreview() {
+    PreviewStatusBar(text = STARTING_SAMPLE)
 }
 
 @Preview
 @Composable
-internal fun StatusBarIdlePreview() {
-    PreviewStatusBar(text = URL_SAMPLE, isLoading = false)
+internal fun StatusBarPagePreview() {
+    PreviewStatusBar(text = URL_SAMPLE)
 }

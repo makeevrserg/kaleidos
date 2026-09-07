@@ -15,16 +15,24 @@ class PreviewStateReducer(
 ) {
 
     /** The page exists only once the server of the target's own module answers; another module's server is not it. */
+    private fun PreviewState.derivedUrl(): String? {
+        val target = target ?: return null
+        val host = (target.host as? PreviewHostResolution.Found)?.host ?: return null
+        val running = serverState as? DevServerState.Running ?: return null
+        if (running.host != host) return null
+        val previews = target.renderablePreviews
+        if (previews.isEmpty()) return null
+        return previewUrlFactory.create(running.baseUrl, host.kind, previews, target.focusedFqn)
+    }
+
+    /**
+     * Every URL is loaded from scratch, so a page that was on screen for the previous address must not
+     * count as the page of the new one: nothing is shown until the browser reports the new load.
+     */
     private fun PreviewState.withDerivedUrl(): PreviewState {
-        val target = target
-        val host = (target?.host as? PreviewHostResolution.Found)?.host
-        val running = serverState as? DevServerState.Running
-        val previewUrl = when {
-            target == null || host == null || running == null -> null
-            target.previews.isEmpty() || running.host != host -> null
-            else -> previewUrlFactory.create(running.baseUrl, host.kind, target)
-        }
-        return copy(previewUrl = previewUrl)
+        val derivedUrl = derivedUrl()
+        if (derivedUrl == previewUrl) return this
+        return copy(previewUrl = derivedUrl, pageState = PageState.Loading)
     }
 
     /**
@@ -51,7 +59,7 @@ class PreviewStateReducer(
             PreviewTarget(
                 filePath = previewFunction.filePath,
                 fileName = previewFunction.fileName,
-                previews = listOf(previewFunction),
+                scan = PreviewScan.Renderable(listOf(previewFunction)),
                 focusedFqn = previewFunction.fqn,
                 host = null
             )
@@ -79,11 +87,21 @@ class PreviewStateReducer(
     }
 
     /**
-     * The first load of a page says nothing about freshness; a reload does, whether it follows an
+     * The first load of a page says nothing about freshness; a later one does, whether it follows an
      * edit in the IDE or a change made on disk that the IDE never reported.
      */
-    fun markLoaded(state: PreviewState, isReload: Boolean): PreviewState {
-        if (state.sourceState is SourceState.UpToDate && !isReload) return state
-        return state.copy(sourceState = SourceState.Reloaded(clock.instant()))
+    fun markPageShown(state: PreviewState): PreviewState {
+        if (state.previewUrl == null) return state
+        val isReload = state.pageState is PageState.Shown
+        val isFresh = state.sourceState is SourceState.UpToDate && !isReload
+        return state.copy(
+            pageState = PageState.Shown,
+            sourceState = if (isFresh) state.sourceState else SourceState.Reloaded(clock.instant())
+        )
+    }
+
+    fun markPageFailed(state: PreviewState, reason: String): PreviewState {
+        if (state.previewUrl == null) return state
+        return state.copy(pageState = PageState.Failed(reason))
     }
 }

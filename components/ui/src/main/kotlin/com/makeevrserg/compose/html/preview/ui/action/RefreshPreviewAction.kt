@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
+import com.makeevrserg.compose.html.preview.feature.renderablePreviews
 import com.makeevrserg.compose.html.preview.ui.PreviewPanel
 
 class RefreshPreviewAction(
@@ -19,7 +20,7 @@ class RefreshPreviewAction(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = contract.state.value.target?.previews?.isNotEmpty() == true
+        e.presentation.isEnabled = contract.state.value.target?.renderablePreviews?.isNotEmpty() == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {
