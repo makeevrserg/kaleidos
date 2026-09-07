@@ -130,6 +130,8 @@ stays yellow, check the Run tool window — the rebuild has probably failed with
 - **Open in Browser** opens the current page URL in the system browser. This is the fallback when JCEF is not
   available, for example under Remote Development.
 - Gear menu: **Restart Dev Server**, **Stop Dev Server**, **Open DevTools**.
+- The footer, next to the state of the dev server, carries a **Support the author** link that opens the ways of
+  supporting the plugin.
 
 Only runs started by the plugin are stopped, whether by **Stop Dev Server**, by a switch to another module or by
 closing the project; a dev server started from a terminal is left untouched.
@@ -348,7 +350,8 @@ Found a bug or need a new feature? Please submit a
 
 ## 💜 Support Us
 
-If this plugin helps you, consider supporting its development.
+If this plugin helps you, consider supporting its development. The same options are one click away inside the IDE:
+the **Support the author** link in the footer of the tool window.
 
 <table>
 <tr>
