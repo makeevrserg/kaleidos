@@ -80,27 +80,38 @@ class PreviewPageSourceFactory(private val naming: HarnessNaming) {
         }
     }
 
+    /**
+     * One preview is a card of its own: a header naming it and a body with room around the composable,
+     * so several previews of a file do not run into each other.
+     */
     private fun sectionLines(): List<String> {
         return listOf(
+            "private const val BORDER = \"1px solid rgba(127, 127, 127, 0.35)\"",
+            "",
             "@Composable",
             "private fun PreviewSection(fqn: String) {",
             "    Div(attrs = {",
             "        id(fqn)",
             "        style {",
-            "            property(\"padding\", \"16px\")",
-            "            property(\"border-bottom\", \"1px solid rgba(127, 127, 127, 0.25)\")",
+            "            property(\"margin\", \"16px\")",
+            "            property(\"border\", BORDER)",
+            "            property(\"border-radius\", \"8px\")",
+            "            property(\"overflow\", \"hidden\")",
             "        }",
             "    }) {",
             "        Div(attrs = {",
             "            style {",
             "                property(\"font\", \"12px monospace\")",
             "                property(\"opacity\", \"0.6\")",
-            "                property(\"padding-bottom\", \"8px\")",
+            "                property(\"padding\", \"8px 12px\")",
+            "                property(\"border-bottom\", BORDER)",
             "            }",
             "        }) {",
             "            Text(fqn.substringAfterLast('.'))",
             "        }",
-            "        RenderPreview(fqn)",
+            "        Div(attrs = { style { property(\"padding\", \"16px\") } }) {",
+            "            RenderPreview(fqn)",
+            "        }",
             "    }",
             "}"
         )

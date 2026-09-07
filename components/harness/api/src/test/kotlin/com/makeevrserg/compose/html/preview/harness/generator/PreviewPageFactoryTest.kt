@@ -100,6 +100,15 @@ class PreviewPageFactoryTest {
     }
 
     @Test
+    fun GIVEN_any_host_WHEN_create_THEN_every_preview_is_a_card_with_room_around_it() {
+        val page = pageContent(DevServerKind.KOBWEB)
+
+        assertTrue(page.contains("""property("margin", "16px")"""))
+        assertTrue(page.contains("""property("padding", "16px")"""))
+        assertTrue(page.contains("""property("border-radius", "8px")"""))
+    }
+
+    @Test
     fun GIVEN_no_previews_at_all_WHEN_create_THEN_the_page_still_compiles() {
         val content = pageContent(DevServerKind.KOBWEB, modules = emptyList())
 
