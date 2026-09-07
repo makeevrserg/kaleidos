@@ -3,6 +3,8 @@ package com.makeevrserg.kaleidos.ui.donation
 /**
  * Where a donation can go, in the order the dialog offers it: the ways that cost nothing to arrange
  * first, the wallets after them.
+ *
+ * The same options the README of the repository lists, and they have to stay in step with it.
  */
 class DonationCatalog {
 
@@ -26,12 +28,20 @@ class DonationCatalog {
             url = "https://github.com/makeevrserg/kaleidos"
         ),
         DonationOption.Address(
-            title = "Bitcoin",
-            address = "bc1q9a8dr55jgfae0mhevw3vvczegjv0khfp0ngrnv"
+            title = "USDT (Polygon)",
+            address = "0x3955abc6f5396e57b11a05b96f988bc60708c9b0"
         ),
         DonationOption.Address(
-            title = "Ethereum",
-            address = "0x0BaAeEA44Ce08c8DC139224ff57563695B30d423"
+            title = "USDT (TRC20)",
+            address = "TLYf28vZeuuHcEJMHSZtuYEzQ2DjNvNE3W"
+        ),
+        DonationOption.Address(
+            title = "USDT (Solana)",
+            address = "6sYK6Nss8cjLeeTp6u3t63JG4f1hFf8sDQ7nVtMNoyps"
+        ),
+        DonationOption.Address(
+            title = "TON",
+            address = "UQDfywxsnHI1ko_uqBYKED3RoMzoVm3mnxuS_-JVQc4mSSJt"
         )
     )
 }

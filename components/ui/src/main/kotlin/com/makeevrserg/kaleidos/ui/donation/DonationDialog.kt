@@ -19,7 +19,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 private const val DIALOG_WIDTH = 620
-private const val DIALOG_HEIGHT = 420
+private const val DIALOG_HEIGHT = 480
 
 /**
  * The options in a modal window of the platform.
