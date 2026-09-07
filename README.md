@@ -1,15 +1,147 @@
-## Compose HTML Preview
+<p align="center">
+  <img src="plugin/src/main/resources/META-INF/pluginIcon.svg" alt="Compose HTML Preview logo" width="120"/>
+</p>
 
-IntelliJ plugin that previews [Compose HTML](https://github.com/JetBrains/compose-multiplatform#compose-html) (DOM)
-composables inside the IDE. The official Compose preview renders through the Android backend and cannot draw DOM,
-so this plugin renders the composable in the embedded browser instead.
+<h1 align="center">Compose HTML Preview</h1>
 
-Found bug or need a new feature? Please submit a
+<p align="center">
+  <strong>Preview <a href="https://github.com/JetBrains/compose-multiplatform#compose-html">Compose HTML</a> (DOM)
+  composables right inside IntelliJ IDEA — zero configuration.</strong>
+</p>
 
-- [💀 Bug report](https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin/issues/new?assignees=makeevrserg&labels=bug&projects=&template=bug.md&title=)
-- [👾 Feature request](https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin/issues/new?assignees=makeevrserg&labels=enhancement&projects=&template=feature.md&title=)
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.1.0-3574F0?style=for-the-badge" alt="Version 0.1.0"/>
+  <img src="https://img.shields.io/badge/IntelliJ_IDEA-2026.2+-000000?style=for-the-badge&logo=intellijidea&logoColor=white" alt="IntelliJ IDEA 2026.2+"/>
+  <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin"/>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-D22128?style=for-the-badge" alt="Apache 2.0"/></a>
+</p>
 
-### How it works
+<p align="center">
+  <a href="#-installation">Installation</a> ·
+  <a href="#-quick-start">Quick start</a> ·
+  <a href="#-how-it-works">How it works</a> ·
+  <a href="#-development">Development</a> ·
+  <a href="#-support-us">Support</a>
+</p>
+
+<!-- SCREENSHOT PLACEHOLDER: hero shot. The Compose HTML Preview tool window docked on the right,
+     showing two or three preview cards of the Kotlin file open in the editor. File not committed yet. -->
+<p align="center">
+  <img src="docs/images/preview-tool-window.png" alt="Compose HTML Preview tool window rendering the previews of the open file" width="900"/>
+</p>
+
+The official Compose preview renders through the Android backend and cannot draw DOM. This plugin renders your
+composable in the IDE's embedded browser instead — real DOM, real CSS, real Silk styles.
+
+## ✨ Features
+
+- 🖼 **The tool window follows the editor.** Select a Kotlin file and every top-level parameterless
+  `@Preview @Composable` in it is rendered together, in source order.
+- ⚙️ **No setup at all.** The module that serves the previews is picked from the Gradle structure of the project —
+  no preview module to write, no registry to maintain, no page to serve.
+- 🧬 **The preview app is generated for you** into `build/` directories and passed to the run through a Gradle init
+  script. Not a single file of your project is touched.
+- 🚀 **The dev server is managed for you** — started when it is missing, reused when it already answers, stopped when
+  you switch modules or close the project.
+- 🎯 **Gutter icons** on every preview function jump straight to that preview on the page.
+- ♻️ **Live reload with a staleness banner** — save a file, the bundle recompiles and the page reloads; the banner
+  tells you whether what you are looking at is current.
+- 🕸 **Kobweb aware.** Previews of a Kobweb library are served as a route of a real Kobweb site, so they get the
+  `@App` root of that site: theme and Silk exactly as in production.
+- 🔍 **Honest states.** Every non-rendering situation is a card that says what is going on and why, never an empty
+  panel.
+
+## 📦 Installation
+
+The plugin is not on the JetBrains Marketplace yet — a listing is coming. Until then, install it from disk:
+
+**From a release**
+
+1. Download `compose-html-preview-<version>.zip` from the
+   [Releases](https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin/releases) page.
+2. In the IDE: **Settings → Plugins → ⚙️ → Install Plugin from Disk…** and pick the ZIP.
+3. Restart the IDE.
+
+**From source**
+
+```bash
+git clone https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin.git
+cd MVIKotlin-Decompose-Plugin
+./gradlew :plugin:buildPlugin
+```
+
+The distribution lands in `plugin/build/distributions`; install it from disk as above.
+
+**Requirements:** IntelliJ IDEA **2026.2** or newer (build 262+). JDK 25 is needed only to build the plugin.
+
+## 🚀 Quick start
+
+1. Open a project that has a Kotlin/JS browser target depending on Compose HTML — a plain Kotlin/JS module or a
+   Kobweb site both work.
+2. Mark a composable as a preview. Top level, no parameters:
+
+   ```kotlin
+   @Preview
+   @Composable
+   fun ButtonPreview() {
+       Button(attrs = { onClick { } }) { Text("Click me") }
+   }
+   ```
+
+3. Click the gutter icon next to the function, or open the **Compose HTML Preview** tool window from the right
+   toolbar.
+4. That is it. The plugin picks the module, starts its dev server, generates the page and renders your previews.
+   Save the file to see it reload.
+
+<!-- SCREENSHOT PLACEHOLDER: the gutter icon / run line marker next to an @Preview @Composable function,
+     ideally with its tooltip visible. File not committed yet. -->
+<img src="docs/images/gutter-icon.png" alt="Gutter icon next to a @Preview @Composable function" width="620"/>
+
+## 🧩 What your project has to provide
+
+Nothing beyond what a Compose HTML project has anyway: a module with a Kotlin/JS browser target that depends on
+Compose HTML (`org.jetbrains.compose.html:html-core`) and the Compose compiler plugin, which is what makes the
+`@Preview @Composable` functions compile in the first place. There is no preview module to write, no registry to
+maintain and no page to serve — the plugin generates all of it.
+
+Two things are worth knowing:
+
+- The `main` of the module that renders the previews is left out of the compilation of the preview run. If that file
+  also declares something else the module needs, the run fails with a compilation error in the Run tool window; move
+  the `main` into a file of its own.
+- A dev server that was started outside the IDE, from a terminal for example, is adopted as it is. It was built
+  without the generated page, so the tool window says that the server does not serve it; press **Restart Dev
+  Server** to have the plugin run it.
+
+## ♻️ Stale previews
+
+Any edit of a Kotlin source in the project marks the page as stale: a yellow banner says which file changed and when.
+The plugin does not compute the dependency graph, so a preview is considered affected by any Kotlin change. When the
+dev server finishes rebuilding and the page live-reloads, the banner turns green with the reload time. If the banner
+stays yellow, check the Run tool window — the rebuild has probably failed with a compilation error.
+
+<!-- SCREENSHOT PLACEHOLDER: the yellow "stale" banner above the preview page, naming the changed file;
+     a second shot of the green "reloaded" state would be a bonus. File not committed yet. -->
+<img src="docs/images/stale-preview-banner.png" alt="Stale preview banner naming the file that changed" width="720"/>
+
+## 🎛 Tool window actions
+
+- **Refresh Preview** reloads the page and re-checks the dev server.
+- **Open in Browser** opens the current page URL in the system browser. This is the fallback when JCEF is not
+  available, for example under Remote Development.
+- Gear menu: **Restart Dev Server**, **Stop Dev Server**, **Open DevTools**.
+
+Only runs started by the plugin are stopped, whether by **Stop Dev Server**, by a switch to another module or by
+closing the project; a dev server started from a terminal is left untouched.
+
+<!-- SCREENSHOT PLACEHOLDER: the tool window toolbar with the gear menu open, showing Restart Dev Server /
+     Stop Dev Server / Open DevTools. File not committed yet. -->
+<img src="docs/images/tool-window-actions.png" alt="Tool window toolbar with the gear menu open" width="480"/>
+
+## 🔬 How it works
+
+<details>
+<summary><strong>Step by step, from a selected file to a rendered page</strong></summary>
 
 1. The **Compose HTML Preview** tool window follows the editor: whenever a Kotlin file is selected, its top-level
    `@Preview @Composable` functions without parameters are collected and shown together, in source order, like
@@ -33,7 +165,10 @@ Found bug or need a new feature? Please submit a
    URL so the page scrolls to that preview.
 8. Because the dev server runs in continuous mode, saving a file recompiles the bundle and the page live-reloads.
 
-### Which module renders the previews
+</details>
+
+<details>
+<summary><strong>Which module renders the previews</strong></summary>
 
 For the selected file the plugin takes the Gradle module the file belongs to and decides from the tasks the last
 Gradle sync recorded:
@@ -57,7 +192,10 @@ A dev server that already answers is reused instead of started again. The server
 module is stopped, so the plugin owns at most one dev server per project. Closing the project stops that server as
 well: a run started by the plugin never outlives it.
 
-### What the tool window shows
+</details>
+
+<details>
+<summary><strong>What the tool window shows in every state</strong></summary>
 
 Switching editor tabs drops the page immediately: the preview of the file you left is gone before the new file has
 even been read, and a page is put on screen only once the browser reports that it loaded and the page itself
@@ -81,7 +219,12 @@ under it.
 | Error | The preview page could not be loaded | the browser could not load the address: connection refused, an HTTP error, and so on |
 | Error | The dev server does not serve the preview page | the address answered with something that is not the generated page |
 
-The last one is what a dev server that was already running before the plugin attached to it does: it was built
+<!-- SCREENSHOT PLACEHOLDER: one of the state cards — the error card ("Nothing can render this preview" or
+     "The dev server does not serve the preview page") and/or the empty "No previews in …" card.
+     File not committed yet. -->
+<img src="docs/images/state-card.png" alt="Tool window state card for an empty or failed preview" width="620"/>
+
+The last row is what a dev server that was already running before the plugin attached to it does: it was built
 without the preview page, and a single page application answers *every* path with the shell of the real site, so
 the address returns HTTP 200 and renders nothing. The generated page therefore names itself in the document title,
 and a load that never shows that title is reported instead of an empty panel. **Restart Dev Server** builds and
@@ -95,7 +238,10 @@ message from turning into an empty rectangle, and it is why the page is fetched 
 **Refresh Preview** hands the address back to the browser and loads it again, which is how a page that failed
 comes back.
 
-### What the plugin generates
+</details>
+
+<details>
+<summary><strong>What the plugin generates</strong></summary>
 
 Everything generated lives under `build/compose-html-preview` of the module it belongs to, so it is ignored by
 version control, removed by `clean` and never mixed into your sources:
@@ -118,30 +264,10 @@ Previews are collected from source sets that end up in the Kotlin/JS compilation
 launch and only when their content actually changed, so a preview you add is on the page after the next
 recompilation, while switching between two files recompiles nothing.
 
-### Stale previews
+</details>
 
-Any edit of a Kotlin source in the project marks the page as stale: a yellow banner says which file changed and when.
-The plugin does not compute the dependency graph, so a preview is considered affected by any Kotlin change. When the
-dev server finishes rebuilding and the page live-reloads, the banner turns green with the reload time. If the banner
-stays yellow, check the Run tool window: the rebuild has probably failed with a compilation error.
-
-### What your project has to provide
-
-Nothing beyond what a Compose HTML project has anyway: a module with a Kotlin/JS browser target that depends on
-Compose HTML (`org.jetbrains.compose.html:html-core`) and the Compose compiler plugin, which is what makes the
-`@Preview @Composable` functions compile in the first place. There is no preview module to write, no registry to
-maintain and no page to serve: the plugin generates all of it.
-
-Two things are worth knowing:
-
-- The `main` of the module that renders the previews is left out of the compilation of the preview run. If that
-  file also declares something else the module needs, the run fails with a compilation error in the Run tool
-  window; move the `main` into a file of its own.
-- A dev server that was started outside the IDE, from a terminal for example, is adopted as it is. It was built
-  without the generated page, so the tool window says that the server does not serve it; press **Restart Dev
-  Server** to have the plugin run it.
-
-### Kobweb projects
+<details>
+<summary><strong>Kobweb projects</strong></summary>
 
 Kobweb components depend on Silk, whose styles are registered by the entry point the Kobweb Gradle plugin generates
 for an application, so previews of a Kobweb library are served by a Kobweb application of the build. The plugin adds
@@ -155,27 +281,26 @@ server on the port. The plugin does what `kobwebStop` does, without Gradle: it r
 not. This also works while the project is closing, when no Gradle task can run any more. The plugin also re-checks
 the port when the Gradle task finishes successfully, so a server that keeps running is shown as running.
 
-### Tool window actions
+<!-- SCREENSHOT PLACEHOLDER: previews of a Kobweb library rendered inside the Kobweb site's @App root
+     (Silk theme visible), with the Kobweb project tree in the background. File not committed yet. -->
+<img src="docs/images/kobweb-preview.png" alt="Previews of a Kobweb library rendered with the Silk theme of the real site" width="900"/>
 
-- **Refresh Preview** reloads the page and re-checks the dev server.
-- **Open in Browser** opens the current page URL in the system browser. This is the fallback when JCEF is not
-  available, for example under Remote Development.
-- Gear menu: **Restart Dev Server**, **Stop Dev Server**, **Open DevTools**.
+</details>
 
-Only runs started by the plugin are stopped, whether by **Stop Dev Server**, by a switch to another module or by
-closing the project; a dev server started from a terminal is left untouched.
+## 🛠 Development
 
-### Development
-
-- `./gradlew :plugin:runIde` starts a sandbox IDE with the plugin.
-- `./gradlew :plugin:buildPlugin` builds the distribution into `plugin/build/distributions`.
-- `./gradlew :plugin:verifyPlugin` runs the IntelliJ Plugin Verifier.
-- `./gradlew detekt` runs static analysis.
-- `./gradlew test` runs the unit tests of the plain Kotlin components.
+```bash
+./gradlew :plugin:runIde        # sandbox IDE with the plugin
+./gradlew :plugin:buildPlugin   # distribution into plugin/build/distributions
+./gradlew :plugin:verifyPlugin  # IntelliJ Plugin Verifier
+./gradlew detekt                # static analysis
+./gradlew test                  # unit tests of the plain Kotlin components
+```
 
 Requirements: IntelliJ IDEA 2026.2 or newer, JDK 25 to build.
 
-#### Modules
+<details>
+<summary><strong>Module layout</strong></summary>
 
 `:plugin` holds `plugin.xml`, the resources and the IntelliJ entry points: the line marker contributor, the gutter
 action, the tool window factory, the startup activity and the project service. Everything else lives under
@@ -195,7 +320,10 @@ holds the adapters that implement the ports of the `api` module with platform AP
 
 Every component is merged into the plugin JAR through `pluginComposedModule` in `plugin/build.gradle.kts`.
 
-#### Dependency injection
+</details>
+
+<details>
+<summary><strong>Dependency injection</strong></summary>
 
 Dependencies are wired by hand through constructors; there is no DI framework and no service locator inside the
 components. Each component has a `di/…Module` class that builds its object graph from the modules it depends on and
@@ -203,8 +331,79 @@ exposes the services other components need. `RootModule` in `:plugin` creates th
 aggregates their `Lifecycle`s. The project-level `PreviewProjectService` owns the `RootModule`; platform entry points,
 which IntelliJ creates without constructors, reach the graph through that service only.
 
-### Gratitude
+</details>
+
+## 🙏 Gratitude
 
 - [Compose Multiplatform IDE plugin](https://github.com/JetBrains/compose-multiplatform/tree/v1.7.3/idea-plugin) for the gutter and Gradle orchestration approach
 - [kotlin-js-preview-idea-plugin](https://github.com/sanyavertolet/kotlin-js-preview-idea-plugin) for proving Kotlin/JS previews in JCEF work
 - [jetbrains](https://jetbrains.com) for IntelliJ
+
+## 🐛 Feedback
+
+Found a bug or need a new feature? Please submit a
+
+- [💀 Bug report](https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin/issues/new?assignees=makeevrserg&labels=bug&projects=&template=bug.md&title=)
+- [👾 Feature request](https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin/issues/new?assignees=makeevrserg&labels=enhancement&projects=&template=feature.md&title=)
+
+## 💜 Support Us
+
+If this plugin helps you, consider supporting its development.
+
+<table>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/telegram/26A5E4" width="25" alt="Telegram"/><br/>
+<sub><b>Telegram</b></sub>
+</td>
+<td align="center">
+<a href="https://t.me/makeevrserg">
+<img width="70%" src="https://img.shields.io/badge/Write-@makeevrserg-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Write to @makeevrserg on Telegram"/>
+</a>
+</td>
+</tr>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/bitcoin/F7931A" width="25" alt="BTC"/><br/>
+<sub><b>Bitcoin</b></sub>
+</td>
+<td>
+
+```text
+bc1q9a8dr55jgfae0mhevw3vvczegjv0khfp0ngrnv
+```
+
+</td>
+</tr>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/ethereum/627EEA" width="25" alt="ETH"/><br/>
+<sub><b>Ethereum</b></sub>
+</td>
+<td>
+
+```text
+0x0BaAeEA44Ce08c8DC139224ff57563695B30d423
+```
+
+</td>
+</tr>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/boosty/F15F2C" width="25" alt="Boosty"/><br/>
+<sub><b>Boosty</b></sub>
+</td>
+<td align="center">
+<a href="https://boosty.to/empireprojekt/donate">
+<img width="70%" src="https://img.shields.io/badge/Donate-Boosty-F15F2C?style=for-the-badge&logo=boosty&logoColor=white" alt="Donate on Boosty"/>
+</a>
+</td>
+</tr>
+</table>
+
+Prefer to arrange something else, or just want to say thanks? Write to
+[@makeevrserg](https://t.me/makeevrserg) on Telegram.
+
+## 📄 License
+
+[Apache License 2.0](LICENSE)
