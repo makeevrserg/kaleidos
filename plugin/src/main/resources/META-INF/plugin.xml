@@ -1,11 +1,11 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-    <id>com.makeevrserg.compose.html.preview</id>
+    <id>com.makeevrserg.kaleidos</id>
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-    <name>Compose HTML Preview</name>
+    <name>Kaleidos</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="makeevrserg@gmail.com" url="https://github.com/makeevrserg">makeevrserg</vendor>
@@ -53,17 +53,17 @@
     <extensions defaultExtensionNs="com.intellij">
         <runLineMarkerContributor
                 language="kotlin"
-                implementationClass="com.makeevrserg.compose.html.preview.linemarker.PreviewRunLineMarkerContributor"/>
+                implementationClass="com.makeevrserg.kaleidos.linemarker.PreviewRunLineMarkerContributor"/>
 
         <toolWindow
-                id="Compose HTML Preview"
+                id="Kaleidos"
                 anchor="right"
                 doNotActivateOnStart="true"
                 icon="/icons/toolWindowPreview.svg"
-                factoryClass="com.makeevrserg.compose.html.preview.ui.PreviewToolWindowFactory"/>
+                factoryClass="com.makeevrserg.kaleidos.ui.PreviewToolWindowFactory"/>
 
-        <notificationGroup id="Compose HTML Preview" displayType="BALLOON"/>
+        <notificationGroup id="Kaleidos" displayType="BALLOON"/>
 
-        <postStartupActivity implementation="com.makeevrserg.compose.html.preview.startup.PreviewStartupActivity"/>
+        <postStartupActivity implementation="com.makeevrserg.kaleidos.startup.PreviewStartupActivity"/>
     </extensions>
 </idea-plugin>

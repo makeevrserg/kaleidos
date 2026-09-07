@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="plugin/src/main/resources/META-INF/pluginIcon.svg" alt="Compose HTML Preview logo" width="120"/>
+  <img src="plugin/src/main/resources/META-INF/pluginIcon.svg" alt="Kaleidos logo" width="120"/>
 </p>
 
-<h1 align="center">Compose HTML Preview</h1>
+<h1 align="center">Kaleidos</h1>
 
 <p align="center">
   <strong>Preview <a href="https://github.com/JetBrains/compose-multiplatform#compose-html">Compose HTML</a> (DOM)
@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/kobweb-preview.png" alt="Compose HTML Preview tool window rendering the previews of the open file" width="880"/>
+  <img src="docs/images/kobweb-preview.png" alt="Kaleidos tool window rendering the previews of the open file" width="880"/>
 </p>
 
 The official Compose preview renders through the Android backend and cannot draw DOM. This plugin renders your
@@ -55,16 +55,16 @@ The plugin is not on the JetBrains Marketplace yet — a listing is coming. Unti
 
 **From a release**
 
-1. Download `compose-html-preview-<version>.zip` from the
-   [Releases](https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin/releases) page.
+1. Download `kaleidos-<version>.zip` from the
+   [Releases](https://github.com/makeevrserg/kaleidos/releases) page.
 2. In the IDE: **Settings → Plugins → ⚙️ → Install Plugin from Disk…** and pick the ZIP.
 3. Restart the IDE.
 
 **From source**
 
 ```bash
-git clone https://github.com/makeevrserg/MVIKotlin-Decompose-Plugin.git
-cd MVIKotlin-Decompose-Plugin
+git clone https://github.com/makeevrserg/kaleidos.git
+cd kaleidos
 ./gradlew :plugin:buildPlugin
 ```
 
@@ -86,7 +86,7 @@ The distribution lands in `plugin/build/distributions`; install it from disk as 
    }
    ```
 
-3. Click the gutter icon next to the function, or open the **Compose HTML Preview** tool window from the right
+3. Click the gutter icon next to the function, or open the **Kaleidos** tool window from the right
    toolbar.
 4. That is it. The plugin picks the module, starts its dev server, generates the page and renders your previews.
    Save the file to see it reload.
@@ -161,8 +161,8 @@ selected file → previews scanned → module picked → sources generated → d
 
    | Module | URL |
    |---|---|
-   | Plain Kotlin/JS | `http://localhost:{port}/compose-html-preview.html?preview={fqn,fqn}` |
-   | Kobweb | `http://localhost:{port}/compose-html-preview?preview={fqn,fqn}` |
+   | Plain Kotlin/JS | `http://localhost:{port}/kaleidos.html?preview={fqn,fqn}` |
+   | Kobweb | `http://localhost:{port}/kaleidos?preview={fqn,fqn}` |
 
    Without the `preview` parameter the same page shows every preview it knows, so it doubles as a gallery.
 
@@ -253,16 +253,16 @@ back.
 <details>
 <summary><strong>What the plugin generates</strong></summary>
 
-Everything generated lives under `build/compose-html-preview` of the module it belongs to, so it is ignored by
+Everything generated lives under `build/kaleidos` of the module it belongs to, so it is ignored by
 version control, removed by `clean` and never mixed into your sources:
 
 | File | Where | What it is |
 |---|---|---|
-| `kotlin/composehtmlpreview/generated/<module>/PreviewRegistry.kt` | every module that owns previews the picked module can see | compiled into that module, so `internal` previews work: only the object that dispatches them is public |
-| `kotlin/composehtmlpreview/generated/PreviewPage.kt` | the picked module | the page itself |
-| `PreviewMain.kt` + `compose-html-preview.html` | the picked module, plain Kotlin/JS | entry point and host page |
-| `ComposeHtmlPreviewRoute.kt` with `@Page("/compose-html-preview")` | the picked module, Kobweb | the page as a route of the site |
-| `compose-html-preview.init.gradle` | the picked module | the init script that adds those source directories to the build |
+| `kotlin/kaleidos/generated/<module>/PreviewRegistry.kt` | every module that owns previews the picked module can see | compiled into that module, so `internal` previews work: only the object that dispatches them is public |
+| `kotlin/kaleidos/generated/PreviewPage.kt` | the picked module | the page itself |
+| `PreviewMain.kt` + `kaleidos.html` | the picked module, plain Kotlin/JS | entry point and host page |
+| `KaleidosRoute.kt` with `@Page("/kaleidos")` | the picked module, Kobweb | the page as a route of the site |
+| `kaleidos.init.gradle` | the picked module | the init script that adds those source directories to the build |
 
 The init script is passed to the preview run as `--init-script`, so it affects nothing else: not your build files,
 not the Gradle sync of the IDE, not a build you start yourself.
@@ -282,7 +282,7 @@ switching between two files recompiles nothing.
 
 Kobweb components depend on Silk, whose styles are registered by the entry point the Kobweb Gradle plugin generates
 for an application, so previews of a Kobweb library are served by a Kobweb application of the build. The plugin adds
-its page to that application as a `@Page("/compose-html-preview")` route, which the Kobweb code generation picks up
+its page to that application as a `@Page("/kaleidos")` route, which the Kobweb code generation picks up
 from the generated source directory like any page of the site, and runs `kobwebStart -t`; the port comes from
 `server.port` in `.kobweb/conf.yaml` of the module.
 

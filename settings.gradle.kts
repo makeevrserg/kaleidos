@@ -23,7 +23,7 @@ dependencyResolutionManagement {
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
-rootProject.name = "compose-html-preview"
+rootProject.name = "kaleidos"
 
 include(":plugin")
 // Components. `api` modules are plain Kotlin without the IntelliJ Platform; `intellij` modules hold the adapters.
