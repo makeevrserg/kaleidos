@@ -21,6 +21,10 @@ dependencies {
         )
     }
 
+    // @Preview annotations only, taken without transitives so no second Compose reaches the compile
+    // classpath. Never at runtime: the IDE reads the annotations, the composables never touch them.
+    compileOnly(libs.compose.ui.tooling.preview) { isTransitive = false }
+
     implementation(projects.components.core.api)
     implementation(projects.components.preview.api)
 

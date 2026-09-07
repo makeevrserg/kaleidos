@@ -4,11 +4,15 @@ kotlin-version = "2.3.20" # https://github.com/JetBrains/kotlin
 kotlinx-coroutines = "1.10.2" # https://github.com/Kotlin/kotlinx.coroutines
 # klibs
 klibs-gradleplugin = "2.0.0" # https://github.com/makeevrserg/gradle-plugin
+# Compose
+compose-multiplatform = "1.11.1" # https://github.com/JetBrains/compose-multiplatform
 
 [libraries]
 # Kotlin
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin-version" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+# Compose
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview-desktop", version.ref = "compose-multiplatform" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 # Tests
 tests-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin-version" }

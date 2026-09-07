@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
@@ -20,6 +21,8 @@ private const val STATUS_PADDING_VERTICAL = 4
 private const val STATUS_PADDING_HORIZONTAL = 8
 private const val STATUS_ICON_GAP = 6
 private const val STATUS_TRANSITION = "preview-status"
+private const val LOADING_SAMPLE = "Loading preview…"
+private const val URL_SAMPLE = "http://localhost:8080/compose-html-preview?preview=app.CardPreview"
 
 /** Footer with the state of the dev server, and a spinner while the page itself is loading. */
 @Composable
@@ -49,4 +52,16 @@ internal fun PreviewStatusBar(
             )
         }
     }
+}
+
+@Preview
+@Composable
+internal fun StatusBarLoadingPreview() {
+    PreviewStatusBar(text = LOADING_SAMPLE, isLoading = true)
+}
+
+@Preview
+@Composable
+internal fun StatusBarIdlePreview() {
+    PreviewStatusBar(text = URL_SAMPLE, isLoading = false)
 }
