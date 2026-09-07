@@ -69,7 +69,10 @@ class RootModule(
 
     val previewStore: PreviewStore = intellijPreviewModule.previewModule.previewStore
 
-    val uiModule = UiModule(previewStore = previewStore)
+    val uiModule = UiModule(
+        previewStore = previewStore,
+        project = project
+    )
 
     val lifecycle: Lifecycle = intellijPreviewModule.lifecycle
 }

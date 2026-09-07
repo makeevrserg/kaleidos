@@ -41,13 +41,17 @@ private const val CONTENT_WEIGHT = 1f
  * Rendered from the last state seen while the tool window was visible. The store keeps working while
  * nobody looks at the page, and dropping a loaded page for a state change no one can see would cost
  * a full dev server round trip to get it back.
+ *
+ * @param onDonateClick opens the ways of supporting the author, offered by the footer
  */
 @Composable
 internal fun PreviewToolWindowContent(
     store: PreviewStore,
     browser: PreviewBrowser,
     messageTexts: PreviewMessageTexts,
-    uiStateFactory: PreviewUiStateFactory
+    uiStateFactory: PreviewUiStateFactory,
+    donationText: String,
+    onDonateClick: () -> Unit
 ) {
     val storeState by store.state.collectAsState()
     var visibleState by remember { mutableStateOf(storeState) }
@@ -102,6 +106,10 @@ internal fun PreviewToolWindowContent(
                 }
             }
         }
-        PreviewStatusBar(text = uiState.statusText)
+        PreviewStatusBar(
+            text = uiState.statusText,
+            donationText = donationText,
+            onDonateClick = onDonateClick
+        )
     }
 }
