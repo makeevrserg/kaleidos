@@ -26,6 +26,8 @@ dependencies {
     compileOnly(libs.compose.ui.tooling.preview) { isTransitive = false }
 
     implementation(projects.components.core.api)
+    // The page the harness generates says who it is by its title; the browser checks that it got it
+    implementation(projects.components.harness.api)
     implementation(projects.components.preview.api)
 
     testImplementation(libs.kotlin.stdlib)

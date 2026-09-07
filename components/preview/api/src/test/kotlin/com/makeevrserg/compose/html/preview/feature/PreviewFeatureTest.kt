@@ -339,6 +339,17 @@ class PreviewFeatureTest {
     }
 
     @Test
+    fun GIVEN_running_server_WHEN_the_address_answers_with_another_page_THEN_the_state_says_so() = runTest {
+        val feature = createVisibleFeatureWithCardFile()
+        devServerController.mutableState.value = running
+        runCurrent()
+
+        feature.onPageLoaded(PageLoad.Foreign)
+
+        assertEquals(PageState.Foreign, feature.state.value.pageState)
+    }
+
+    @Test
     fun GIVEN_shown_page_WHEN_the_browser_reports_a_failure_THEN_the_reason_reaches_the_state() = runTest {
         val feature = createVisibleFeatureWithCardFile()
         devServerController.mutableState.value = running

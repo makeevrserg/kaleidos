@@ -11,6 +11,9 @@ sealed interface PageState {
 
     data object Shown : PageState
 
+    /** The address answered with a page the plugin did not generate. */
+    data object Foreign : PageState
+
     /** @param reason why the browser could not render the page, worded for the user */
     data class Failed(
         val reason: String

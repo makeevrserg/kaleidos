@@ -140,6 +140,7 @@ class PreviewFeature(
         mutableState.update { current ->
             when (load) {
                 PageLoad.Succeeded -> reducer.markPageShown(current)
+                PageLoad.Foreign -> reducer.markPageForeign(current)
                 is PageLoad.Failed -> reducer.markPageFailed(current, load.reason)
             }
         }

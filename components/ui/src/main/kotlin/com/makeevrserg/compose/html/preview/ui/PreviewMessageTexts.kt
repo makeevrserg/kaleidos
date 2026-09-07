@@ -97,6 +97,17 @@ class PreviewMessageTexts {
         )
     }
 
+    fun foreignPage(serverState: DevServerState): PreviewMessage {
+        val server = (serverState as? DevServerState.Running)?.host?.displayName
+        val where = if (server == null) "The dev server" else "The dev server of $server"
+        return PreviewMessage(
+            title = "The dev server does not serve the preview page",
+            description = "$where answered with something else, which is what a server that was already " +
+                "running before the plugin attached to it does: it was built without the page.\n\n" +
+                "Press Restart Dev Server to build and start it again."
+        )
+    }
+
     private companion object {
         const val SOURCE_SET_SEPARATOR = ", "
     }

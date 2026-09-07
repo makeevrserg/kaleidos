@@ -48,6 +48,7 @@ class PreviewUiStateFactory(
             host is PreviewHostResolution.NotFound -> PreviewContent.Failure(messageTexts.hostNotFound(host))
             serverState is DevServerState.Failed -> PreviewContent.Failure(messageTexts.serverFailed(serverState))
             pageState is PageState.Failed -> PreviewContent.Failure(messageTexts.pageFailed(pageState))
+            pageState is PageState.Foreign -> PreviewContent.Failure(messageTexts.foreignPage(serverState))
             else -> null
         }
     }

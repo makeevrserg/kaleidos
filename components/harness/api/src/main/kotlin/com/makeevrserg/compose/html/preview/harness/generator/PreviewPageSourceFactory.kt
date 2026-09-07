@@ -1,6 +1,7 @@
 package com.makeevrserg.compose.html.preview.harness.generator
 
 import com.makeevrserg.compose.html.preview.harness.HarnessPlan
+import com.makeevrserg.compose.html.preview.harness.PreviewPagePath
 
 /**
  * The source of the page itself: it reads the `preview` query parameter, renders every preview it names
@@ -44,6 +45,7 @@ class PreviewPageSourceFactory(private val naming: HarnessNaming) {
             add("")
             add("private const val PREVIEW_PARAMETER = \"preview\"")
             add("private const val FQN_SEPARATOR = \",\"")
+            add("private const val PAGE_TITLE = \"${PreviewPagePath.TITLE}\"")
             add("")
             addAll(knownPreviewLines(plan))
         }
@@ -111,6 +113,9 @@ class PreviewPageSourceFactory(private val naming: HarnessNaming) {
             "public fun PreviewPage() {",
             "    val fqns = requestedFqns().ifEmpty { allPreviewFqns }",
             "    DisposableEffect(fqns) {",
+            "        // Tells the IDE this really is the generated page and not the site the dev server",
+            "        // answers with for a path its bundle does not know.",
+            "        document.title = PAGE_TITLE",
             "        val anchor = window.location.hash.removePrefix(\"#\")",
             "        if (anchor.isNotEmpty()) document.getElementById(anchor)?.scrollIntoView()",
             "        onDispose { }",

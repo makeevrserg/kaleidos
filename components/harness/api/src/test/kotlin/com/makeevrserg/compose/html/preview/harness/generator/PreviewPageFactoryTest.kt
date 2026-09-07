@@ -87,6 +87,18 @@ class PreviewPageFactoryTest {
         )
     }
 
+    /**
+     * A single page application answers every path with the shell of the real site, so the IDE can only
+     * tell the generated page from it by the title the page gives the document.
+     */
+    @Test
+    fun GIVEN_any_host_WHEN_create_THEN_the_page_names_itself_in_the_document_title() {
+        DevServerKind.entries.forEach { kind ->
+            assertTrue(pageContent(kind).contains("document.title = PAGE_TITLE"))
+            assertTrue(pageContent(kind).contains("\"${PreviewPagePath.TITLE}\""))
+        }
+    }
+
     @Test
     fun GIVEN_no_previews_at_all_WHEN_create_THEN_the_page_still_compiles() {
         val content = pageContent(DevServerKind.KOBWEB, modules = emptyList())

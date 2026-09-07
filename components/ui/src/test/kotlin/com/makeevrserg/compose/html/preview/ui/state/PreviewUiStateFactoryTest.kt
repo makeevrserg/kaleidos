@@ -95,6 +95,17 @@ class PreviewUiStateFactoryTest {
         assertTrue(uiState.content.message.description.contains("Refresh Preview"))
     }
 
+    @Test
+    fun GIVEN_dev_server_that_answered_with_another_page_WHEN_ui_state_is_created_THEN_failure_offers_a_restart() {
+        val state = PreviewUiStateFixtures.pageState(PageState.Foreign)
+
+        val uiState = factory.create(state)
+
+        assertIs<PreviewContent.Failure>(uiState.content)
+        assertTrue(uiState.content.message.description.contains(PreviewUiStateFixtures.host.displayName))
+        assertTrue(uiState.content.message.description.contains("Restart Dev Server"))
+    }
+
     /** A live reload can still bring the page back, so the browser keeps the address it failed on. */
     @Test
     fun GIVEN_page_the_browser_could_not_load_WHEN_ui_state_is_created_THEN_the_url_is_still_loaded() {

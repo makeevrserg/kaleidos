@@ -256,6 +256,22 @@ class PreviewStateReducerTest {
     }
 
     @Test
+    fun GIVEN_served_file_WHEN_the_address_answers_with_another_page_THEN_the_page_is_foreign() {
+        val state = reducer.markPageForeign(servedState())
+
+        assertEquals(PageState.Foreign, state.pageState)
+    }
+
+    @Test
+    fun GIVEN_foreign_page_WHEN_another_file_is_selected_THEN_the_page_state_starts_over() {
+        val foreign = reducer.markPageForeign(servedState())
+
+        val state = reducer.select(foreign, target(filePath = BUTTON_FILE, scan = PreviewScan.Pending))
+
+        assertEquals(PageState.Loading, state.pageState)
+    }
+
+    @Test
     fun GIVEN_failed_page_WHEN_a_later_load_succeeds_THEN_the_page_is_shown_again() {
         val failed = reducer.markPageFailed(servedState(), "ERR_CONNECTION_REFUSED")
 

@@ -104,4 +104,9 @@ class PreviewStateReducer(
         if (state.previewUrl == null) return state
         return state.copy(pageState = PageState.Failed(reason))
     }
+
+    fun markPageForeign(state: PreviewState): PreviewState {
+        if (state.previewUrl == null) return state
+        return state.copy(pageState = PageState.Foreign)
+    }
 }
