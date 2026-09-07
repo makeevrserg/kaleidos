@@ -5,7 +5,8 @@ import com.makeevrserg.compose.html.preview.feature.PreviewScan
 import com.makeevrserg.compose.html.preview.feature.SourceState
 import com.makeevrserg.compose.html.preview.host.PreviewHostResolution
 import com.makeevrserg.compose.html.preview.server.DevServerState
-import com.makeevrserg.compose.html.preview.ui.PreviewStateTexts
+import com.makeevrserg.compose.html.preview.ui.PreviewMessageTexts
+import com.makeevrserg.compose.html.preview.ui.PreviewStatusTexts
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -15,16 +16,19 @@ import kotlin.test.assertTrue
 
 class PreviewUiStateFactoryTest {
 
-    private val texts = PreviewStateTexts()
+    private val messageTexts = PreviewMessageTexts()
 
-    private val factory = PreviewUiStateFactory(texts)
+    private val factory = PreviewUiStateFactory(
+        statusTexts = PreviewStatusTexts(),
+        messageTexts = messageTexts
+    )
 
     @Test
     fun GIVEN_no_selected_file_WHEN_ui_state_is_created_THEN_message_asks_for_a_file() {
         val uiState = factory.create(PreviewUiStateFixtures.state(target = null))
 
         assertIs<PreviewContent.Empty>(uiState.content)
-        assertTrue(uiState.content.text.contains("@Preview"))
+        assertTrue(uiState.content.message.description.contains("@Preview"))
     }
 
     @Test
@@ -34,7 +38,7 @@ class PreviewUiStateFactoryTest {
         val uiState = factory.create(PreviewUiStateFixtures.state(target = target))
 
         assertIs<PreviewContent.Loading>(uiState.content)
-        assertTrue(uiState.content.text.contains(PreviewUiStateFixtures.FILE_NAME))
+        assertTrue(uiState.content.message.description.contains(PreviewUiStateFixtures.FILE_NAME))
     }
 
     @Test
@@ -44,7 +48,7 @@ class PreviewUiStateFactoryTest {
         val uiState = factory.create(PreviewUiStateFixtures.state(target = target))
 
         assertIs<PreviewContent.Empty>(uiState.content)
-        assertTrue(uiState.content.text.contains(PreviewUiStateFixtures.FILE_NAME))
+        assertTrue(uiState.content.message.title.contains(PreviewUiStateFixtures.FILE_NAME))
     }
 
     @Test
@@ -54,8 +58,9 @@ class PreviewUiStateFactoryTest {
         val uiState = factory.create(PreviewUiStateFixtures.state(target = target))
 
         assertIs<PreviewContent.Empty>(uiState.content)
-        assertTrue(uiState.content.text.contains("jvmMain"))
-        assertTrue(uiState.content.text.contains("jsMain"))
+        assertTrue(uiState.content.message.title.contains(PreviewUiStateFixtures.FILE_NAME))
+        assertTrue(uiState.content.message.description.contains("jvmMain"))
+        assertTrue(uiState.content.message.description.contains("jsMain"))
     }
 
     @Test
@@ -65,7 +70,7 @@ class PreviewUiStateFactoryTest {
         val uiState = factory.create(PreviewUiStateFixtures.state(target = target))
 
         assertIs<PreviewContent.Failure>(uiState.content)
-        assertTrue(uiState.content.text.contains("No Kotlin/JS module"))
+        assertEquals("No Kotlin/JS module", uiState.content.message.description)
     }
 
     @Test
@@ -75,33 +80,25 @@ class PreviewUiStateFactoryTest {
         val uiState = factory.create(PreviewUiStateFixtures.state(serverState = serverState))
 
         assertIs<PreviewContent.Failure>(uiState.content)
-        assertTrue(uiState.content.text.contains("Port 8085 is taken"))
-        assertTrue(uiState.content.text.contains("Refresh Preview"))
+        assertTrue(uiState.content.message.description.contains("Port 8085 is taken"))
+        assertTrue(uiState.content.message.description.contains("Refresh Preview"))
     }
 
     @Test
-    fun GIVEN_page_the_browser_could_not_render_WHEN_ui_state_is_created_THEN_failure_offers_a_retry() {
-        val state = PreviewUiStateFixtures.state(
-            previewUrl = PreviewUiStateFixtures.PREVIEW_URL,
-            serverState = PreviewUiStateFixtures.running,
-            pageState = PageState.Failed("ERR_CONNECTION_REFUSED")
-        )
+    fun GIVEN_page_the_browser_could_not_load_WHEN_ui_state_is_created_THEN_failure_offers_a_retry() {
+        val state = PreviewUiStateFixtures.pageState(PageState.Failed("ERR_CONNECTION_REFUSED"))
 
         val uiState = factory.create(state)
 
         assertIs<PreviewContent.Failure>(uiState.content)
-        assertTrue(uiState.content.text.contains("ERR_CONNECTION_REFUSED"))
-        assertTrue(uiState.content.text.contains("Refresh Preview"))
+        assertTrue(uiState.content.message.description.contains("ERR_CONNECTION_REFUSED"))
+        assertTrue(uiState.content.message.description.contains("Refresh Preview"))
     }
 
     /** A live reload can still bring the page back, so the browser keeps the address it failed on. */
     @Test
-    fun GIVEN_page_the_browser_could_not_render_WHEN_ui_state_is_created_THEN_the_url_is_still_loaded() {
-        val state = PreviewUiStateFixtures.state(
-            previewUrl = PreviewUiStateFixtures.PREVIEW_URL,
-            serverState = PreviewUiStateFixtures.running,
-            pageState = PageState.Failed("ERR_CONNECTION_REFUSED")
-        )
+    fun GIVEN_page_the_browser_could_not_load_WHEN_ui_state_is_created_THEN_the_url_is_still_loaded() {
+        val state = PreviewUiStateFixtures.pageState(PageState.Failed("ERR_CONNECTION_REFUSED"))
 
         val uiState = factory.create(state)
 
@@ -116,24 +113,28 @@ class PreviewUiStateFactoryTest {
     }
 
     @Test
+    fun GIVEN_host_not_looked_up_yet_WHEN_ui_state_is_created_THEN_loading_says_so() {
+        val target = PreviewUiStateFixtures.target(host = null)
+
+        val uiState = factory.create(PreviewUiStateFixtures.state(target = target))
+
+        assertEquals(PreviewContent.Loading(messageTexts.lookingForHost), uiState.content)
+    }
+
+    @Test
     fun GIVEN_starting_server_and_no_page_WHEN_ui_state_is_created_THEN_loading_names_the_task() {
         val serverState = DevServerState.Starting(PreviewUiStateFixtures.host)
 
         val uiState = factory.create(PreviewUiStateFixtures.state(serverState = serverState))
 
         assertIs<PreviewContent.Loading>(uiState.content)
-        assertTrue(uiState.content.text.contains(PreviewUiStateFixtures.host.kind.startTask))
+        assertTrue(uiState.content.message.description.contains(PreviewUiStateFixtures.host.kind.startTask))
         assertTrue(uiState.statusText.contains(PreviewUiStateFixtures.host.displayName))
     }
 
     @Test
     fun GIVEN_page_that_has_not_loaded_yet_WHEN_ui_state_is_created_THEN_it_is_loaded_but_not_shown() {
-        val state = PreviewUiStateFixtures.state(
-            previewUrl = PreviewUiStateFixtures.PREVIEW_URL,
-            serverState = PreviewUiStateFixtures.running
-        )
-
-        val uiState = factory.create(state)
+        val uiState = factory.create(PreviewUiStateFixtures.pageState(PageState.Loading))
 
         assertIs<PreviewContent.Loading>(uiState.content)
         assertEquals(PreviewUiStateFixtures.PREVIEW_URL, uiState.pageUrl)
@@ -184,6 +185,6 @@ class PreviewUiStateFactoryTest {
         val uiState = factory.create(PreviewUiStateFixtures.state(target = target))
 
         assertIs<PreviewContent.Failure>(uiState.content)
-        assertTrue(uiState.content.text.none { symbol -> symbol == '<' })
+        assertTrue(uiState.content.message.description.none { symbol: Char -> symbol == '<' })
     }
 }

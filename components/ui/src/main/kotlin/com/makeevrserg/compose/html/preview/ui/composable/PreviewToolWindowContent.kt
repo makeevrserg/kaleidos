@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
-import com.makeevrserg.compose.html.preview.ui.PreviewStateTexts
+import com.makeevrserg.compose.html.preview.ui.PreviewMessageTexts
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowser
 import com.makeevrserg.compose.html.preview.ui.composable.components.PreviewPageView
 import com.makeevrserg.compose.html.preview.ui.composable.components.PreviewPlaceholder
@@ -46,7 +46,7 @@ private const val CONTENT_WEIGHT = 1f
 internal fun PreviewToolWindowContent(
     store: PreviewStore,
     browser: PreviewBrowser,
-    texts: PreviewStateTexts,
+    messageTexts: PreviewMessageTexts,
     uiStateFactory: PreviewUiStateFactory
 ) {
     val storeState by store.state.collectAsState()
@@ -72,7 +72,7 @@ internal fun PreviewToolWindowContent(
                 browser = browser,
                 url = uiState.pageUrl,
                 isPageVisible = uiState.content is PreviewContent.Page,
-                unsupportedText = texts.unsupportedBrowser,
+                unsupportedMessage = messageTexts.unsupportedBrowser,
                 onLoad = store::onPageLoaded,
                 modifier = Modifier.fillMaxSize()
             )
@@ -85,17 +85,17 @@ internal fun PreviewToolWindowContent(
                 when (content) {
                     is PreviewContent.Page -> Box(modifier = Modifier.fillMaxSize())
                     is PreviewContent.Loading -> PreviewPlaceholder(
-                        text = content.text,
+                        message = content.message,
                         kind = PreviewPlaceholderKind.LOADING,
                         modifier = Modifier.fillMaxSize()
                     )
                     is PreviewContent.Empty -> PreviewPlaceholder(
-                        text = content.text,
+                        message = content.message,
                         kind = PreviewPlaceholderKind.INFO,
                         modifier = Modifier.fillMaxSize()
                     )
                     is PreviewContent.Failure -> PreviewPlaceholder(
-                        text = content.text,
+                        message = content.message,
                         kind = PreviewPlaceholderKind.FAILURE,
                         modifier = Modifier.fillMaxSize()
                     )

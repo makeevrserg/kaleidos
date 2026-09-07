@@ -14,7 +14,7 @@ import javax.swing.JComponent
 class PreviewPanel(
     private val store: PreviewStore,
     private val browser: PreviewBrowser,
-    private val texts: PreviewStateTexts,
+    private val messageTexts: PreviewMessageTexts,
     private val uiStateFactory: PreviewUiStateFactory
 ) {
 
@@ -22,7 +22,7 @@ class PreviewPanel(
         PreviewToolWindowContent(
             store = store,
             browser = browser,
-            texts = texts,
+            messageTexts = messageTexts,
             uiStateFactory = uiStateFactory
         )
     }

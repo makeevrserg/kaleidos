@@ -66,13 +66,18 @@ object PreviewUiStateFixtures {
         )
     }
 
-    /** The state in which the browser shows the page: server running, page loaded. */
-    fun shownPageState(sourceState: SourceState = SourceState.UpToDate): PreviewState {
+    /** A running server that serves the page, with the browser in [pageState]. */
+    fun pageState(pageState: PageState, sourceState: SourceState = SourceState.UpToDate): PreviewState {
         return state(
             previewUrl = PREVIEW_URL,
             sourceState = sourceState,
             serverState = running,
-            pageState = PageState.Shown
+            pageState = pageState
         )
+    }
+
+    /** The state in which the browser shows the page: server running, page loaded. */
+    fun shownPageState(sourceState: SourceState = SourceState.UpToDate): PreviewState {
+        return pageState(PageState.Shown, sourceState)
     }
 }

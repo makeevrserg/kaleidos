@@ -1,8 +1,9 @@
 package com.makeevrserg.compose.html.preview.ui.di
 
 import com.makeevrserg.compose.html.preview.feature.PreviewStore
+import com.makeevrserg.compose.html.preview.ui.PreviewMessageTexts
 import com.makeevrserg.compose.html.preview.ui.PreviewPanel
-import com.makeevrserg.compose.html.preview.ui.PreviewStateTexts
+import com.makeevrserg.compose.html.preview.ui.PreviewStatusTexts
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowser
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowserFactory
 import com.makeevrserg.compose.html.preview.ui.state.PreviewUiStateFactory
@@ -16,16 +17,19 @@ class UiModule(
 ) {
     val previewBrowserFactory = PreviewBrowserFactory()
 
-    private val previewStateTexts = PreviewStateTexts()
+    private val previewMessageTexts = PreviewMessageTexts()
 
-    private val previewUiStateFactory = PreviewUiStateFactory(previewStateTexts)
+    private val previewUiStateFactory = PreviewUiStateFactory(
+        statusTexts = PreviewStatusTexts(),
+        messageTexts = previewMessageTexts
+    )
 
     /** Must be called on the event dispatch thread. The caller owns [browser]. */
     fun createPreviewPanel(browser: PreviewBrowser): PreviewPanel {
         return PreviewPanel(
             store = previewStore,
             browser = browser,
-            texts = previewStateTexts,
+            messageTexts = previewMessageTexts,
             uiStateFactory = previewUiStateFactory
         )
     }

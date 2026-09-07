@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import com.makeevrserg.compose.html.preview.feature.PageLoad
 import com.makeevrserg.compose.html.preview.ui.browser.PreviewBrowser
+import com.makeevrserg.compose.html.preview.ui.state.PreviewMessage
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 /**
@@ -34,22 +35,22 @@ private fun PreviewPageLoads(
 /**
  * Hosts the embedded browser. Swing components live in the interop layer above the Compose canvas,
  * so nothing can be drawn over the browser: the placeholders are drawn where it is not, and it is
- * kept mounted and only hidden while it has nothing to show. Adding and removing it instead would
- * tear the browser down and build it again on every state change.
+ * kept mounted while it has nothing to show. Adding and removing it instead would tear the browser
+ * down and build it again on every state change.
  *
- * A page is loaded while the browser is hidden and shown only once the store reports that load, which
- * is what keeps the page of the file left behind from ever being seen.
+ * A page is loaded out of sight and shown only once the store reports that load, which is what keeps
+ * the page of the file left behind from ever being seen.
  *
  * @param url page to load; null while the tool window has no page for the selected file
  * @param isPageVisible whether the browser shows the page it was last asked to load
- * @param unsupportedText shown in place of the page when the runtime has no embedded browser
+ * @param unsupportedMessage shown in place of the page when the runtime has no embedded browser
  */
 @Composable
 internal fun PreviewPageView(
     browser: PreviewBrowser,
     url: String?,
     isPageVisible: Boolean,
-    unsupportedText: String,
+    unsupportedMessage: PreviewMessage,
     onLoad: (PageLoad) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -62,7 +63,7 @@ internal fun PreviewPageView(
             update = { hosted -> hosted.isVisible = isPageVisible }
         )
         isPageVisible -> PreviewPlaceholder(
-            text = unsupportedText,
+            message = unsupportedMessage,
             kind = PreviewPlaceholderKind.INFO,
             modifier = modifier
         )
