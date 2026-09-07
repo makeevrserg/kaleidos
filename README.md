@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.2.0-3574F0?style=for-the-badge" alt="Version 0.2.0"/>
+  <img src="https://img.shields.io/badge/version-0.3.2-3574F0?style=for-the-badge" alt="Version 0.3.2"/>
   <img src="https://img.shields.io/badge/IntelliJ_IDEA-2026.2+-000000?style=for-the-badge&logo=intellijidea&logoColor=white" alt="IntelliJ IDEA 2026.2+"/>
   <img src="https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin"/>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-D22128?style=for-the-badge" alt="Apache 2.0"/></a>
