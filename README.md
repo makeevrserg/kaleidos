@@ -335,10 +335,7 @@ Every component is merged into the plugin JAR through `pluginComposedModule` in 
 - [kotlin-js-preview-idea-plugin](https://github.com/sanyavertolet/kotlin-js-preview-idea-plugin) for proving Kotlin/JS previews in JCEF work
 - [jetbrains](https://jetbrains.com) for IntelliJ
 
-## 💜 Support Us
-
-If this plugin helps you, consider supporting its development. The same options are one click away inside the IDE:
-the **Support the author** link in the footer of the tool window.
+## 💖 Support the project
 
 <table>
 <tr>
@@ -348,34 +345,8 @@ the **Support the author** link in the footer of the tool window.
 </td>
 <td align="center">
 <a href="https://t.me/makeevrserg">
-<img width="70%" src="https://img.shields.io/badge/Write-@makeevrserg-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Write to @makeevrserg on Telegram"/>
+<img width="70%" src="https://img.shields.io/badge/@makeevrserg-Message-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @makeevrserg"/>
 </a>
-</td>
-</tr>
-<tr>
-<td align="center" width="130">
-<img src="https://cdn.simpleicons.org/bitcoin/F7931A" width="25" alt="BTC"/><br/>
-<sub><b>Bitcoin</b></sub>
-</td>
-<td>
-
-```text
-bc1q9a8dr55jgfae0mhevw3vvczegjv0khfp0ngrnv
-```
-
-</td>
-</tr>
-<tr>
-<td align="center" width="130">
-<img src="https://cdn.simpleicons.org/ethereum/627EEA" width="25" alt="ETH"/><br/>
-<sub><b>Ethereum</b></sub>
-</td>
-<td>
-
-```text
-0x0BaAeEA44Ce08c8DC139224ff57563695B30d423
-```
-
 </td>
 </tr>
 <tr>
@@ -389,7 +360,66 @@ bc1q9a8dr55jgfae0mhevw3vvczegjv0khfp0ngrnv
 </a>
 </td>
 </tr>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/tether/50AF95" width="25" alt="USDT"/><br/>
+<sub><b>USDT</b></sub><br/>
+<sub>Polygon (POL)</sub>
+</td>
+<td>
+
+```text
+0x3955abc6f5396e57b11a05b96f988bc60708c9b0
+```
+
+</td>
+</tr>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/tether/50AF95" width="25" alt="USDT"/><br/>
+<sub><b>USDT</b></sub><br/>
+<sub>TRC20</sub>
+</td>
+<td>
+
+```text
+TLYf28vZeuuHcEJMHSZtuYEzQ2DjNvNE3W
+```
+
+</td>
+</tr>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/tether/50AF95" width="25" alt="USDT"/><br/>
+<sub><b>USDT</b></sub><br/>
+<sub>Solana</sub>
+</td>
+<td>
+
+```text
+6sYK6Nss8cjLeeTp6u3t63JG4f1hFf8sDQ7nVtMNoyps
+```
+
+</td>
+</tr>
+<tr>
+<td align="center" width="130">
+<img src="https://cdn.simpleicons.org/ton/0098EA" width="25" alt="TON"/><br/>
+<sub><b>TON</b></sub><br/>
+<sub>TON network</sub>
+</td>
+<td>
+
+```text
+UQDfywxsnHI1ko_uqBYKED3RoMzoVm3mnxuS_-JVQc4mSSJt
+```
+
+</td>
+</tr>
 </table>
+
+A ⭐ on the repository costs nothing and helps just as much.
+
 
 ## 📄 License
 
