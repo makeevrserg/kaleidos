@@ -71,7 +71,7 @@ under it.
 | Spinner | Looking for a module | the Gradle structure is being read for a module that can render the file |
 | Spinner | Starting the dev server | the Gradle task of that module is running |
 | Spinner | Waiting for the dev server | the plugin is polling the port of a server that has not answered yet |
-| Spinner | Loading the preview | the page is being loaded into the embedded browser |
+| Spinner | Loading the preview | the page is being fetched; a dev server that is rebuilding answers only when it is done |
 | — | *the page* | the browser loaded the page and the page identified itself |
 | Information | No file selected | no editor file is selected |
 | Information | No previews in … | the file declares no `@Preview` function |
@@ -87,8 +87,13 @@ the address returns HTTP 200 and renders nothing. The generated page therefore n
 and a load that never shows that title is reported instead of an empty panel. **Restart Dev Server** builds and
 starts the server again with the page in it.
 
-A page the browser could not load stays loaded behind the message, so a rebuild that fixes the problem brings it
-back on its own live reload; **Refresh Preview** retries at once.
+The embedded browser is a Swing component of a Compose panel, which means it is a hole cut into the canvas: it
+replaces whatever is drawn where it sits, and hiding it only leaves the background of the window showing through.
+So it is given room only while it shows a page, and no room at all while a card is up. That is what keeps a
+message from turning into an empty rectangle, and it is why the page is fetched while the card is still there.
+
+**Refresh Preview** hands the address back to the browser and loads it again, which is how a page that failed
+comes back.
 
 ### What the plugin generates
 
@@ -104,6 +109,9 @@ version control, removed by `clean` and never mixed into your sources:
 - `compose-html-preview.init.gradle`, the init script that adds those source directories to the build. It is
   passed to the preview run as `--init-script`, so it affects nothing else: not your build files, not the Gradle
   sync of the IDE, not a build you start yourself.
+
+Every preview on the page is a card of its own: a header naming it and a body with room around the composable, so
+several previews of one file do not run into each other.
 
 Previews are collected from source sets that end up in the Kotlin/JS compilation — `commonMain`, `jsMain` and the
 `main` of the `kotlin("js")` plugin — and never from tests. The generated sources are rewritten before every
