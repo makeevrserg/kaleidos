@@ -60,24 +60,34 @@ well: a run started by the plugin never outlives it.
 ### What the tool window shows
 
 Switching editor tabs drops the page immediately: the preview of the file you left is gone before the new file has
-even been read, and a page is put on screen only once the browser reports that it loaded, never while it is still
-loading. The tool window is in exactly one of these states:
+even been read, and a page is put on screen only once the browser reports that it loaded and the page itself
+answered that it is the generated one, never while it is still loading. Anything that is not a page is a card in
+the shape the platform uses for empty and failed states: an icon, one line saying what is going on and the detail
+under it.
 
-| State | When |
-|---|---|
-| Spinner, *Looking for @Preview functions in …* | the selected file is being scanned |
-| Spinner, *Looking for the module that can render the previews…* | the Gradle structure is being read |
-| Spinner, *Starting …* / *Connecting to the dev server of …* | the dev server is starting or being polled |
-| Spinner, *Loading preview…* | the page is being loaded into the embedded browser |
-| The page | the browser reported the page of the current file |
-| *Open a Kotlin file with @Preview functions* | no editor file is selected |
-| *No @Preview functions in …* | the file has none |
-| *The @Preview functions of … are in `jvmMain`, which is not compiled to Kotlin/JS* | the previews exist but their source set never reaches the page |
-| Error, *Nothing in this project can render the preview* | no module of the build can serve the file (with the reason) |
-| Error, *Dev server failed* | the Gradle run failed; **Refresh Preview** tries again |
-| Error, *The preview page could not be rendered* | the browser could not load the page: the server refused the connection, answered an HTTP error, and so on |
+| Icon | Title | When |
+|---|---|---|
+| Spinner | Looking for previews | the selected file is being scanned |
+| Spinner | Looking for a module | the Gradle structure is being read for a module that can render the file |
+| Spinner | Starting the dev server | the Gradle task of that module is running |
+| Spinner | Waiting for the dev server | the plugin is polling the port of a server that has not answered yet |
+| Spinner | Loading the preview | the page is being loaded into the embedded browser |
+| — | *the page* | the browser loaded the page and the page identified itself |
+| Information | No file selected | no editor file is selected |
+| Information | No previews in … | the file declares no `@Preview` function |
+| Information | Previews of … are not compiled to Kotlin/JS | they are in `jvmMain` or another source set that never reaches the page |
+| Error | Nothing can render this preview | no module of the build can serve the file; the detail says why |
+| Error | The dev server failed | the Gradle run failed; **Refresh Preview** tries again |
+| Error | The preview page could not be loaded | the browser could not load the address: connection refused, an HTTP error, and so on |
+| Error | The dev server does not serve the preview page | the address answered with something that is not the generated page |
 
-A page the browser could not render stays loaded behind the message, so a rebuild that fixes the problem brings it
+The last one is what a dev server that was already running before the plugin attached to it does: it was built
+without the preview page, and a single page application answers *every* path with the shell of the real site, so
+the address returns HTTP 200 and renders nothing. The generated page therefore names itself in the document title,
+and a load that never shows that title is reported instead of an empty panel. **Restart Dev Server** builds and
+starts the server again with the page in it.
+
+A page the browser could not load stays loaded behind the message, so a rebuild that fixes the problem brings it
 back on its own live reload; **Refresh Preview** retries at once.
 
 ### What the plugin generates
@@ -119,9 +129,9 @@ Two things are worth knowing:
 - The `main` of the module that renders the previews is left out of the compilation of the preview run. If that
   file also declares something else the module needs, the run fails with a compilation error in the Run tool
   window; move the `main` into a file of its own.
-- A Kobweb server that was started outside the IDE, from a terminal for example, is adopted as it is. It was built
-  without the generated page, so its site has no `/compose-html-preview` route; press **Restart Dev Server** to
-  have the plugin run it.
+- A dev server that was started outside the IDE, from a terminal for example, is adopted as it is. It was built
+  without the generated page, so the tool window says that the server does not serve it; press **Restart Dev
+  Server** to have the plugin run it.
 
 ### Kobweb projects
 
