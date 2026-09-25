@@ -42,14 +42,15 @@ class ProjectPreviewScanner(
         return projectDependencies.psiManager.findFile(file) as? KtFile
     }
 
-    private fun previewsOf(file: VirtualFile): List<HarnessPreview> {
-        val ktFile = ktFile(file) ?: return emptyList()
-        return fileScanner.scan(ktFile).map { preview -> HarnessPreview(preview.fqn) }
-    }
-
     private fun sourceRootRelativePath(file: VirtualFile): String? {
         val sourceRoot = projectDependencies.fileIndex.getSourceRootForFile(file) ?: return null
         return VfsUtilCore.getRelativePath(file, sourceRoot, PATH_SEPARATOR)
+    }
+
+    private fun previewsOf(file: VirtualFile): List<HarnessPreview> {
+        val ktFile = ktFile(file) ?: return emptyList()
+        val sourcePath = sourceRootRelativePath(file) ?: return emptyList()
+        return fileScanner.scan(ktFile).map { preview -> HarnessPreview(fqn = preview.fqn, sourcePath = sourcePath) }
     }
 
     override suspend fun previews(): List<ModulePreviews> = withContext(backgroundContext) {

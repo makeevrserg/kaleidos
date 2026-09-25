@@ -1,6 +1,6 @@
 package com.makeevrserg.kaleidos.harness.generator
 
-import com.makeevrserg.kaleidos.harness.HarnessPreview
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.preview
 import com.makeevrserg.kaleidos.harness.PreviewModulePlan
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +12,7 @@ class PreviewRegistryFactoryTest {
     private val module = PreviewModulePlan(
         gradlePath = ":components:ui",
         directory = "/project/components/ui",
-        previews = listOf(HarnessPreview("com.example.CardPreview"), HarnessPreview("com.example.ButtonPreview"))
+        previews = listOf(preview("com.example.CardPreview"), preview("com.example.ButtonPreview"))
     )
 
     @Test

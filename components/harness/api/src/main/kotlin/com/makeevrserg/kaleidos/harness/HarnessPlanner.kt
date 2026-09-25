@@ -13,26 +13,33 @@ class HarnessPlanner(
     private val portAllocator: FreePortAllocator
 ) {
 
-    private fun ModulePreviews.toModulePlan(gradlePath: String): PreviewModulePlan {
+    private fun HarnessHostPlan.excludedSourcePathsIn(moduleDirectory: String): List<String> {
+        return if (moduleDirectory == directory) excludedSourcePaths else emptyList()
+    }
+
+    private fun ModulePreviews.toModulePlan(gradlePath: String, excludedSourcePaths: List<String>): PreviewModulePlan {
         return PreviewModulePlan(
             gradlePath = gradlePath,
             directory = moduleDirectory,
-            previews = previews.sortedBy { preview -> preview.fqn }
+            previews = previews
+                .filterNot { preview -> preview.sourcePath in excludedSourcePaths }
+                .sortedBy { preview -> preview.fqn }
         )
     }
 
     private fun previewModules(
-        host: PreviewHost,
+        host: HarnessHostPlan,
         structure: PreviewProjectStructure,
         previews: List<ModulePreviews>
     ): List<PreviewModulePlan> {
         return previews
-            .filter { modulePreviews -> modulePreviews.previews.isNotEmpty() }
             .filter { modulePreviews -> structure.reaches(host.directory, modulePreviews.moduleDirectory) }
             .mapNotNull { modulePreviews ->
-                structure.gradlePathOf(modulePreviews.moduleDirectory)
-                    ?.let { gradlePath -> modulePreviews.toModulePlan(gradlePath) }
+                structure.gradlePathOf(modulePreviews.moduleDirectory)?.let { gradlePath ->
+                    modulePreviews.toModulePlan(gradlePath, host.excludedSourcePathsIn(modulePreviews.moduleDirectory))
+                }
             }
+            .filter { module -> module.previews.isNotEmpty() }
             .sortedBy { module -> module.gradlePath }
     }
 
@@ -53,9 +60,10 @@ class HarnessPlanner(
     }
 
     suspend fun plan(host: PreviewHost, structure: PreviewProjectStructure): HarnessPlan {
+        val hostPlan = hostPlan(host)
         return HarnessPlan(
-            host = hostPlan(host),
-            modules = previewModules(host, structure, projectPreviewSource.previews())
+            host = hostPlan,
+            modules = previewModules(hostPlan, structure, projectPreviewSource.previews())
         )
     }
 }

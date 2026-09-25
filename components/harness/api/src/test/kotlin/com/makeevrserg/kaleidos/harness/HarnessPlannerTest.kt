@@ -3,6 +3,7 @@ package com.makeevrserg.kaleidos.harness
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.directoryOf
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.host
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.previews
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.sourcePathOf
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.structure
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.structureOf
 import com.makeevrserg.kaleidos.host.DevServerKind
@@ -86,6 +87,45 @@ class HarnessPlannerTest {
         assertEquals(PORT, plan.host.devServerPort)
         assertEquals(listOf("com/example/Main.kt"), plan.host.excludedSourcePaths)
         assertEquals(listOf(directoryOf(":components:ui")), allocator.keys)
+    }
+
+    @Test
+    fun GIVEN_webpack_host_with_a_preview_in_its_entry_point_WHEN_plan_THEN_that_preview_is_left_out() = runTest {
+        val source = FakeProjectPreviewSource(
+            previews = listOf(previews(":components:ui", "com.example.Main", "com.example.CardPreview")),
+            entryPoints = mapOf(directoryOf(":components:ui") to listOf(sourcePathOf("com.example.Main")))
+        )
+
+        val plan = planner(source).plan(webpackHost, structureOf(":components:ui"))
+
+        assertEquals(listOf("com.example.CardPreview"), plan.modules.single().previews.map { preview -> preview.fqn })
+    }
+
+    @Test
+    fun GIVEN_webpack_host_whose_only_previews_are_in_its_entry_point_WHEN_plan_THEN_it_gets_no_registry() = runTest {
+        val source = FakeProjectPreviewSource(
+            previews = listOf(previews(":components:ui", "com.example.Main")),
+            entryPoints = mapOf(directoryOf(":components:ui") to listOf(sourcePathOf("com.example.Main")))
+        )
+
+        val plan = planner(source).plan(webpackHost, structureOf(":components:ui"))
+
+        assertTrue(plan.modules.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_dependency_file_with_the_path_of_a_host_entry_point_WHEN_plan_THEN_its_previews_are_kept() = runTest {
+        val source = FakeProjectPreviewSource(
+            previews = listOf(
+                previews(":components:ui", "com.example.Main"),
+                previews(":components:lib", "com.example.Main")
+            ),
+            entryPoints = mapOf(directoryOf(":components:ui") to listOf(sourcePathOf("com.example.Main")))
+        )
+
+        val plan = planner(source).plan(webpackHost, structure(":components:ui" to ":components:lib"))
+
+        assertEquals(listOf(":components:lib"), plan.modules.map { module -> module.gradlePath })
     }
 
     @Test

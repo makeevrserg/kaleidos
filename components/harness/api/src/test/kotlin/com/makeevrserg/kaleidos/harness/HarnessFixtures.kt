@@ -29,10 +29,14 @@ object HarnessFixtures {
         )
     }
 
+    fun sourcePathOf(fqn: String): String = fqn.replace('.', '/') + ".kt"
+
+    fun preview(fqn: String): HarnessPreview = HarnessPreview(fqn = fqn, sourcePath = sourcePathOf(fqn))
+
     fun previews(gradlePath: String, vararg fqns: String): ModulePreviews {
         return ModulePreviews(
             moduleDirectory = directoryOf(gradlePath),
-            previews = fqns.map(::HarnessPreview)
+            previews = fqns.map(::preview)
         )
     }
 

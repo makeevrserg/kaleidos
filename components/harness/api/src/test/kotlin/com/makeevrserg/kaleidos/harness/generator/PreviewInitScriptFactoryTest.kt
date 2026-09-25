@@ -1,9 +1,9 @@
 package com.makeevrserg.kaleidos.harness.generator
 
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.preview
 import com.makeevrserg.kaleidos.harness.HarnessHostPlan
 import com.makeevrserg.kaleidos.harness.HarnessLayout
 import com.makeevrserg.kaleidos.harness.HarnessPlan
-import com.makeevrserg.kaleidos.harness.HarnessPreview
 import com.makeevrserg.kaleidos.harness.PreviewModulePlan
 import com.makeevrserg.kaleidos.host.DevServerKind
 import kotlin.test.Test
@@ -17,7 +17,7 @@ class PreviewInitScriptFactoryTest {
     private val uiModule = PreviewModulePlan(
         gradlePath = ":components:ui",
         directory = "/project/components/ui",
-        previews = listOf(HarnessPreview("com.example.CardPreview"))
+        previews = listOf(preview("com.example.CardPreview"))
     )
 
     private fun plan(kind: DevServerKind, excludedSourcePaths: List<String> = emptyList()): HarnessPlan {
