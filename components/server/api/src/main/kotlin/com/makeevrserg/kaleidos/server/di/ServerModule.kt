@@ -4,6 +4,7 @@ import com.makeevrserg.kaleidos.core.di.CoreModule
 import com.makeevrserg.kaleidos.server.DefaultDevServerController
 import com.makeevrserg.kaleidos.server.DevServerController
 import com.makeevrserg.kaleidos.server.DevServerLauncher
+import com.makeevrserg.kaleidos.server.DevServerLog
 import com.makeevrserg.kaleidos.server.DevServerOriginResolver
 import com.makeevrserg.kaleidos.server.DevServerUrlDetector
 import com.makeevrserg.kaleidos.server.GradleTaskRunner
@@ -42,6 +43,8 @@ class ServerModule(
         healthCheck = healthCheck
     )
 
+    val devServerLog = DevServerLog(capacity = DEV_SERVER_LOG_CAPACITY)
+
     val devServerController: DevServerController = DefaultDevServerController(
         launcher = DevServerLauncher(
             gradleTaskRunner = gradleTaskRunner,
@@ -54,6 +57,7 @@ class ServerModule(
             originResolver = originResolver,
             portListenerLookup = portListenerLookup,
             urlDetector = DevServerUrlDetector(),
+            log = devServerLog,
             startupTimeout = DEV_SERVER_STARTUP_TIMEOUT,
             pollInterval = DEV_SERVER_POLL_INTERVAL
         ),
@@ -65,6 +69,7 @@ class ServerModule(
     private companion object {
         const val OS_NAME_PROPERTY = "os.name"
         const val WINDOWS_OS_NAME = "Windows"
+        const val DEV_SERVER_LOG_CAPACITY = 10_000
         val HEALTH_CHECK_TIMEOUT = 2.seconds
         val PORT_LISTENER_TIMEOUT = 3.seconds
         val DEV_SERVER_STARTUP_TIMEOUT = 5.minutes

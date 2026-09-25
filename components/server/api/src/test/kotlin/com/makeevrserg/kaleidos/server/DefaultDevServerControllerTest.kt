@@ -61,6 +61,7 @@ class DefaultDevServerControllerTest {
                 originResolver = originResolver,
                 portListenerLookup = portListenerLookup,
                 urlDetector = DevServerUrlDetector(),
+                log = DevServerLog(capacity = LOG_CAPACITY),
                 startupTimeout = STARTUP_TIMEOUT,
                 pollInterval = POLL_INTERVAL
             ),
@@ -323,5 +324,6 @@ class DefaultDevServerControllerTest {
     private companion object {
         val STARTUP_TIMEOUT = 5.minutes
         val POLL_INTERVAL = 1.seconds
+        const val LOG_CAPACITY = 100
     }
 }

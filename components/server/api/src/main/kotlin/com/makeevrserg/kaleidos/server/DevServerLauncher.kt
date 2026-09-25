@@ -32,6 +32,7 @@ class DevServerLauncher(
     private val originResolver: DevServerOriginResolver,
     private val portListenerLookup: PortListenerLookup,
     private val urlDetector: DevServerUrlDetector,
+    private val log: DevServerLog,
     private val startupTimeout: Duration,
     private val pollInterval: Duration
 ) {
@@ -49,8 +50,9 @@ class DevServerLauncher(
         gradleTaskRunner.run(config, DevServerRunNames.devServer(host)).collect { event ->
             when (event) {
                 GradleRunEvent.Started -> Unit
-                is GradleRunEvent.Output -> parser.feed(event.text)?.let { baseUrl ->
-                    signals.announcedBaseUrl.complete(baseUrl)
+                is GradleRunEvent.Output -> {
+                    log.record(DevServerLogEvent.Output(event.text))
+                    parser.feed(event.text)?.let { baseUrl -> signals.announcedBaseUrl.complete(baseUrl) }
                 }
                 is GradleRunEvent.Exited -> signals.exit.complete(event.isSuccess)
             }
@@ -188,6 +190,7 @@ class DevServerLauncher(
             announcedBaseUrl = CompletableDeferred(),
             exit = CompletableDeferred()
         )
+        log.record(DevServerLogEvent.RunStarted(config))
         observeRun(host, config, run)
         var isRunOwned = true
         try {
@@ -212,6 +215,7 @@ class DevServerLauncher(
     ): Flow<DevServerState> = channelFlow {
         val adoptedBaseUrl = if (isRestart) null else originResolver.findAlive(host, options)
         if (adoptedBaseUrl != null) {
+            log.record(DevServerLogEvent.Adopted(adoptedBaseUrl))
             send(DevServerState.Running(host, adoptedBaseUrl))
             awaitCancellation()
         }

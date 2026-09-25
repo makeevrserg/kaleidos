@@ -43,6 +43,8 @@ class DevServerLauncherTest {
 
     private val portListenerLookup = FakePortListenerLookup()
 
+    private val log = DevServerLog(capacity = LOG_CAPACITY)
+
     private val launcher = DevServerLauncher(
         gradleTaskRunner = taskRunner,
         detachedServerStopper = detachedServerStopper,
@@ -54,6 +56,7 @@ class DevServerLauncherTest {
         ),
         portListenerLookup = portListenerLookup,
         urlDetector = DevServerUrlDetector(),
+        log = log,
         startupTimeout = STARTUP_TIMEOUT,
         pollInterval = POLL_INTERVAL
     )
@@ -103,6 +106,45 @@ class DevServerLauncherTest {
 
         assertEquals(listOf<DevServerState>(DevServerState.Running(kobwebHost, "http://localhost:8086")), states)
         assertTrue(taskRunner.startedRuns.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_own_server_answers_WHEN_collected_THEN_the_log_names_the_adopted_server() = runTest {
+        kobwebServerRuns()
+
+        collectStates(kobwebHost)
+        runCurrent()
+
+        assertEquals(
+            listOf<DevServerLogEvent>(DevServerLogEvent.Adopted("http://localhost:8086")),
+            log.events.replayCache
+        )
+    }
+
+    @Test
+    fun GIVEN_no_server_WHEN_the_run_prints_THEN_the_log_holds_the_run_and_its_output() = runTest {
+        launchWebpackServer()
+
+        assertEquals(
+            listOf(
+                DevServerLogEvent.RunStarted(taskRunner.startedRuns.single().config),
+                DevServerLogEvent.Output("Loopback: http://localhost:8085/\n")
+            ),
+            log.events.replayCache
+        )
+    }
+
+    @Test
+    fun GIVEN_restart_WHEN_the_new_run_starts_THEN_the_log_marks_where_it_begins() = runTest {
+        kobwebServerRuns()
+
+        collectStates(kobwebHost, isRestart = true)
+        runCurrent()
+
+        assertEquals(
+            listOf<DevServerLogEvent>(DevServerLogEvent.RunStarted(taskRunner.startedRuns.single().config)),
+            log.events.replayCache
+        )
     }
 
     @Test
@@ -346,5 +388,6 @@ class DevServerLauncherTest {
     private companion object {
         val STARTUP_TIMEOUT = 5.minutes
         val POLL_INTERVAL = 1.seconds
+        const val LOG_CAPACITY = 100
     }
 }
