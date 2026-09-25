@@ -8,5 +8,6 @@ data class PreviewFunction(
     val fqn: String,
     val name: String,
     val filePath: String,
-    val fileName: String
+    val fileName: String,
+    val isPrivate: Boolean
 )

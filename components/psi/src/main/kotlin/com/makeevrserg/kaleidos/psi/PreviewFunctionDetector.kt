@@ -1,6 +1,7 @@
 package com.makeevrserg.kaleidos.psi
 
 import com.makeevrserg.kaleidos.feature.PreviewFunction
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 /**
@@ -35,7 +36,8 @@ class PreviewFunctionDetector(
             fqn = fqn,
             name = name,
             filePath = virtualFile.path,
-            fileName = virtualFile.name
+            fileName = virtualFile.name,
+            isPrivate = function.hasModifier(KtTokens.PRIVATE_KEYWORD)
         )
     }
 }

@@ -23,7 +23,10 @@ class HarnessPlanner(
             directory = moduleDirectory,
             previews = previews
                 .filterNot { preview -> preview.sourcePath in excludedSourcePaths }
-                .sortedBy { preview -> preview.fqn }
+                .sortedBy { preview -> preview.fqn },
+            privatePreviewFiles = privatePreviewFiles
+                .filterNot { file -> file.sourcePath in excludedSourcePaths }
+                .sortedBy { file -> file.sourcePath }
         )
     }
 

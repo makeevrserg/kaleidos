@@ -29,7 +29,8 @@ object PreviewUiStateFixtures {
                 fqn = "app.CardPreview",
                 name = "CardPreview",
                 filePath = FILE_PATH,
-                fileName = FILE_NAME
+                fileName = FILE_NAME,
+                isPrivate = false
             )
         )
     )

@@ -27,7 +27,8 @@ object PreviewFixtures {
             fqn = "app.$name",
             name = name,
             filePath = filePath,
-            fileName = filePath.substringAfterLast('/')
+            fileName = filePath.substringAfterLast('/'),
+            isPrivate = false
         )
     }
 

@@ -16,7 +16,8 @@ class PreviewPageFactoryTest {
     private val uiModule = PreviewModulePlan(
         gradlePath = ":components:ui",
         directory = "/project/components/ui",
-        previews = listOf(preview("com.example.CardPreview"))
+        previews = listOf(preview("com.example.CardPreview")),
+        privatePreviewFiles = emptyList()
     )
 
     private fun plan(kind: DevServerKind, modules: List<PreviewModulePlan> = listOf(uiModule)): HarnessPlan {

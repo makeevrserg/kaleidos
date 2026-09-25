@@ -2,6 +2,7 @@ package com.makeevrserg.kaleidos.harness.generator
 
 import com.makeevrserg.kaleidos.harness.HarnessLayout
 import com.makeevrserg.kaleidos.harness.HarnessPlan
+import com.makeevrserg.kaleidos.harness.PreviewModulePlan
 import com.makeevrserg.kaleidos.harness.PreviewPagePath
 import com.makeevrserg.kaleidos.host.DevServerKind
 
@@ -57,10 +58,17 @@ class PreviewInitScriptFactory(private val layout: HarnessLayout) {
         }
     }
 
+    private fun PreviewModulePlan.privatePreviewSourcePaths(): List<String> {
+        return privatePreviewFiles.map { file -> file.sourcePath }
+    }
+
     private fun injections(plan: HarnessPlan): List<String> {
         val hostDirectory = plan.host.directory
         val isWebpack = plan.host.kind == DevServerKind.WEBPACK
         val registryOnlyModules = plan.modules.filterNot { module -> module.directory == hostDirectory }
+        val hostPrivatePreviewSourcePaths = plan.modules
+            .filter { module -> module.directory == hostDirectory }
+            .flatMap { module -> module.privatePreviewSourcePaths() }
         return buildList {
             add("def previewInjections = [")
             registryOnlyModules.forEach { module ->
@@ -70,7 +78,7 @@ class PreviewInitScriptFactory(private val layout: HarnessLayout) {
                         kotlinDirectory = layout.kotlinRoot(module.directory).toString(),
                         resourcesDirectory = null,
                         devServerPort = null,
-                        excludedSourcePaths = emptyList()
+                        excludedSourcePaths = module.privatePreviewSourcePaths()
                     )
                 )
             }
@@ -80,7 +88,7 @@ class PreviewInitScriptFactory(private val layout: HarnessLayout) {
                     kotlinDirectory = layout.kotlinRoot(hostDirectory).toString(),
                     resourcesDirectory = layout.resourcesRoot(hostDirectory).toString().takeIf { isWebpack },
                     devServerPort = plan.host.devServerPort,
-                    excludedSourcePaths = plan.host.excludedSourcePaths
+                    excludedSourcePaths = plan.host.excludedSourcePaths + hostPrivatePreviewSourcePaths
                 )
             )
             add("]")
@@ -137,9 +145,9 @@ class PreviewInitScriptFactory(private val layout: HarnessLayout) {
             "        project.afterEvaluate { evaluated -> configurePreviewServer(evaluated, injection) }",
             "    }",
             "    kotlin.sourceSets.configureEach { sourceSet ->",
+            "        injection.excludedSourcePaths.each { pattern -> sourceSet.kotlin.exclude(pattern) }",
             "        if (sourceSet.name != sourceSetName) return",
             "        sourceSet.kotlin.srcDir(injection.kotlinSrcDir)",
-            "        injection.excludedSourcePaths.each { pattern -> sourceSet.kotlin.exclude(pattern) }",
             "        if (injection.resourcesSrcDir != null) sourceSet.resources.srcDir(injection.resourcesSrcDir)",
             "    }",
             "}",

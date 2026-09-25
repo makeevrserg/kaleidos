@@ -7,5 +7,6 @@ package com.makeevrserg.kaleidos.harness
  */
 data class ModulePreviews(
     val moduleDirectory: String,
-    val previews: List<HarnessPreview>
+    val previews: List<HarnessPreview>,
+    val privatePreviewFiles: List<PrivatePreviewFile>
 )

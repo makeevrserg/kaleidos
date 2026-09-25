@@ -2,7 +2,11 @@ package com.makeevrserg.kaleidos.harness
 
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.directoryOf
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.host
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.preview
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.previews
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.privatePreview
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.privatePreviewFile
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.privatePreviews
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.sourcePathOf
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.structure
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.structureOf
@@ -127,6 +131,40 @@ class HarnessPlannerTest {
 
         assertEquals(listOf(":components:lib"), plan.modules.map { module -> module.gradlePath })
     }
+
+    @Test
+    fun GIVEN_private_preview_in_the_entry_point_of_the_host_WHEN_plan_THEN_its_file_is_not_copied() = runTest {
+        val source = FakeProjectPreviewSource(
+            previews = listOf(
+                ModulePreviews(
+                    moduleDirectory = directoryOf(":components:ui"),
+                    previews = listOf(privatePreview("com.example.Main"), preview("com.example.CardPreview")),
+                    privatePreviewFiles = listOf(privatePreviewFile("com.example.Main"))
+                )
+            ),
+            entryPoints = mapOf(directoryOf(":components:ui") to listOf(sourcePathOf("com.example.Main")))
+        )
+
+        val module = planner(source).plan(webpackHost, structureOf(":components:ui")).modules.single()
+
+        assertEquals(listOf("com.example.CardPreview"), module.previews.map { preview -> preview.fqn })
+        assertTrue(module.privatePreviewFiles.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_private_previews_in_files_reported_in_any_order_WHEN_plan_THEN_their_files_are_in_a_stable_order() =
+        runTest {
+            val source = FakeProjectPreviewSource(
+                listOf(privatePreviews(":components:ui", "com.example.ZPreview", "com.example.APreview"))
+            )
+
+            val module = planner(source).plan(webpackHost, structureOf(":components:ui")).modules.single()
+
+            assertEquals(
+                listOf(sourcePathOf("com.example.APreview"), sourcePathOf("com.example.ZPreview")),
+                module.privatePreviewFiles.map { file -> file.sourcePath }
+            )
+        }
 
     @Test
     fun GIVEN_kobweb_host_WHEN_plan_THEN_the_port_stays_with_the_kobweb_configuration() = runTest {

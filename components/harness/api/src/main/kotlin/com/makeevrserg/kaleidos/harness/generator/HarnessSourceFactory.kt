@@ -1,6 +1,7 @@
 package com.makeevrserg.kaleidos.harness.generator
 
 import com.makeevrserg.kaleidos.harness.HarnessPlan
+import com.makeevrserg.kaleidos.harness.PreviewModulePlan
 
 /**
  * Turns a plan into the files that have to be on disk: a registry per module, the page and the init
@@ -9,14 +10,19 @@ import com.makeevrserg.kaleidos.harness.HarnessPlan
 class HarnessSourceFactory(
     private val registryFactory: PreviewRegistryFactory,
     private val pageFactory: PreviewPageFactory,
-    private val initScriptFactory: PreviewInitScriptFactory
+    private val initScriptFactory: PreviewInitScriptFactory,
+    private val privatePreviewFileFactory: PrivatePreviewFileFactory
 ) {
 
+    private fun moduleFiles(module: PreviewModulePlan): List<GeneratedFile> {
+        return listOf(registryFactory.create(module)) + privatePreviewFileFactory.create(module)
+    }
+
     private fun hostFiles(plan: HarnessPlan): List<GeneratedFile> {
-        val registry = plan.modules
+        val moduleFiles = plan.modules
             .filter { module -> module.directory == plan.host.directory }
-            .map(registryFactory::create)
-        return registry + pageFactory.create(plan) + initScriptFactory.create(plan)
+            .flatMap(::moduleFiles)
+        return moduleFiles + pageFactory.create(plan) + initScriptFactory.create(plan)
     }
 
     fun create(plan: HarnessPlan): List<GeneratedModuleSources> {
@@ -25,7 +31,7 @@ class HarnessSourceFactory(
             .map { module ->
                 GeneratedModuleSources(
                     moduleDirectory = module.directory,
-                    files = listOf(registryFactory.create(module))
+                    files = moduleFiles(module)
                 )
             }
         val host = GeneratedModuleSources(moduleDirectory = plan.host.directory, files = hostFiles(plan))

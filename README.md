@@ -259,6 +259,7 @@ version control, removed by `clean` and never mixed into your sources:
 | File | Where | What it is |
 |---|---|---|
 | `kotlin/kaleidos/generated/<module>/PreviewRegistry.kt` | every module that owns previews the picked module can see | compiled into that module, so `internal` previews work: only the object that dispatches them is public |
+| `kotlin/kaleidos/sources/<path of the file>` | every module with `private` previews | a copy of each file that declares a `private` preview, with an `internal` wrapper per preview appended to it: a `private` function can only be called from its own file. The original file is left out of the preview run and the copy is compiled in its place, so a compile error in that file points at the copy |
 | `kotlin/kaleidos/generated/PreviewPage.kt` | the picked module | the page itself |
 | `PreviewMain.kt` + `kaleidos.html` | the picked module, plain Kotlin/JS | entry point and host page |
 | `KaleidosRoute.kt` with `@Page("/kaleidos")` | the picked module, Kobweb | the page as a route of the site |

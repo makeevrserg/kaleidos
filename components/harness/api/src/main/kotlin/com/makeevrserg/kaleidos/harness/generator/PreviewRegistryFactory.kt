@@ -17,7 +17,9 @@ class PreviewRegistryFactory(private val naming: HarnessNaming) {
     }
 
     private fun renderLines(module: PreviewModulePlan): List<String> {
-        return module.previews.map { preview -> "            \"${preview.fqn}\" -> ${preview.fqn}()" }
+        return module.previews.map { preview ->
+            "            \"${preview.fqn}\" -> ${naming.callFqn(preview)}()"
+        }
     }
 
     fun create(module: PreviewModulePlan): GeneratedFile {

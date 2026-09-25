@@ -31,12 +31,43 @@ object HarnessFixtures {
 
     fun sourcePathOf(fqn: String): String = fqn.replace('.', '/') + ".kt"
 
-    fun preview(fqn: String): HarnessPreview = HarnessPreview(fqn = fqn, sourcePath = sourcePathOf(fqn))
+    fun preview(fqn: String): HarnessPreview {
+        return HarnessPreview(fqn = fqn, sourcePath = sourcePathOf(fqn), isPrivate = false)
+    }
+
+    fun privatePreview(fqn: String): HarnessPreview {
+        return HarnessPreview(fqn = fqn, sourcePath = sourcePathOf(fqn), isPrivate = true)
+    }
+
+    fun privatePreviewFile(fqn: String): PrivatePreviewFile {
+        val packageName = fqn.substringBeforeLast('.')
+        val name = fqn.substringAfterLast('.')
+        return PrivatePreviewFile(
+            sourcePath = sourcePathOf(fqn),
+            text = """
+                |package $packageName
+                |
+                |@Preview
+                |@Composable
+                |private fun $name() {}
+                |
+            """.trimMargin()
+        )
+    }
 
     fun previews(gradlePath: String, vararg fqns: String): ModulePreviews {
         return ModulePreviews(
             moduleDirectory = directoryOf(gradlePath),
-            previews = fqns.map(::preview)
+            previews = fqns.map(::preview),
+            privatePreviewFiles = emptyList()
+        )
+    }
+
+    fun privatePreviews(gradlePath: String, vararg fqns: String): ModulePreviews {
+        return ModulePreviews(
+            moduleDirectory = directoryOf(gradlePath),
+            previews = fqns.map(::privatePreview),
+            privatePreviewFiles = fqns.map(::privatePreviewFile)
         )
     }
 

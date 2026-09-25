@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
 import com.makeevrserg.kaleidos.harness.HarnessPreview
 import com.makeevrserg.kaleidos.harness.ModulePreviews
+import com.makeevrserg.kaleidos.harness.PrivatePreviewFile
 import com.makeevrserg.kaleidos.harness.ProjectPreviewSource
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.psi.KtFile
@@ -47,18 +48,35 @@ class ProjectPreviewScanner(
         return VfsUtilCore.getRelativePath(file, sourceRoot, PATH_SEPARATOR)
     }
 
-    private fun previewsOf(file: VirtualFile): List<HarnessPreview> {
-        val ktFile = ktFile(file) ?: return emptyList()
-        val sourcePath = sourceRootRelativePath(file) ?: return emptyList()
-        return fileScanner.scan(ktFile).map { preview -> HarnessPreview(fqn = preview.fqn, sourcePath = sourcePath) }
+    private fun scan(file: VirtualFile): ScannedPreviewFile? {
+        val moduleDirectory = moduleDirectoryOf(file) ?: return null
+        val ktFile = ktFile(file) ?: return null
+        val sourcePath = sourceRootRelativePath(file) ?: return null
+        val previews = fileScanner.scan(ktFile).map { preview ->
+            HarnessPreview(fqn = preview.fqn, sourcePath = sourcePath, isPrivate = preview.isPrivate)
+        }
+        val hasPrivatePreviews = previews.any { preview -> preview.isPrivate }
+        return ScannedPreviewFile(
+            moduleDirectory = moduleDirectory,
+            previews = previews,
+            privatePreviewFile = if (hasPrivatePreviews) PrivatePreviewFile(sourcePath, ktFile.text) else null
+        )
+    }
+
+    private fun List<ScannedPreviewFile>.toModulePreviews(moduleDirectory: String): ModulePreviews {
+        return ModulePreviews(
+            moduleDirectory = moduleDirectory,
+            previews = flatMap { file -> file.previews },
+            privatePreviewFiles = mapNotNull { file -> file.privatePreviewFile }
+        )
     }
 
     override suspend fun previews(): List<ModulePreviews> = withContext(backgroundContext) {
         smartReadAction(projectDependencies.project) {
             fileFinder.filesMentioning(PREVIEW_WORD)
-                .mapNotNull { file -> moduleDirectoryOf(file)?.let { directory -> directory to previewsOf(file) } }
-                .groupBy(keySelector = { entry -> entry.first }, valueTransform = { entry -> entry.second })
-                .map { entry -> ModulePreviews(moduleDirectory = entry.key, previews = entry.value.flatten()) }
+                .mapNotNull(::scan)
+                .groupBy { file -> file.moduleDirectory }
+                .map { entry -> entry.value.toModulePreviews(entry.key) }
         }
     }
 

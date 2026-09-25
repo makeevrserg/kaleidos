@@ -14,6 +14,7 @@ import com.makeevrserg.kaleidos.harness.generator.PreviewInitScriptFactory
 import com.makeevrserg.kaleidos.harness.generator.PreviewPageFactory
 import com.makeevrserg.kaleidos.harness.generator.PreviewPageSourceFactory
 import com.makeevrserg.kaleidos.harness.generator.PreviewRegistryFactory
+import com.makeevrserg.kaleidos.harness.generator.PrivatePreviewFileFactory
 import com.makeevrserg.kaleidos.host.PreviewProjectStructureReader
 
 class HarnessModule(
@@ -34,7 +35,8 @@ class HarnessModule(
         sourceFactory = HarnessSourceFactory(
             registryFactory = PreviewRegistryFactory(naming),
             pageFactory = PreviewPageFactory(naming, PreviewPageSourceFactory(naming)),
-            initScriptFactory = PreviewInitScriptFactory(layout)
+            initScriptFactory = PreviewInitScriptFactory(layout),
+            privatePreviewFileFactory = PrivatePreviewFileFactory(naming)
         ),
         writer = HarnessWriter(ioContext = coreModule.dispatchers.io),
         layout = layout

@@ -1,6 +1,7 @@
 package com.makeevrserg.kaleidos.harness.generator
 
 import com.makeevrserg.kaleidos.harness.HarnessFixtures.preview
+import com.makeevrserg.kaleidos.harness.HarnessFixtures.privatePreview
 import com.makeevrserg.kaleidos.harness.PreviewModulePlan
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +13,8 @@ class PreviewRegistryFactoryTest {
     private val module = PreviewModulePlan(
         gradlePath = ":components:ui",
         directory = "/project/components/ui",
-        previews = listOf(preview("com.example.CardPreview"), preview("com.example.ButtonPreview"))
+        previews = listOf(preview("com.example.CardPreview"), preview("com.example.ButtonPreview")),
+        privatePreviewFiles = emptyList()
     )
 
     @Test
@@ -35,5 +37,19 @@ class PreviewRegistryFactoryTest {
         assertTrue(content.contains("        \"com.example.CardPreview\","), content)
         assertTrue(content.contains("        \"com.example.ButtonPreview\"\n"), content)
         assertTrue(content.contains("            \"com.example.CardPreview\" -> com.example.CardPreview()"), content)
+    }
+
+    @Suppress("StringShouldBeRawString")
+    @Test
+    fun GIVEN_private_preview_WHEN_create_THEN_it_is_called_through_its_wrapper() {
+        val content = factory.create(module.copy(previews = listOf(privatePreview("com.example.CardPreview")))).content
+
+        assertTrue(
+            content.contains(
+                "            \"com.example.CardPreview\" -> " +
+                    "com.example.KaleidosPreview_com_example_CardPreview_CardPreview()"
+            ),
+            content
+        )
     }
 }
