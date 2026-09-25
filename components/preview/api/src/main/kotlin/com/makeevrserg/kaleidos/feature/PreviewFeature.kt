@@ -51,7 +51,12 @@ class PreviewFeature(
     init {
         connectRequests
             .filterNotNull()
-            .mapLatest(::connect)
+            .mapLatest { request ->
+                val resolution = resolveHost(request.target, force = request.retryAfterFailure)
+                if (resolution is PreviewHostResolution.Found) {
+                    serverLauncher.requestRunning(resolution.host, request.retryAfterFailure)
+                }
+            }
             .launchIn(this)
         devServerController.state
             .onEach { serverState -> mutableState.update { current -> reducer.setServerState(current, serverState) } }
@@ -76,12 +81,6 @@ class PreviewFeature(
             previewNotifier.error(resolution.reason)
         }
         return resolution
-    }
-
-    private suspend fun connect(request: PreviewConnectRequest) {
-        val resolution = resolveHost(request.target, force = request.retryAfterFailure)
-        if (resolution !is PreviewHostResolution.Found) return
-        serverLauncher.requestRunning(resolution.host, request.retryAfterFailure)
     }
 
     /**
