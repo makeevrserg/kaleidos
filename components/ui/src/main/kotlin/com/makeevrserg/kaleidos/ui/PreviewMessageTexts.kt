@@ -41,7 +41,7 @@ class PreviewMessageTexts {
         return PreviewMessage(
             title = "Starting the dev server",
             description = "Running ${host.kind.startTask} in ${host.displayName}. " +
-                "Its output is in the Run tool window."
+                "Its output is in the Dev Server Console of this tool window and in the Run tool window."
         )
     }
 

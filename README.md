@@ -113,7 +113,8 @@ The distribution lands in `plugin/build/distributions`; install it from disk as 
 Any edit of a Kotlin source in the project marks the page as stale: a yellow banner says which file changed and when.
 The plugin does not compute the dependency graph, so a preview is considered affected by any Kotlin change. When the
 dev server finishes rebuilding and the page live-reloads, the banner turns green with the reload time. If the banner
-stays yellow, check the Run tool window — the rebuild has probably failed with a compilation error.
+stays yellow, check the **Dev Server Console** or the Run tool window — the rebuild has probably failed with a
+compilation error.
 
 <p align="center">
   <img src="docs/images/stale-preview-banner.png" alt="Stale preview banner naming the file that changed" width="520"/>
@@ -124,6 +125,10 @@ stays yellow, check the Run tool window — the rebuild has probably failed with
 - **Refresh Preview** reloads the page and re-checks the dev server.
 - **Open in Browser** opens the current page URL in the system browser. This is the fallback when JCEF is not
   available, for example under Remote Development.
+- **Dev Server Console** opens a console under the page with the output of the dev server and its Gradle task, so a
+  server that is still starting or a build that failed can be followed without leaving the tool window. It keeps the
+  output of the current run even when opened late; a server that was already running is named there instead, since
+  its output belongs to wherever it was started. Drag the divider to resize it; the size is remembered.
 - Gear menu: **Restart Dev Server**, **Stop Dev Server**, **Open DevTools**.
 - The footer, next to the state of the dev server, carries a **Support the author** link that opens the ways of
   supporting the plugin.

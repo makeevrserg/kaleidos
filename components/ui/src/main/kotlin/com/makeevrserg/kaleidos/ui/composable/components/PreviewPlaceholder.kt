@@ -27,7 +27,8 @@ private const val TITLE_GAP = 6
 
 private val LOADING_SAMPLE = PreviewMessage(
     title = "Starting the dev server",
-    description = "Running kobwebStart in :instances:web-app. Its output is in the Run tool window."
+    description = "Running kobwebStart in :instances:web-app. " +
+        "Its output is in the Dev Server Console of this tool window and in the Run tool window."
 )
 private val INFO_SAMPLE = PreviewMessage(
     title = "No previews in Card.kt",

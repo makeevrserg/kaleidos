@@ -71,7 +71,9 @@ class RootModule(
 
     val uiModule = UiModule(
         previewStore = previewStore,
-        project = project
+        project = project,
+        devServerLog = serverModule.devServerLog,
+        coroutineFeature = coreModule.backgroundCoroutineFeature
     )
 
     val lifecycle: Lifecycle = intellijPreviewModule.lifecycle

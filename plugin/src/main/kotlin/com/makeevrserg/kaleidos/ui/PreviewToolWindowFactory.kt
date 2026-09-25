@@ -14,6 +14,8 @@ import com.makeevrserg.kaleidos.ui.action.OpenInBrowserAction
 import com.makeevrserg.kaleidos.ui.action.RefreshPreviewAction
 import com.makeevrserg.kaleidos.ui.action.RestartDevServerAction
 import com.makeevrserg.kaleidos.ui.action.StopDevServerAction
+import com.makeevrserg.kaleidos.ui.action.ToggleDevServerConsoleAction
+import com.makeevrserg.kaleidos.ui.console.PreviewConsoleSplitter
 
 class PreviewToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -23,15 +25,19 @@ class PreviewToolWindowFactory : ToolWindowFactory, DumbAware {
         val uiModule = rootModule.uiModule
         val browser = uiModule.previewBrowserFactory.create()
         val panel = uiModule.createPreviewPanel(browser)
+        val console = uiModule.createDevServerConsole()
+        val splitter = PreviewConsoleSplitter(page = panel.component, console = console.component)
         // No display name: the tool window shows only its own title, not the file name
-        val content = ContentFactory.getInstance().createContent(panel.component, "", false)
+        val content = ContentFactory.getInstance().createContent(splitter.component, "", false)
         Disposer.register(toolWindow.disposable, browser)
+        Disposer.register(toolWindow.disposable, console)
         toolWindow.contentManager.addContent(content)
 
         toolWindow.setTitleActions(
             listOf(
                 RefreshPreviewAction(contract, panel),
-                OpenInBrowserAction(contract)
+                OpenInBrowserAction(contract),
+                ToggleDevServerConsoleAction(splitter)
             )
         )
         toolWindow.setAdditionalGearActions(
