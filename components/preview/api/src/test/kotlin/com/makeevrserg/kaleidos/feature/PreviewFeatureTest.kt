@@ -372,4 +372,32 @@ class PreviewFeatureTest {
 
         assertEquals(PageState.Failed("ERR_CONNECTION_REFUSED"), feature.state.value.pageState)
     }
+
+    @Test
+    fun GIVEN_visible_page_WHEN_sources_saved_THEN_the_preview_sources_are_generated_again_without_a_retry() =
+        runTest {
+            val feature = createVisibleFeatureWithCardFile()
+
+            feature.onSourcesSaved()
+            runCurrent()
+
+            assertEquals(listOf(previewHost, previewHost), previewHarness.installedHosts)
+            assertEquals(
+                listOf(runningRequest(previewHost, false), runningRequest(previewHost, false)),
+                devServerController.runningRequests
+            )
+        }
+
+    @Test
+    fun GIVEN_hidden_tool_window_WHEN_sources_saved_THEN_nothing_is_generated() = runTest {
+        hostLocator.resolutions[CARD_FILE] = hostFound
+        val feature = createFeature()
+        feature.onFileSelected(target())
+        runCurrent()
+
+        feature.onSourcesSaved()
+        runCurrent()
+
+        assertTrue(previewHarness.installedHosts.isEmpty())
+    }
 }

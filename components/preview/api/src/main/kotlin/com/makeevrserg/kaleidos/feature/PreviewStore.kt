@@ -31,6 +31,8 @@ interface PreviewStore {
     /** A Kotlin source of the project changed; the rendered page may be stale. */
     fun onSourceChanged(changedFileName: String)
 
+    fun onSourcesSaved()
+
     /** The browser finished loading the current page, whether it can show it or not. */
     fun onPageLoaded(load: PageLoad)
 }

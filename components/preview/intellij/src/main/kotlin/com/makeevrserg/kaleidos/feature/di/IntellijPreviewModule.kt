@@ -12,6 +12,7 @@ import com.makeevrserg.kaleidos.server.di.ServerModule
 import com.makeevrserg.kaleidos.source.EditorTracker
 import com.makeevrserg.kaleidos.source.ScanScheduler
 import com.makeevrserg.kaleidos.source.SourceChangeTracker
+import com.makeevrserg.kaleidos.source.SourceSaveTracker
 import com.makeevrserg.kaleidos.source.ToolWindowVisibilityTracker
 import com.makeevrserg.kaleidos.toolwindow.IntellijPreviewToolWindowPresenter
 import kotlinx.coroutines.launch
@@ -54,6 +55,11 @@ class IntellijPreviewModule(
         contract = previewModule.previewStore
     )
 
+    private val sourceSaveTracker = SourceSaveTracker(
+        projectDependencies = intellijCoreModule.projectDependencies,
+        contract = previewModule.previewStore
+    )
+
     private val toolWindowVisibilityTracker = ToolWindowVisibilityTracker(
         projectDependencies = intellijCoreModule.projectDependencies,
         contract = previewModule.previewStore,
@@ -64,6 +70,7 @@ class IntellijPreviewModule(
         supervisorScope {
             launch { editorTracker.track() }
             launch { sourceChangeTracker.track() }
+            launch { sourceSaveTracker.track() }
             launch { toolWindowVisibilityTracker.track() }
         }
     }

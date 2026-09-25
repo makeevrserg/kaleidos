@@ -272,8 +272,9 @@ Every preview on the page is a card of its own: a header naming it and a body wi
 several previews of one file do not run into each other.
 
 Previews are collected from the source sets that end up in the Kotlin/JS compilation — `commonMain`, `jsMain` and the
-`main` of the `kotlin("js")` plugin — and never from tests. The generated sources are rewritten before every launch,
-and only when their content actually changed: a preview you add is on the page after the next recompilation, while
+`main` of the `kotlin("js")` plugin — and never from tests. The generated sources are rewritten before every launch
+and whenever a Kotlin file of the project is saved while the preview is open, and only when their content actually
+changed: a preview you add is on the page after the next recompilation, while
 switching between two files recompiles nothing.
 
 </details>

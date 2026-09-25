@@ -136,6 +136,8 @@ class PreviewFeature(
         mutableState.update { current -> reducer.markChanged(current, changedFileName) }
     }
 
+    override fun onSourcesSaved() = connectIfNeeded(retryAfterFailure = false)
+
     override fun onPageLoaded(load: PageLoad) {
         mutableState.update { current -> reducer.markPageLoad(current, load) }
     }
