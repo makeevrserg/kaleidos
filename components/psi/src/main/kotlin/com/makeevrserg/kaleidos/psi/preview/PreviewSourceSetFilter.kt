@@ -8,7 +8,7 @@ import com.makeevrserg.kaleidos.feature.util.PREVIEW_SOURCE_SETS
  *
  * The IDE imports every source set of a Gradle module as a module of its own, named after it
  * (`project.components.ui.jsMain`), which is what the source set is read from here. Which of them
- * count is [PreviewSourceSetCatalog].
+ * count is [PREVIEW_SOURCE_SETS].
  */
 internal class PreviewSourceSetFilter {
 

@@ -1,7 +1,8 @@
 package com.makeevrserg.kaleidos.ui.state.model
 
 /**
- * Everything the tool window renders. Derived from the store state by [PreviewUiStateFactory], so
+ * Everything the tool window renders. Derived from the store state by
+ * [com.makeevrserg.kaleidos.ui.state.util.buildUiState], so
  * the composables hold no logic of their own.
  *
  * @param pageUrl what the browser is told to load, and with it whether the browser takes the place of

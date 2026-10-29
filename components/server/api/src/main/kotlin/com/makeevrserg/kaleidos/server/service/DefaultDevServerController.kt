@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.update
  * Nothing is configured: the task follows the kind of the module and the origin comes from the output
  * of the run or from the Kobweb configuration file.
  *
- * The state is the latest launch request switched into [DevServerLauncher.launch]. A new request cancels
+ * The state is the latest launch request switched into [LaunchDevServerUseCase.invoke]. A new request cancels
  * the previous launch, which stops its run before the next one starts, and cancelling the owning scope
  * stops whatever is running. No launch can outlive its request, so nothing has to be serialised.
  */
