@@ -2,17 +2,14 @@ package com.makeevrserg.kaleidos.feature
 
 import com.makeevrserg.kaleidos.host.PreviewHostResolution
 import com.makeevrserg.kaleidos.server.DevServerState
-import com.makeevrserg.kaleidos.url.PreviewUrlFactory
+import com.makeevrserg.kaleidos.url.util.buildPreviewUrl
 import java.time.Clock
 
 /**
  * Pure transitions of [PreviewState]. Kept apart from [PreviewFeature] so the feature only
  * orchestrates side effects: tool window, dev server, notifications.
  */
-class PreviewStateReducer(
-    private val clock: Clock,
-    private val previewUrlFactory: PreviewUrlFactory
-) {
+class PreviewStateReducer(private val clock: Clock) {
 
     /** The page exists only once the server of the target's own module answers; another module's server is not it. */
     private fun PreviewState.derivedUrl(): String? {
@@ -22,7 +19,7 @@ class PreviewStateReducer(
         if (running.host != host) return null
         val previews = target.renderablePreviews
         if (previews.isEmpty()) return null
-        return previewUrlFactory.create(running.baseUrl, host.kind, previews, target.focusedFqn)
+        return buildPreviewUrl(running.baseUrl, host.kind, previews, target.focusedFqn)
     }
 
     /**

@@ -14,7 +14,6 @@ import com.makeevrserg.kaleidos.host.PreviewHost
 import com.makeevrserg.kaleidos.host.PreviewHostResolution
 import com.makeevrserg.kaleidos.server.DevServerLaunchOptions
 import com.makeevrserg.kaleidos.server.DevServerState
-import com.makeevrserg.kaleidos.url.PreviewUrlFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -65,8 +64,7 @@ class PreviewFeatureTest {
             toolWindowPresenter = toolWindowPresenter,
             previewNotifier = notifier,
             reducer = PreviewStateReducer(
-                clock = Clock.fixed(Instant.parse("2026-09-06T10:00:00Z"), ZoneOffset.UTC),
-                previewUrlFactory = PreviewUrlFactory()
+                clock = Clock.fixed(Instant.parse("2026-09-06T10:00:00Z"), ZoneOffset.UTC)
             ),
             coroutineFeature = TestCoroutineFeature(backgroundScope)
         )

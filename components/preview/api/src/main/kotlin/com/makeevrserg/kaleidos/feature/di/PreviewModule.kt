@@ -10,7 +10,6 @@ import com.makeevrserg.kaleidos.harness.PreviewHarness
 import com.makeevrserg.kaleidos.host.PreviewHostLocator
 import com.makeevrserg.kaleidos.notification.PreviewNotifier
 import com.makeevrserg.kaleidos.server.di.ServerModule
-import com.makeevrserg.kaleidos.url.PreviewUrlFactory
 
 class PreviewModule(
     coreModule: CoreModule,
@@ -30,10 +29,7 @@ class PreviewModule(
         hostLocator = previewHostLocator,
         toolWindowPresenter = toolWindowPresenter,
         previewNotifier = previewNotifier,
-        reducer = PreviewStateReducer(
-            clock = coreModule.clock,
-            previewUrlFactory = PreviewUrlFactory()
-        ),
+        reducer = PreviewStateReducer(clock = coreModule.clock),
         coroutineFeature = coreModule.mainCoroutineFeature
     )
 }

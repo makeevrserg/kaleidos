@@ -11,7 +11,6 @@ import com.makeevrserg.kaleidos.feature.PreviewFixtures.running
 import com.makeevrserg.kaleidos.feature.PreviewFixtures.target
 import com.makeevrserg.kaleidos.host.PreviewHostResolution
 import com.makeevrserg.kaleidos.server.DevServerState
-import com.makeevrserg.kaleidos.url.PreviewUrlFactory
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -22,10 +21,7 @@ import kotlin.test.assertNull
 class PreviewStateReducerTest {
     private val now: Instant = Instant.parse("2026-09-06T10:00:00Z")
 
-    private val reducer = PreviewStateReducer(
-        clock = Clock.fixed(now, ZoneOffset.UTC),
-        previewUrlFactory = PreviewUrlFactory()
-    )
+    private val reducer = PreviewStateReducer(clock = Clock.fixed(now, ZoneOffset.UTC))
 
     /** A file with a found host whose server is running: the state in which a page is shown. */
     private fun servedState(): PreviewState {

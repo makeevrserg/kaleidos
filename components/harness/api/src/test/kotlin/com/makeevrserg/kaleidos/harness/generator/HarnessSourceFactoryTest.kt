@@ -18,7 +18,7 @@ class HarnessSourceFactoryTest {
         registryFactory = PreviewRegistryFactory(naming),
         pageFactory = PreviewPageFactory(naming, PreviewPageSourceFactory(naming)),
         initScriptFactory = PreviewInitScriptFactory(HarnessLayout()),
-        privatePreviewFileFactory = PrivatePreviewFileFactory(naming)
+        naming = naming
     )
 
     private val host = HarnessHostPlan(

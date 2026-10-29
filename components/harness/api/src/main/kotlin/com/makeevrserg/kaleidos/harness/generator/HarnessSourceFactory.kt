@@ -2,6 +2,7 @@ package com.makeevrserg.kaleidos.harness.generator
 
 import com.makeevrserg.kaleidos.harness.HarnessPlan
 import com.makeevrserg.kaleidos.harness.PreviewModulePlan
+import com.makeevrserg.kaleidos.harness.generator.util.generatePrivatePreviewFiles
 
 /**
  * Turns a plan into the files that have to be on disk: a registry per module, the page and the init
@@ -11,11 +12,11 @@ class HarnessSourceFactory(
     private val registryFactory: PreviewRegistryFactory,
     private val pageFactory: PreviewPageFactory,
     private val initScriptFactory: PreviewInitScriptFactory,
-    private val privatePreviewFileFactory: PrivatePreviewFileFactory
+    private val naming: HarnessNaming
 ) {
 
     private fun moduleFiles(module: PreviewModulePlan): List<GeneratedFile> {
-        return listOf(registryFactory.create(module)) + privatePreviewFileFactory.create(module)
+        return listOf(registryFactory.create(module)) + generatePrivatePreviewFiles(module, naming)
     }
 
     private fun hostFiles(plan: HarnessPlan): List<GeneratedFile> {
