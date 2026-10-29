@@ -1,11 +1,10 @@
 package com.makeevrserg.kaleidos.di
 
 import com.intellij.openapi.project.Project
-import com.makeevrserg.kaleidos.core.IntellijDispatchers
 import com.makeevrserg.kaleidos.core.di.CoreModule
 import com.makeevrserg.kaleidos.core.di.IntellijCoreModule
-import com.makeevrserg.kaleidos.core.lifecycle.Lifecycle
-import com.makeevrserg.kaleidos.feature.PreviewStore
+import com.makeevrserg.kaleidos.core.lifecycle.api.Lifecycle
+import com.makeevrserg.kaleidos.feature.api.PreviewStore
 import com.makeevrserg.kaleidos.feature.di.IntellijPreviewModule
 import com.makeevrserg.kaleidos.harness.di.HarnessModule
 import com.makeevrserg.kaleidos.host.di.HostModule
@@ -24,13 +23,13 @@ class RootModule(
     project: Project,
     coroutineScope: CoroutineScope
 ) {
+    private val intellijCoreModule = IntellijCoreModule(project = project)
+
     private val coreModule = CoreModule(
         coroutineScope = coroutineScope,
-        dispatchers = IntellijDispatchers(),
+        dispatchers = intellijCoreModule.dispatchers,
         clock = Clock.systemDefaultZone()
     )
-
-    private val intellijCoreModule = IntellijCoreModule(project = project)
 
     val psiModule = PsiModule(
         coreModule = coreModule,
@@ -61,10 +60,10 @@ class RootModule(
     private val intellijPreviewModule = IntellijPreviewModule(
         coreModule = coreModule,
         intellijCoreModule = intellijCoreModule,
-        psiModule = psiModule,
+        selectedFileScanner = psiModule.selectedFileScanner,
         serverModule = serverModule,
-        hostModule = hostModule,
-        harnessModule = harnessModule
+        previewHostLocator = hostModule.previewHostLocator,
+        previewHarness = harnessModule.previewHarness
     )
 
     val previewStore: PreviewStore = intellijPreviewModule.previewModule.previewStore

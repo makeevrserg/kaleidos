@@ -2,6 +2,12 @@ plugins {
     id("kaleidos.kotlin.jvm")
     alias(libs.plugins.kotlin.compose)
     id("kaleidos.intellij.module")
+    alias(libs.plugins.klibs.rules.linter)
+}
+
+linter {
+    unitKind.set("context")
+    rootPackage.set("com.makeevrserg.kaleidos.ui")
 }
 
 dependencies {
@@ -28,7 +34,9 @@ dependencies {
     implementation(projects.components.core.api)
     // The page the harness generates says who it is by its title; the browser checks that it got it
     implementation(projects.components.harness.api)
+    implementation(projects.components.host.api)
     implementation(projects.components.preview.api)
+    implementation(projects.components.server.api)
 
     testImplementation(libs.kotlin.stdlib)
     testImplementation(libs.tests.kotlin.test)

@@ -1,9 +1,9 @@
 package com.makeevrserg.kaleidos.core.di
 
-import com.makeevrserg.kaleidos.core.BackgroundCoroutineFeature
-import com.makeevrserg.kaleidos.core.CoroutineFeature
-import com.makeevrserg.kaleidos.core.MainCoroutineFeature
-import com.makeevrserg.kaleidos.core.PreviewDispatchers
+import com.makeevrserg.kaleidos.core.coroutine.api.CoroutineFeature
+import com.makeevrserg.kaleidos.core.coroutine.api.PreviewDispatchers
+import com.makeevrserg.kaleidos.core.coroutine.memory.BackgroundCoroutineFeature
+import com.makeevrserg.kaleidos.core.coroutine.memory.MainCoroutineFeature
 import kotlinx.coroutines.CoroutineScope
 import java.time.Clock
 

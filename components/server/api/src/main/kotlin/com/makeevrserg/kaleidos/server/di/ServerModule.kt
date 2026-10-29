@@ -1,20 +1,22 @@
 package com.makeevrserg.kaleidos.server.di
 
 import com.makeevrserg.kaleidos.core.di.CoreModule
-import com.makeevrserg.kaleidos.server.DefaultDevServerController
-import com.makeevrserg.kaleidos.server.DevServerController
-import com.makeevrserg.kaleidos.server.DevServerLauncher
-import com.makeevrserg.kaleidos.server.DevServerLog
-import com.makeevrserg.kaleidos.server.DevServerOriginResolver
-import com.makeevrserg.kaleidos.server.DevServerUrlDetector
-import com.makeevrserg.kaleidos.server.GradleTaskRunner
-import com.makeevrserg.kaleidos.server.HttpDevServerHealthCheck
-import com.makeevrserg.kaleidos.server.KobwebConfReader
-import com.makeevrserg.kaleidos.server.KobwebServerStateReader
-import com.makeevrserg.kaleidos.server.KobwebServerStopper
-import com.makeevrserg.kaleidos.server.LsofPortListenerCommand
-import com.makeevrserg.kaleidos.server.NetstatPortListenerCommand
-import com.makeevrserg.kaleidos.server.OsPortListenerLookup
+import com.makeevrserg.kaleidos.server.api.DevServerController
+import com.makeevrserg.kaleidos.server.api.DevServerLog
+import com.makeevrserg.kaleidos.server.api.GradleTaskRunner
+import com.makeevrserg.kaleidos.server.file.DefaultKobwebConfReader
+import com.makeevrserg.kaleidos.server.file.DefaultKobwebServerStateReader
+import com.makeevrserg.kaleidos.server.memory.DefaultAnnouncedBaseUrlParser
+import com.makeevrserg.kaleidos.server.memory.DefaultDevServerLog
+import com.makeevrserg.kaleidos.server.memory.DevServerUrlDetector
+import com.makeevrserg.kaleidos.server.memory.LsofPortListenerCommand
+import com.makeevrserg.kaleidos.server.memory.NetstatPortListenerCommand
+import com.makeevrserg.kaleidos.server.service.DefaultDevServerController
+import com.makeevrserg.kaleidos.server.service.DefaultDevServerOriginResolver
+import com.makeevrserg.kaleidos.server.service.HttpDevServerHealthCheck
+import com.makeevrserg.kaleidos.server.service.KobwebServerStopper
+import com.makeevrserg.kaleidos.server.service.OsPortListenerLookup
+import com.makeevrserg.kaleidos.server.usecase.LaunchDevServerUseCase
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -27,7 +29,7 @@ class ServerModule(
         connectTimeout = HEALTH_CHECK_TIMEOUT
     )
 
-    private val kobwebServerStateReader = KobwebServerStateReader(ioContext = coreModule.dispatchers.io)
+    private val kobwebServerStateReader = DefaultKobwebServerStateReader(ioContext = coreModule.dispatchers.io)
 
     private val isWindows = System.getProperty(OS_NAME_PROPERTY).orEmpty().startsWith(WINDOWS_OS_NAME)
 
@@ -37,16 +39,18 @@ class ServerModule(
         timeout = PORT_LISTENER_TIMEOUT
     )
 
-    private val originResolver = DevServerOriginResolver(
-        kobwebConfReader = KobwebConfReader(ioContext = coreModule.dispatchers.io),
+    private val originResolver = DefaultDevServerOriginResolver(
+        kobwebConfReader = DefaultKobwebConfReader(ioContext = coreModule.dispatchers.io),
         kobwebServerStateReader = kobwebServerStateReader,
         healthCheck = healthCheck
     )
 
-    val devServerLog = DevServerLog(capacity = DEV_SERVER_LOG_CAPACITY)
+    private val urlDetector = DevServerUrlDetector()
+
+    val devServerLog: DevServerLog = DefaultDevServerLog(capacity = DEV_SERVER_LOG_CAPACITY)
 
     val devServerController: DevServerController = DefaultDevServerController(
-        launcher = DevServerLauncher(
+        launcher = LaunchDevServerUseCase(
             gradleTaskRunner = gradleTaskRunner,
             detachedServerStopper = KobwebServerStopper(
                 stateReader = kobwebServerStateReader,
@@ -56,7 +60,7 @@ class ServerModule(
             healthCheck = healthCheck,
             originResolver = originResolver,
             portListenerLookup = portListenerLookup,
-            urlDetector = DevServerUrlDetector(),
+            announcedBaseUrlParser = { DefaultAnnouncedBaseUrlParser(urlDetector) },
             log = devServerLog,
             startupTimeout = DEV_SERVER_STARTUP_TIMEOUT,
             pollInterval = DEV_SERVER_POLL_INTERVAL

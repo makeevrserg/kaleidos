@@ -1,35 +1,31 @@
 package com.makeevrserg.kaleidos.harness.generator.util
 
-import com.makeevrserg.kaleidos.harness.HarnessPreview
-import com.makeevrserg.kaleidos.harness.PreviewModulePlan
-import com.makeevrserg.kaleidos.harness.PrivatePreviewFile
-import com.makeevrserg.kaleidos.harness.generator.GeneratedFile
-import com.makeevrserg.kaleidos.harness.generator.HarnessNaming
+import com.makeevrserg.kaleidos.harness.generator.model.GeneratedFile
+import com.makeevrserg.kaleidos.harness.model.HarnessPreview
+import com.makeevrserg.kaleidos.harness.model.PreviewModulePlan
+import com.makeevrserg.kaleidos.harness.model.PrivatePreviewFile
 
-private fun HarnessPreview.wrapperLines(naming: HarnessNaming): List<String> {
+private fun HarnessPreview.wrapperLines(): List<String> {
     return listOf(
         "",
         "@androidx.compose.runtime.Composable",
-        "internal fun ${naming.privatePreviewWrapperName(this)}() {",
-        "    ${naming.functionName(this)}()",
+        "internal fun ${privatePreviewWrapperName()}() {",
+        "    ${functionName()}()",
         "}"
     )
 }
 
-private fun PrivatePreviewFile.toGeneratedFile(
-    previews: List<HarnessPreview>,
-    naming: HarnessNaming
-): GeneratedFile {
+private fun PrivatePreviewFile.toGeneratedFile(previews: List<HarnessPreview>): GeneratedFile {
     val wrappers = previews
         .filter { preview -> preview.isPrivate && preview.sourcePath == sourcePath }
-        .flatMap { preview -> preview.wrapperLines(naming) }
-    val lines = listOf(HarnessNaming.HEADER, text.trimEnd()) + wrappers
+        .flatMap(HarnessPreview::wrapperLines)
+    val lines = listOf(HEADER, text.trimEnd()) + wrappers
     return GeneratedFile(
-        relativePath = naming.privatePreviewFileCopyPath(sourcePath),
+        relativePath = privatePreviewFileCopyPath(sourcePath),
         content = lines.joinToString(separator = "\n", postfix = "\n")
     )
 }
 
-internal fun generatePrivatePreviewFiles(module: PreviewModulePlan, naming: HarnessNaming): List<GeneratedFile> {
-    return module.privatePreviewFiles.map { file -> file.toGeneratedFile(module.previews, naming) }
+internal fun PreviewModulePlan.generatePrivatePreviewFiles(): List<GeneratedFile> {
+    return privatePreviewFiles.map { file -> file.toGeneratedFile(previews) }
 }

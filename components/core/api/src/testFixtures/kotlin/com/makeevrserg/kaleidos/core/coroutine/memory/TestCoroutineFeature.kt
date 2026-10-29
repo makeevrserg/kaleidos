@@ -1,0 +1,10 @@
+package com.makeevrserg.kaleidos.core.coroutine.memory
+
+import com.makeevrserg.kaleidos.core.coroutine.api.CoroutineFeature
+import kotlinx.coroutines.CoroutineScope
+import kotlin.coroutines.CoroutineContext
+
+/** Runs the feature inside the scope of a `runTest` block so virtual time applies. */
+class TestCoroutineFeature(scope: CoroutineScope) : CoroutineFeature {
+    override val coroutineContext: CoroutineContext = scope.coroutineContext
+}
