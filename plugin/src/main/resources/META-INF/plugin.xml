@@ -53,17 +53,17 @@
     <extensions defaultExtensionNs="com.intellij">
         <runLineMarkerContributor
                 language="kotlin"
-                implementationClass="com.makeevrserg.kaleidos.linemarker.PreviewRunLineMarkerContributor"/>
+                implementationClass="com.makeevrserg.kaleidos.PreviewRunLineMarkerContributor"/>
 
         <toolWindow
                 id="Kaleidos"
                 anchor="right"
                 doNotActivateOnStart="true"
                 icon="/icons/toolWindowPreview.svg"
-                factoryClass="com.makeevrserg.kaleidos.ui.PreviewToolWindowFactory"/>
+                factoryClass="com.makeevrserg.kaleidos.PreviewToolWindowFactory"/>
 
         <notificationGroup id="Kaleidos" displayType="BALLOON"/>
 
-        <postStartupActivity implementation="com.makeevrserg.kaleidos.startup.PreviewStartupActivity"/>
+        <postStartupActivity implementation="com.makeevrserg.kaleidos.PreviewStartupActivity"/>
     </extensions>
 </idea-plugin>

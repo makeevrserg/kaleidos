@@ -1,5 +1,11 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("kaleidos.kotlin.jvm")
+    alias(libs.plugins.klibs.rules.linter)
+}
+
+linter {
+    unitKind.set("api")
+    rootPackage.set("com.makeevrserg.kaleidos.harness")
 }
 
 dependencies {
@@ -7,7 +13,7 @@ dependencies {
     compileOnly(libs.kotlin.stdlib)
     compileOnly(libs.kotlinx.coroutines.core)
 
-    api(projects.components.host.api)
+    implementation(projects.components.host.api)
     implementation(projects.components.core.api)
 
     testImplementation(libs.kotlin.stdlib)

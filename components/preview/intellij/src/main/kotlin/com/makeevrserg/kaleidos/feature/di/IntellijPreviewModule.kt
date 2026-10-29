@@ -2,22 +2,20 @@ package com.makeevrserg.kaleidos.feature.di
 
 import com.makeevrserg.kaleidos.core.di.CoreModule
 import com.makeevrserg.kaleidos.core.di.IntellijCoreModule
-import com.makeevrserg.kaleidos.core.lifecycle.CoroutineLifecycle
-import com.makeevrserg.kaleidos.core.lifecycle.Lifecycle
-import com.makeevrserg.kaleidos.harness.di.HarnessModule
-import com.makeevrserg.kaleidos.host.di.HostModule
-import com.makeevrserg.kaleidos.notification.IntellijPreviewNotifier
-import com.makeevrserg.kaleidos.psi.di.PsiModule
+import com.makeevrserg.kaleidos.core.lifecycle.api.Lifecycle
+import com.makeevrserg.kaleidos.feature.service.CoroutineLifecycle
+import com.makeevrserg.kaleidos.harness.api.PreviewHarness
+import com.makeevrserg.kaleidos.host.api.PreviewHostLocator
+import com.makeevrserg.kaleidos.notification.service.IntellijPreviewNotifier
 import com.makeevrserg.kaleidos.server.di.ServerModule
-import com.makeevrserg.kaleidos.source.EditorTracker
-import com.makeevrserg.kaleidos.source.ScanScheduler
-import com.makeevrserg.kaleidos.source.SourceChangeTracker
-import com.makeevrserg.kaleidos.source.SourceSaveTracker
-import com.makeevrserg.kaleidos.source.ToolWindowVisibilityTracker
-import com.makeevrserg.kaleidos.toolwindow.IntellijPreviewToolWindowPresenter
+import com.makeevrserg.kaleidos.source.api.SelectedFileScanner
+import com.makeevrserg.kaleidos.source.service.EditorTracker
+import com.makeevrserg.kaleidos.source.service.SourceChangeTracker
+import com.makeevrserg.kaleidos.source.service.SourceSaveTracker
+import com.makeevrserg.kaleidos.source.service.ToolWindowVisibilityTracker
+import com.makeevrserg.kaleidos.toolwindow.component.IntellijPreviewToolWindowPresenter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * The preview store with its IDE ports and the trackers that feed it editor and tool window events.
@@ -28,24 +26,24 @@ import kotlin.time.Duration.Companion.milliseconds
 class IntellijPreviewModule(
     coreModule: CoreModule,
     intellijCoreModule: IntellijCoreModule,
-    psiModule: PsiModule,
+    selectedFileScanner: SelectedFileScanner,
     serverModule: ServerModule,
-    hostModule: HostModule,
-    harnessModule: HarnessModule
+    previewHostLocator: PreviewHostLocator,
+    previewHarness: PreviewHarness
 ) {
     val previewModule = PreviewModule(
         coreModule = coreModule,
         serverModule = serverModule,
-        previewHostLocator = hostModule.previewHostLocator,
-        previewHarness = harnessModule.previewHarness,
+        previewHostLocator = previewHostLocator,
+        previewHarness = previewHarness,
         toolWindowPresenter = IntellijPreviewToolWindowPresenter(intellijCoreModule.projectDependencies),
         previewNotifier = IntellijPreviewNotifier(intellijCoreModule.project)
     )
 
     private val editorTracker = EditorTracker(
         projectDependencies = intellijCoreModule.projectDependencies,
-        fileScanner = psiModule.selectedFileScanner,
-        scanScheduler = ScanScheduler(rescanDebounce = RESCAN_DEBOUNCE),
+        fileScanner = selectedFileScanner,
+        scanScheduler = previewModule.scanScheduler,
         contract = previewModule.previewStore,
         mainContext = coreModule.dispatchers.main
     )
@@ -73,9 +71,5 @@ class IntellijPreviewModule(
             launch { sourceSaveTracker.track() }
             launch { toolWindowVisibilityTracker.track() }
         }
-    }
-
-    private companion object {
-        val RESCAN_DEBOUNCE = 300.milliseconds
     }
 }

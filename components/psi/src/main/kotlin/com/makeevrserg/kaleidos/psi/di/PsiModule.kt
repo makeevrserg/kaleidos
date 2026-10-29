@@ -2,27 +2,29 @@ package com.makeevrserg.kaleidos.psi.di
 
 import com.makeevrserg.kaleidos.core.di.CoreModule
 import com.makeevrserg.kaleidos.core.di.IntellijCoreModule
-import com.makeevrserg.kaleidos.harness.ProjectPreviewSource
-import com.makeevrserg.kaleidos.psi.AnnotationFqnResolver
-import com.makeevrserg.kaleidos.psi.EntryPointDetector
-import com.makeevrserg.kaleidos.psi.KotlinSourceFileFinder
-import com.makeevrserg.kaleidos.psi.PreviewFileScanner
-import com.makeevrserg.kaleidos.psi.PreviewFunctionDetector
-import com.makeevrserg.kaleidos.psi.PreviewSourceSetFilter
-import com.makeevrserg.kaleidos.psi.ProjectPreviewScanner
-import com.makeevrserg.kaleidos.psi.SelectedFileScanner
+import com.makeevrserg.kaleidos.harness.api.ProjectPreviewSource
+import com.makeevrserg.kaleidos.psi.annotation.AnnotationFqnResolver
+import com.makeevrserg.kaleidos.psi.api.PreviewFunctionDetector
+import com.makeevrserg.kaleidos.psi.preview.DefaultPreviewFunctionDetector
+import com.makeevrserg.kaleidos.psi.preview.EntryPointDetector
+import com.makeevrserg.kaleidos.psi.preview.PreviewFileScanner
+import com.makeevrserg.kaleidos.psi.preview.PreviewSourceSetFilter
+import com.makeevrserg.kaleidos.psi.source.DefaultSelectedFileScanner
+import com.makeevrserg.kaleidos.psi.source.KotlinSourceFileFinder
+import com.makeevrserg.kaleidos.psi.source.ProjectPreviewScanner
+import com.makeevrserg.kaleidos.source.api.SelectedFileScanner
 
 class PsiModule(
     coreModule: CoreModule,
     intellijCoreModule: IntellijCoreModule
 ) {
-    val previewFunctionDetector = PreviewFunctionDetector(AnnotationFqnResolver())
+    val previewFunctionDetector: PreviewFunctionDetector = DefaultPreviewFunctionDetector(AnnotationFqnResolver())
 
     private val previewFileScanner = PreviewFileScanner(previewFunctionDetector)
 
     private val previewSourceSetFilter = PreviewSourceSetFilter()
 
-    val selectedFileScanner = SelectedFileScanner(
+    val selectedFileScanner: SelectedFileScanner = DefaultSelectedFileScanner(
         projectDependencies = intellijCoreModule.projectDependencies,
         fileScanner = previewFileScanner,
         sourceSetFilter = previewSourceSetFilter

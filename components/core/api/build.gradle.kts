@@ -1,6 +1,12 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("kaleidos.kotlin.jvm")
     `java-test-fixtures`
+    alias(libs.plugins.klibs.rules.linter)
+}
+
+linter {
+    unitKind.set("api")
+    rootPackage.set("com.makeevrserg.kaleidos.core")
 }
 
 dependencies {

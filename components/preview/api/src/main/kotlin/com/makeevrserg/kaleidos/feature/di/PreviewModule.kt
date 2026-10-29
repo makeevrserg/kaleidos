@@ -1,16 +1,18 @@
 package com.makeevrserg.kaleidos.feature.di
 
 import com.makeevrserg.kaleidos.core.di.CoreModule
-import com.makeevrserg.kaleidos.feature.PreviewFeature
-import com.makeevrserg.kaleidos.feature.PreviewServerLauncher
-import com.makeevrserg.kaleidos.feature.PreviewStateReducer
-import com.makeevrserg.kaleidos.feature.PreviewStore
-import com.makeevrserg.kaleidos.feature.PreviewToolWindowPresenter
-import com.makeevrserg.kaleidos.harness.PreviewHarness
-import com.makeevrserg.kaleidos.host.PreviewHostLocator
-import com.makeevrserg.kaleidos.notification.PreviewNotifier
+import com.makeevrserg.kaleidos.feature.api.PreviewStore
+import com.makeevrserg.kaleidos.feature.api.PreviewToolWindowPresenter
+import com.makeevrserg.kaleidos.feature.component.PreviewFeature
+import com.makeevrserg.kaleidos.feature.component.PreviewStateReducer
+import com.makeevrserg.kaleidos.feature.service.PreviewServerLauncher
+import com.makeevrserg.kaleidos.harness.api.PreviewHarness
+import com.makeevrserg.kaleidos.host.api.PreviewHostLocator
+import com.makeevrserg.kaleidos.notification.api.PreviewNotifier
 import com.makeevrserg.kaleidos.server.di.ServerModule
-import com.makeevrserg.kaleidos.url.PreviewUrlFactory
+import com.makeevrserg.kaleidos.source.api.ScanScheduler
+import com.makeevrserg.kaleidos.source.service.DefaultScanScheduler
+import kotlin.time.Duration.Companion.milliseconds
 
 class PreviewModule(
     coreModule: CoreModule,
@@ -20,6 +22,8 @@ class PreviewModule(
     toolWindowPresenter: PreviewToolWindowPresenter,
     previewNotifier: PreviewNotifier
 ) {
+    val scanScheduler: ScanScheduler = DefaultScanScheduler(rescanDebounce = RESCAN_DEBOUNCE)
+
     val previewStore: PreviewStore = PreviewFeature(
         devServerController = serverModule.devServerController,
         serverLauncher = PreviewServerLauncher(
@@ -30,10 +34,11 @@ class PreviewModule(
         hostLocator = previewHostLocator,
         toolWindowPresenter = toolWindowPresenter,
         previewNotifier = previewNotifier,
-        reducer = PreviewStateReducer(
-            clock = coreModule.clock,
-            previewUrlFactory = PreviewUrlFactory()
-        ),
+        reducer = PreviewStateReducer(clock = coreModule.clock),
         coroutineFeature = coreModule.mainCoroutineFeature
     )
+
+    private companion object {
+        val RESCAN_DEBOUNCE = 300.milliseconds
+    }
 }

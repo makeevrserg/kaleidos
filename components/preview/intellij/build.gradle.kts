@@ -1,6 +1,12 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    id("org.jetbrains.intellij.platform.module")
+    id("kaleidos.kotlin.jvm")
+    id("kaleidos.intellij.module")
+    alias(libs.plugins.klibs.rules.linter)
+}
+
+linter {
+    unitKind.set("context")
+    rootPackage.set("com.makeevrserg.kaleidos")
 }
 
 dependencies {
@@ -11,7 +17,7 @@ dependencies {
     implementation(projects.components.core.api)
     implementation(projects.components.core.intellij)
     implementation(projects.components.harness.api)
-    implementation(projects.components.host.intellij)
+    implementation(projects.components.host.api)
     implementation(projects.components.preview.api)
-    implementation(projects.components.psi)
+    implementation(projects.components.server.api)
 }

@@ -1,5 +1,11 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("kaleidos.kotlin.jvm")
+    alias(libs.plugins.klibs.rules.linter)
+}
+
+linter {
+    unitKind.set("api")
+    rootPackage.set("com.makeevrserg.kaleidos.host")
 }
 
 dependencies {
