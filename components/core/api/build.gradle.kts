@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("kaleidos.kotlin.jvm")
     `java-test-fixtures`
 }
 

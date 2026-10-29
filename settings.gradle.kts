@@ -8,6 +8,8 @@ pluginManagement {
     }
 }
 
+includeBuild("build-logic")
+
 plugins {
     id("org.jetbrains.intellij.platform.settings") version "2.18.1"
 }

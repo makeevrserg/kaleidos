@@ -1,8 +1,8 @@
 import org.gradle.process.CommandLineArgumentProvider
 
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    id("org.jetbrains.intellij.platform")
+    id("kaleidos.kotlin.jvm")
+    id("kaleidos.intellij.application")
 }
 
 dependencies {

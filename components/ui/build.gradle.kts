@@ -1,7 +1,7 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("kaleidos.kotlin.jvm")
     alias(libs.plugins.kotlin.compose)
-    id("org.jetbrains.intellij.platform.module")
+    id("kaleidos.intellij.module")
 }
 
 dependencies {
