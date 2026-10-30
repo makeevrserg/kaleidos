@@ -1,7 +1,7 @@
 package com.makeevrserg.kaleidos.harness.model
 
 import com.makeevrserg.kaleidos.host.model.DevServerKind
-import com.makeevrserg.kaleidos.host.model.GradleModule
+import com.makeevrserg.kaleidos.host.model.GradleProject
 import com.makeevrserg.kaleidos.host.model.PreviewHost
 import com.makeevrserg.kaleidos.host.model.PreviewProjectStructure
 import com.makeevrserg.kaleidos.host.model.PreviewProjectStructure.ModuleDependencyGraph
@@ -17,8 +17,8 @@ object HarnessFixtures {
 
     fun directoryOf(gradlePath: String): String = ROOT_PROJECT_PATH + gradlePath.replace(':', '/')
 
-    fun module(gradlePath: String): GradleModule {
-        return GradleModule(
+    fun module(gradlePath: String): GradleProject {
+        return GradleProject(
             gradlePath = gradlePath,
             directory = directoryOf(gradlePath),
             rootProjectPath = ROOT_PROJECT_PATH,

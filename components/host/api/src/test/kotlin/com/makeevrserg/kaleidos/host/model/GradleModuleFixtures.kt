@@ -11,8 +11,8 @@ object GradleModuleFixtures {
         return ModuleDependency(dependentPath = this, dependencyPath = dependencyPath)
     }
 
-    fun module(gradlePath: String, taskNames: Set<String> = emptySet()): GradleModule {
-        return GradleModule(
+    fun module(gradlePath: String, taskNames: Set<String> = emptySet()): GradleProject {
+        return GradleProject(
             gradlePath = gradlePath,
             directory = ROOT_PROJECT_PATH + gradlePath.replace(':', '/'),
             rootProjectPath = ROOT_PROJECT_PATH,
@@ -20,13 +20,13 @@ object GradleModuleFixtures {
         )
     }
 
-    fun jsBrowserModule(gradlePath: String): GradleModule = module(gradlePath, setOf("jsBrowserTest"))
+    fun jsBrowserModule(gradlePath: String): GradleProject = module(gradlePath, setOf("jsBrowserTest"))
 
-    fun kobwebApplication(gradlePath: String): GradleModule {
+    fun kobwebApplication(gradlePath: String): GradleProject {
         return module(gradlePath, setOf("jsBrowserTest", "kobwebStart"))
     }
 
-    fun kobwebLibrary(gradlePath: String): GradleModule {
+    fun kobwebLibrary(gradlePath: String): GradleProject {
         return module(gradlePath, setOf("jsBrowserTest", "kobwebGenerateLibraryMetadata"))
     }
 
@@ -38,7 +38,7 @@ object GradleModuleFixtures {
         return ModuleDependencyGraph(dependencies)
     }
 
-    fun structure(modules: List<GradleModule>, vararg edges: ModuleDependency): PreviewProjectStructure {
+    fun structure(modules: List<GradleProject>, vararg edges: ModuleDependency): PreviewProjectStructure {
         return PreviewProjectStructure(modules = modules, dependencies = graph(*edges))
     }
 }

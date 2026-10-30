@@ -6,7 +6,7 @@ package com.makeevrserg.kaleidos.host.model
  * @param dependencies keyed by module directory, the identity shared by the IDE modules of one Gradle module
  */
 data class PreviewProjectStructure(
-    val modules: List<GradleModule>,
+    val modules: List<GradleProject>,
     val dependencies: ModuleDependencyGraph
 ) {
     val isImported: Boolean

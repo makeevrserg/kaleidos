@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.makeevrserg.kaleidos.core.di.ProjectDependencies
-import com.makeevrserg.kaleidos.host.model.GradleModule
+import com.makeevrserg.kaleidos.host.model.GradleProject
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 /**
@@ -34,9 +34,9 @@ internal class GradleModuleCatalog(private val projectDependencies: ProjectDepen
             .toSet()
     }
 
-    private fun DataNode<ModuleData>.toGradleModule(rootProjectPath: String): GradleModule {
+    private fun DataNode<ModuleData>.toGradleProject(rootProjectPath: String): GradleProject {
         val taskNames = ownTaskNames()
-        return GradleModule(
+        return GradleProject(
             gradlePath = data.toGradlePath(),
             directory = data.linkedExternalProjectPath,
             rootProjectPath = rootProjectPath,
@@ -44,13 +44,13 @@ internal class GradleModuleCatalog(private val projectDependencies: ProjectDepen
         )
     }
 
-    fun read(): List<GradleModule> {
+    fun read(): List<GradleProject> {
         return projectDependencies.projectDataManager
             .getExternalProjectsData(projectDependencies.project, GradleConstants.SYSTEM_ID)
             .flatMap { projectInfo ->
                 val structure = projectInfo.externalProjectStructure ?: return@flatMap emptyList()
                 ExternalSystemApiUtil.findAll(structure, ProjectKeys.MODULE)
-                    .map { moduleNode -> moduleNode.toGradleModule(projectInfo.externalProjectPath) }
+                    .map { moduleNode -> moduleNode.toGradleProject(projectInfo.externalProjectPath) }
             }
     }
 

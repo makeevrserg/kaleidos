@@ -6,8 +6,7 @@ package com.makeevrserg.kaleidos.host.model
  * @param gradlePath `:a:b`; empty for the root project
  * @param taskNames plain task names of the module, without the Gradle path
  */
-@Suppress("DiPlacement")
-data class GradleModule(
+data class GradleProject(
     val gradlePath: String,
     val directory: String,
     val rootProjectPath: String,

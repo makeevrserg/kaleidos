@@ -1,8 +1,8 @@
 package com.makeevrserg.kaleidos.host.usecase
 
 import com.makeevrserg.kaleidos.host.model.DevServerKind
-import com.makeevrserg.kaleidos.host.model.GradleModule
 import com.makeevrserg.kaleidos.host.model.GradleModuleKind
+import com.makeevrserg.kaleidos.host.model.GradleProject
 import com.makeevrserg.kaleidos.host.model.HostCandidate
 import com.makeevrserg.kaleidos.host.model.PreviewHost
 import com.makeevrserg.kaleidos.host.model.PreviewHostResolution
@@ -19,7 +19,7 @@ import com.makeevrserg.kaleidos.host.util.reaches
  */
 class SelectPreviewHostUseCase {
 
-    private fun toCandidate(module: GradleModule): HostCandidate? {
+    private fun toCandidate(module: GradleProject): HostCandidate? {
         val kind = GradleModuleKind.detect(module.taskNames).devServerKind ?: return null
         return HostCandidate(module = module, kind = kind)
     }
@@ -57,7 +57,7 @@ class SelectPreviewHostUseCase {
      * that depends on it. A Kobweb library is served by Kobweb applications only.
      */
     private fun servingCandidates(
-        fileModule: GradleModule,
+        fileModule: GradleProject,
         structure: PreviewProjectStructure
     ): List<HostCandidate> {
         val isKobwebLibrary = GradleModuleKind.detect(fileModule.taskNames) == GradleModuleKind.KOBWEB_LIBRARY
@@ -67,7 +67,7 @@ class SelectPreviewHostUseCase {
             .filter { candidate -> structure.reaches(candidate.module.directory, fileModule.directory) }
     }
 
-    private fun noCandidateReason(fileModule: GradleModule): String {
+    private fun noCandidateReason(fileModule: GradleProject): String {
         val isKobwebLibrary = GradleModuleKind.detect(fileModule.taskNames) == GradleModuleKind.KOBWEB_LIBRARY
         if (isKobwebLibrary) {
             return "No Kobweb application of this project depends on ${fileModule.displayName}. " +
