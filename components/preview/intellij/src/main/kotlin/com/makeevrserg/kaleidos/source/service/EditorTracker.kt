@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.feature.api.PreviewStore
 import com.makeevrserg.kaleidos.feature.model.PreviewScan
 import com.makeevrserg.kaleidos.feature.model.PreviewTarget

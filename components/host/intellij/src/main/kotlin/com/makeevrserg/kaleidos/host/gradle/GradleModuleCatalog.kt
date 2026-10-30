@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.host.model.GradleModule
 import org.jetbrains.plugins.gradle.util.GradleConstants
 

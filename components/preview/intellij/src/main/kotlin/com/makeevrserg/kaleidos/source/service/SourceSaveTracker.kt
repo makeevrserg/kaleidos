@@ -4,7 +4,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.feature.api.PreviewStore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

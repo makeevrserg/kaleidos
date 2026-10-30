@@ -4,7 +4,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.feature.api.PreviewStore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

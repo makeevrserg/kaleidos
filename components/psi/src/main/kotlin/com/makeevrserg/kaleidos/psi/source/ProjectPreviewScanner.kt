@@ -4,7 +4,7 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.harness.api.ProjectPreviewSource
 import com.makeevrserg.kaleidos.harness.model.HarnessPreview
 import com.makeevrserg.kaleidos.harness.model.ModulePreviews

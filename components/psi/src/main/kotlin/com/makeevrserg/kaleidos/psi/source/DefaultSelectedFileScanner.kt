@@ -1,6 +1,6 @@
 package com.makeevrserg.kaleidos.psi.source
 
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.feature.model.PreviewScan
 import com.makeevrserg.kaleidos.psi.preview.PreviewFileScanner
 import com.makeevrserg.kaleidos.psi.preview.PreviewSourceSetFilter

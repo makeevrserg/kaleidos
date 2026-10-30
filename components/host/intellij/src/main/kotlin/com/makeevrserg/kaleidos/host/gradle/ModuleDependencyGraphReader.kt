@@ -3,7 +3,7 @@ package com.makeevrserg.kaleidos.host.gradle
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.host.model.PreviewProjectStructure.ModuleDependencyGraph
 import java.nio.file.Path
 

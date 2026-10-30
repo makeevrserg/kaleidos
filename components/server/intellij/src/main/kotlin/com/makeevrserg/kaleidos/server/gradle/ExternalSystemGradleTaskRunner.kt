@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.util.Disposer
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.server.api.GradleTaskRunner
 import com.makeevrserg.kaleidos.server.model.DevServerLaunchConfig
 import com.makeevrserg.kaleidos.server.model.GradleRunEvent

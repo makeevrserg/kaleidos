@@ -3,7 +3,7 @@ package com.makeevrserg.kaleidos.source.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.feature.api.PreviewStore
 import com.makeevrserg.kaleidos.toolwindow.model.PreviewToolWindowIds
 import kotlinx.coroutines.channels.awaitClose

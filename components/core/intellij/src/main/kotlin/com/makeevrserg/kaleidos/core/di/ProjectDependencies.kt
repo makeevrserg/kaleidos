@@ -1,4 +1,4 @@
-package com.makeevrserg.kaleidos.dependencies
+package com.makeevrserg.kaleidos.core.di
 
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.editor.EditorFactory
@@ -17,7 +17,6 @@ import com.intellij.util.messages.MessageBus
 /**
  * Project-scoped platform services gathered in one place so features receive a single dependency.
  */
-@Suppress("ImplementationVisibility")
 class ProjectDependencies(val project: Project) {
     val toolWindowManager: ToolWindowManager = ToolWindowManager.getInstance(project)
     val runContentManager: RunContentManager = RunContentManager.getInstance(project)

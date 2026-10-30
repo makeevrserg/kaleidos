@@ -1,6 +1,6 @@
 package com.makeevrserg.kaleidos.toolwindow.component
 
-import com.makeevrserg.kaleidos.dependencies.ProjectDependencies
+import com.makeevrserg.kaleidos.core.di.ProjectDependencies
 import com.makeevrserg.kaleidos.feature.api.PreviewToolWindowPresenter
 import com.makeevrserg.kaleidos.toolwindow.model.PreviewToolWindowIds
 

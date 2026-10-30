@@ -6,7 +6,7 @@ plugins {
 
 linter {
     unitKind.set("technology")
-    rootPackage.set("com.makeevrserg.kaleidos")
+    rootPackage.set("com.makeevrserg.kaleidos.core")
 }
 
 dependencies {
