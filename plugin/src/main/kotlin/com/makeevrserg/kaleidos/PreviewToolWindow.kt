@@ -7,13 +7,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
-import com.makeevrserg.kaleidos.di.PreviewProjectService
+import com.makeevrserg.kaleidos.di.KaleidosProject
 
-@Suppress("RolelessClassName")
-internal class PreviewToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class PreviewToolWindow : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val rootModule = project.service<PreviewProjectService>().rootModule
+        val rootModule = project.service<KaleidosProject>().rootModule
         val uiModule = rootModule.uiModule
         val browser = uiModule.previewBrowser
         val panel = uiModule.createPreviewPanel(browser)

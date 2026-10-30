@@ -3,7 +3,7 @@ package com.makeevrserg.kaleidos
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.makeevrserg.kaleidos.di.PreviewProjectService
+import com.makeevrserg.kaleidos.di.KaleidosProject
 
 /**
  * Instantiates the project service on project open so editor and tool window tracking start before
@@ -11,6 +11,6 @@ import com.makeevrserg.kaleidos.di.PreviewProjectService
  */
 internal class PreviewStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
-        project.service<PreviewProjectService>()
+        project.service<KaleidosProject>()
     }
 }

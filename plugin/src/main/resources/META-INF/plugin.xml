@@ -60,7 +60,7 @@
                 anchor="right"
                 doNotActivateOnStart="true"
                 icon="/icons/toolWindowPreview.svg"
-                factoryClass="com.makeevrserg.kaleidos.PreviewToolWindowFactory"/>
+                factoryClass="com.makeevrserg.kaleidos.PreviewToolWindow"/>
 
         <notificationGroup id="Kaleidos" displayType="BALLOON"/>
 
