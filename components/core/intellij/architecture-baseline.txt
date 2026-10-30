@@ -1,1 +1,0 @@
-UnitDependency	build.gradle.kts	:components:core:api

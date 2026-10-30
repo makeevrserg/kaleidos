@@ -26,7 +26,7 @@ import kotlin.coroutines.CoroutineContext
  * [PreviewScan.Pending] before its scan, while a rescan keeps the current page visible. Cold flows
  * own the IDE listeners, and `transformLatest` cancels obsolete scans.
  *
- * @param mainContext [com.makeevrserg.kaleidos.core.coroutine.api.PreviewDispatchers.main]
+ * @param mainContext [com.makeevrserg.kaleidos.core.coroutine.model.PreviewDispatchers.main]
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class EditorTracker(

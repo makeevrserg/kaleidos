@@ -16,7 +16,7 @@ import kotlin.coroutines.CoroutineContext
  * Reports whether the preview tool window is visible, so nothing is rendered and no dev server is
  * started while the user cannot see the result.
  *
- * @param mainContext [com.makeevrserg.kaleidos.core.coroutine.api.PreviewDispatchers.main]; the tool
+ * @param mainContext [com.makeevrserg.kaleidos.core.coroutine.model.PreviewDispatchers.main]; the tool
  * window state is read on the event dispatch thread
  */
 internal class ToolWindowVisibilityTracker(

@@ -1,7 +1,7 @@
 package com.makeevrserg.kaleidos.core.coroutine.memory
 
 import com.makeevrserg.kaleidos.core.coroutine.api.CoroutineFeature
-import com.makeevrserg.kaleidos.core.coroutine.api.PreviewDispatchers
+import com.makeevrserg.kaleidos.core.coroutine.model.PreviewDispatchers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob

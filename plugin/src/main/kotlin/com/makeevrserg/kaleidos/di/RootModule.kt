@@ -27,7 +27,7 @@ class RootModule(
 
     private val coreModule = CoreModule(
         coroutineScope = coroutineScope,
-        dispatchers = intellijCoreModule.dispatchers,
+        mainContext = intellijCoreModule.mainContext,
         clock = Clock.systemDefaultZone()
     )
 
