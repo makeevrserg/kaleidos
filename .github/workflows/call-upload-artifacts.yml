@@ -15,13 +15,13 @@ jobs:
       - name: Set up JDK
         uses: ./.github/actions/setup-jdk
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Give gradle permission
         run: chmod +x gradlew
       - name: Build plugin distribution with Gradle
         run: ./gradlew :plugin:buildPlugin --stacktrace
       - name: Upload plugin distribution
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
           # buildPlugin writes <klibs.project.name>-<klibs.project.version.string>.zip here
