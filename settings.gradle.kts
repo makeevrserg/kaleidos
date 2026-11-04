@@ -2,6 +2,7 @@ import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
 
 pluginManagement {
     repositories {
+        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
         google()
@@ -17,6 +18,7 @@ plugins {
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
+        mavenLocal()
         mavenCentral()
         intellijPlatform {
             defaultRepositories()
