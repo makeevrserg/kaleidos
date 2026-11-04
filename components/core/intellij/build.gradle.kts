@@ -1,12 +1,18 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
+
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    id("org.jetbrains.intellij.platform.module")
+    id("kaleidos.kotlin.jvm")
+    id("kaleidos.intellij.module")
+    alias(libs.plugins.klibs.rules.linter)
+}
+
+linter {
+    unitKind(UnitKind.CORE_PLATFORM)
+    rootPackage.set("com.makeevrserg.kaleidos.core")
 }
 
 dependencies {
     intellijPlatform {
         intellijIdea(providers.gradleProperty("intellij.version"))
     }
-
-    implementation(projects.components.core.api)
 }

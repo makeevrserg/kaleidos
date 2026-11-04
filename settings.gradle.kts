@@ -2,11 +2,14 @@ import org.jetbrains.intellij.platform.gradle.extensions.intellijPlatform
 
 pluginManagement {
     repositories {
+        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
         google()
     }
 }
+
+includeBuild("build-logic")
 
 plugins {
     id("org.jetbrains.intellij.platform.settings") version "2.18.1"
@@ -15,6 +18,7 @@ plugins {
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
+        mavenLocal()
         mavenCentral()
         intellijPlatform {
             defaultRepositories()

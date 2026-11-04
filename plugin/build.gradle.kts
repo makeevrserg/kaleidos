@@ -1,29 +1,38 @@
 import org.gradle.process.CommandLineArgumentProvider
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
 
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-    id("org.jetbrains.intellij.platform")
+    id("kaleidos.kotlin.jvm")
+    id("kaleidos.intellij.application")
+    alias(libs.plugins.klibs.rules.linter)
+}
+
+linter {
+    unitKind(UnitKind.ENTRY_POINT)
+    rootPackage.set("com.makeevrserg.kaleidos")
 }
 
 dependencies {
     intellijPlatform {
+        bundledModules("intellij.libraries.jcef", "intellij.platform.ui.jcef")
+        bundledPlugins(
+            "com.intellij.gradle",
+            "com.intellij.java",
+            "org.jetbrains.kotlin"
+        )
         intellijIdea(providers.gradleProperty("intellij.version"))
-        bundledPlugins("com.intellij.java", "org.jetbrains.kotlin", "com.intellij.gradle")
-        bundledModules("intellij.platform.ui.jcef", "intellij.libraries.jcef")
-        pluginVerifier()
-        // Every component is merged into the plugin JAR; a plain project dependency lands in lib/modules
-        // and is not loaded. The list is explicit so no module is pulled in by accident.
         pluginComposedModule(implementation(projects.components.core.api))
         pluginComposedModule(implementation(projects.components.core.intellij))
+        pluginComposedModule(implementation(projects.components.harness.api))
         pluginComposedModule(implementation(projects.components.host.api))
         pluginComposedModule(implementation(projects.components.host.intellij))
-        pluginComposedModule(implementation(projects.components.server.api))
-        pluginComposedModule(implementation(projects.components.server.intellij))
-        pluginComposedModule(implementation(projects.components.harness.api))
         pluginComposedModule(implementation(projects.components.preview.api))
         pluginComposedModule(implementation(projects.components.preview.intellij))
         pluginComposedModule(implementation(projects.components.psi))
+        pluginComposedModule(implementation(projects.components.server.api))
+        pluginComposedModule(implementation(projects.components.server.intellij))
         pluginComposedModule(implementation(projects.components.ui))
+        pluginVerifier()
     }
 }
 
@@ -63,7 +72,7 @@ tasks.named<Zip>("buildPlugin") {
 
 // Sandbox IDE with the Robot Server plugin for scripted UI checks. Pass -PuiTestProject=<path>
 // to open a project on start: ./gradlew :plugin:runIdeForUiTests -PuiTestProject=/path/to/project
-val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
+intellijPlatformTesting.runIde.register("runIdeForUiTests") {
     task {
         jvmArgumentProviders += CommandLineArgumentProvider {
             listOf(
@@ -74,7 +83,7 @@ val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
                 "-Didea.trust.all.projects=true"
             )
         }
-        providers.gradleProperty("uiTestProject").orNull?.let { projectPath -> args(projectPath) }
+        args = listOfNotNull(providers.gradleProperty("uiTestProject").orNull)
     }
 
     plugins {
