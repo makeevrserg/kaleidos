@@ -12,17 +12,13 @@ linter {
 }
 
 dependencies {
+    compileOnly(libs.kotlin.stdlib)
+    compileOnly(libs.kotlinx.coroutines.core)
+    implementation(projects.components.core.api)
+    implementation(projects.components.host.api)
     testFixturesApi(libs.kotlinx.coroutines.core)
     testFixturesApi(projects.components.host.api)
     testFixturesImplementation(libs.kotlin.stdlib)
-
-    // Provided by the IntelliJ Platform at runtime
-    compileOnly(libs.kotlin.stdlib)
-    compileOnly(libs.kotlinx.coroutines.core)
-
-    implementation(projects.components.core.api)
-    implementation(projects.components.host.api)
-
     testImplementation(libs.kotlin.stdlib)
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)

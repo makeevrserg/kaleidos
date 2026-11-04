@@ -14,27 +14,25 @@ linter {
 
 dependencies {
     intellijPlatform {
-        intellijIdea(providers.gradleProperty("intellij.version"))
+        bundledModules("intellij.libraries.jcef", "intellij.platform.ui.jcef")
         bundledPlugins(
+            "com.intellij.gradle",
             "com.intellij.java",
-            "org.jetbrains.kotlin",
-            "com.intellij.gradle"
+            "org.jetbrains.kotlin"
         )
-        bundledModules("intellij.platform.ui.jcef", "intellij.libraries.jcef")
-        pluginVerifier()
-        // Every component is merged into the plugin JAR; a plain project dependency lands in lib/modules
-        // and is not loaded. The list is explicit so no module is pulled in by accident.
+        intellijIdea(providers.gradleProperty("intellij.version"))
         pluginComposedModule(implementation(projects.components.core.api))
         pluginComposedModule(implementation(projects.components.core.intellij))
+        pluginComposedModule(implementation(projects.components.harness.api))
         pluginComposedModule(implementation(projects.components.host.api))
         pluginComposedModule(implementation(projects.components.host.intellij))
-        pluginComposedModule(implementation(projects.components.server.api))
-        pluginComposedModule(implementation(projects.components.server.intellij))
-        pluginComposedModule(implementation(projects.components.harness.api))
         pluginComposedModule(implementation(projects.components.preview.api))
         pluginComposedModule(implementation(projects.components.preview.intellij))
         pluginComposedModule(implementation(projects.components.psi))
+        pluginComposedModule(implementation(projects.components.server.api))
+        pluginComposedModule(implementation(projects.components.server.intellij))
         pluginComposedModule(implementation(projects.components.ui))
+        pluginVerifier()
     }
 }
 
