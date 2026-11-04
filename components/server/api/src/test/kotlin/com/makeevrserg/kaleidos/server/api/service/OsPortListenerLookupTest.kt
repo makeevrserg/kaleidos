@@ -8,7 +8,6 @@ import kotlinx.coroutines.test.TestResult
 import kotlinx.coroutines.test.runTest
 import java.net.ServerSocket
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -26,16 +25,6 @@ class OsPortListenerLookupTest {
         timeout = COMMAND_TIMEOUT
     )
 
-    private var socket: ServerSocket? = null
-
-    // The socket must remain open during lookup; @AfterTest closes it even when an assertion fails.
-    @Suppress("MissingUseCall")
-    private fun listen(): Int {
-        val opened = ServerSocket(0)
-        socket = opened
-        return opened.localPort
-    }
-
     private fun lookupOf(arguments: List<String>, timeout: Duration): OsPortListenerLookup {
         return OsPortListenerLookup(
             command = FakePortListenerCommand(arguments, parsedPid = ProcessHandle.current().pid()),
@@ -44,29 +33,24 @@ class OsPortListenerLookupTest {
         )
     }
 
-    @AfterTest
-    fun cleanUp() {
-        socket?.close()
-    }
-
     @Test
     fun GIVEN_this_process_listens_WHEN_find_THEN_it_is_named_with_its_command_line(): TestResult {
         return runTest {
-            val port = listen()
+            ServerSocket(0).use { socket ->
+                val port = socket.localPort
+                val listener = assertNotNull(lookup.find(port), "lsof did not name the listener of port $port")
 
-            val listener = assertNotNull(lookup.find(port), "lsof did not name the listener of port $port")
-
-            assertEquals(ProcessHandle.current().pid(), listener.pid)
-            assertEquals("kill ${listener.pid}", listener.stopCommand)
-            assertTrue(listener.commandLine.orEmpty().contains("java"), listener.commandLine.orEmpty())
+                assertEquals(ProcessHandle.current().pid(), listener.pid)
+                assertEquals("kill ${listener.pid}", listener.stopCommand)
+                assertTrue(listener.commandLine.orEmpty().contains("java"), listener.commandLine.orEmpty())
+            }
         }
     }
 
     @Test
     fun GIVEN_nobody_listens_WHEN_find_THEN_null(): TestResult {
         return runTest {
-            val port = listen()
-            socket?.close()
+            val port = ServerSocket(0).use(ServerSocket::getLocalPort)
 
             assertNull(lookup.find(port))
         }
@@ -77,7 +61,9 @@ class OsPortListenerLookupTest {
         return runTest {
             val missing = lookupOf(listOf("kaleidos-no-such-command"), COMMAND_TIMEOUT)
 
-            assertNull(missing.find(listen()))
+            ServerSocket(0).use { socket ->
+                assertNull(missing.find(socket.localPort))
+            }
         }
     }
 
@@ -86,7 +72,9 @@ class OsPortListenerLookupTest {
         return runTest {
             val hanging = lookupOf(listOf("sleep", "60"), SHORT_TIMEOUT)
 
-            assertNull(hanging.find(listen()))
+            ServerSocket(0).use { socket ->
+                assertNull(hanging.find(socket.localPort))
+            }
         }
     }
 
