@@ -49,6 +49,13 @@ private val SCRIPT_BODY = listOf(
     "        if (sourceSet.name != sourceSetName) return",
     "        sourceSet.kotlin.srcDir(injection.kotlinSrcDir)",
     "        if (injection.resourcesSrcDir != null) sourceSet.resources.srcDir(injection.resourcesSrcDir)",
+    "        if (project.path == previewHostPath) {",
+    "            previewInjections.keySet().findAll { path -> path != previewHostPath }.each { path ->",
+    "                project.dependencies.add(",
+    "                    sourceSet.implementationConfigurationName, project.dependencies.project(path: path)",
+    "                )",
+    "            }",
+    "        }",
     "    }",
     "}",
     "",
@@ -143,6 +150,8 @@ private fun HarnessPlan.injections(): List<String> {
 internal fun HarnessPlan.generatePreviewInitScript(): GeneratedFile {
     val lines = buildList {
         add(GROOVY_HEADER)
+        add("")
+        add("def previewHostPath = ${groovyString(host.gradlePath)}")
         add("")
         addAll(injections())
         add("")

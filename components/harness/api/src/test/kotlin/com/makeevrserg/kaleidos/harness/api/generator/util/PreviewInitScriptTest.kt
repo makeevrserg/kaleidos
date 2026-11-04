@@ -9,7 +9,12 @@ import com.makeevrserg.kaleidos.harness.api.model.HarnessHostPlan
 import com.makeevrserg.kaleidos.harness.api.model.HarnessPlan
 import com.makeevrserg.kaleidos.harness.api.model.PreviewModulePlan
 import com.makeevrserg.kaleidos.harness.api.util.INIT_SCRIPT_NAME
+import com.makeevrserg.kaleidos.harness.api.util.harnessKotlinRoot
 import com.makeevrserg.kaleidos.host.api.model.DevServerKind
+import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
+import java.io.File
+import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -45,6 +50,121 @@ class PreviewInitScriptTest {
             ),
             modules = listOf(uiModule)
         )
+    }
+
+    private fun writeCompilationFixture(directory: File, pluginId: String, hostPath: String) {
+        val configuration = if (pluginId == "org.jetbrains.kotlin.multiplatform") {
+            "jsMainImplementation"
+        } else {
+            "implementation"
+        }
+        directory.resolve("settings.gradle").writeText(
+            "rootProject.name = 'preview-fixture'\ninclude ':host', ':feature', ':core', ':unrelated'\n"
+        )
+        directory.resolve("build.gradle").writeText(
+            """
+            plugins { id '$pluginId' version '2.3.20' }
+            allprojects {
+                apply plugin: '$pluginId'
+                repositories { mavenCentral() }
+                kotlin { js { browser() } }
+            }
+            project(':feature') {
+                dependencies { add('$configuration', project(':core')) }
+            }
+            project('$hostPath') {
+                dependencies { add('$configuration', project(':feature')) }
+            }
+            """.trimIndent()
+        )
+        listOf(
+            "host",
+            "feature",
+            "core",
+            "unrelated"
+        ).forEach { name -> directory.resolve(name).mkdirs() }
+    }
+
+    private fun compilationPlan(directory: File, hostPath: String): HarnessPlan {
+        val base = plan(DevServerKind.KOBWEB)
+        val hostDirectory = if (hostPath == ":") directory else directory.resolve("host")
+        val modules = listOf(
+            ":core",
+            ":feature",
+            hostPath
+        ).map { path ->
+            uiModule.copy(
+                gradlePath = path,
+                directory = if (path == ":") directory.path else directory.resolve(path.removePrefix(":")).path
+            )
+        }
+        return base.copy(
+            host = base.host.copy(
+                gradlePath = hostPath,
+                directory = hostDirectory.path,
+                rootProjectPath = directory.path
+            ),
+            modules = modules
+        )
+    }
+
+    private fun writeRegistryFixture(plan: HarnessPlan) {
+        plan.modules.forEach { module ->
+            val root = harnessKotlinRoot(module.directory).toFile()
+            root.mkdirs()
+            root.resolve("PreviewRegistry.kt").writeText(
+                """
+                package ${registryPackage(module.gradlePath)}
+                object PreviewRegistry { val fqns: List<String> = listOf("${module.gradlePath}") }
+                """.trimIndent()
+            )
+        }
+        val references = plan.modules.joinToString(" + ") { module -> "${registryFqn(module.gradlePath)}.fqns" }
+        harnessKotlinRoot(plan.host.directory).resolve("PreviewPage.kt").toFile().writeText(
+            "package kaleidos.generated\nval allPreviewFqns: List<String> = $references\n"
+        )
+    }
+
+    private fun verifyRegistryCompilation(pluginId: String, hostPath: String) {
+        val directory = Files.createTempDirectory("kaleidos preview's ").toFile().canonicalFile
+        try {
+            writeCompilationFixture(
+                directory,
+                pluginId,
+                hostPath
+            )
+            val plan = compilationPlan(directory, hostPath)
+            writeRegistryFixture(plan)
+            val script = directory.resolve(INIT_SCRIPT_NAME)
+            script.writeText(plan.generatePreviewInitScript().content)
+            val task = if (hostPath == ":") ":compileKotlinJs" else "$hostPath:compileKotlinJs"
+            val runner = GradleRunner.create().withProjectDir(directory).withArguments(
+                task,
+                "--init-script",
+                script.path,
+                "--configuration-cache",
+                "--stacktrace"
+            )
+
+            val first = runner.build()
+            val second = runner.build()
+
+            assertEquals(TaskOutcome.SUCCESS, first.task(task)?.outcome)
+            assertEquals(TaskOutcome.UP_TO_DATE, second.task(task)?.outcome)
+            assertTrue(second.output.contains("Reusing configuration cache."), second.output)
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun GIVEN_transitive_implementation_dependency_WHEN_compile_preview_THEN_all_registries_are_visible() {
+        verifyRegistryCompilation("org.jetbrains.kotlin.multiplatform", ":host")
+    }
+
+    @Test
+    fun GIVEN_root_js_host_with_own_previews_WHEN_compile_preview_THEN_no_self_dependency_is_added() {
+        verifyRegistryCompilation("org.jetbrains.kotlin.js", ":")
     }
 
     @Test

@@ -18,6 +18,7 @@ dependencies {
     implementation(projects.components.host.api)
     testFixturesApi(projects.components.host.api)
     testFixturesImplementation(libs.kotlin.stdlib)
+    testImplementation(gradleTestKit())
     testImplementation(libs.kotlin.stdlib)
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
