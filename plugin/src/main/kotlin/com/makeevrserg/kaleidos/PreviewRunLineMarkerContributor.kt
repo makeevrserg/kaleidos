@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.makeevrserg.kaleidos.di.KaleidosProject
-import com.makeevrserg.kaleidos.ui.theme.PreviewIcons
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
@@ -23,9 +22,10 @@ internal class PreviewRunLineMarkerContributor : RunLineMarkerContributor() {
         if (function.nameIdentifier != element) return null
         val rootModule = element.project.service<KaleidosProject>().rootModule
         val previewFunction = rootModule.psiModule.previewFunctionDetector.detect(function) ?: return null
-        val actions = arrayOf<AnAction>(rootModule.uiModule.showPreviewAction.invoke(previewFunction))
+        val action = rootModule.uiModule.showPreviewAction.invoke(previewFunction)
+        val actions = arrayOf<AnAction>(action)
         return Info(
-            PreviewIcons.Gutter,
+            requireNotNull(action.templatePresentation.icon),
             actions
         ) { "Show preview of ${previewFunction.name}" }
     }
