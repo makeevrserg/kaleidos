@@ -21,7 +21,7 @@ private const val REBUILDING_SAMPLE = "Sources changed (CardPreview.kt, 10:15:30
 private const val RELOADED_SAMPLE = "Reloaded with fresh sources at 10:15:34"
 
 @Composable
-private fun RebuildingBanner(banner: PreviewBanner.Rebuilding) {
+private fun RebuildingBannerComposable(banner: PreviewBanner.Rebuilding) {
     DefaultWarningBanner(
         text = banner.text,
         modifier = Modifier.fillMaxWidth(),
@@ -30,7 +30,7 @@ private fun RebuildingBanner(banner: PreviewBanner.Rebuilding) {
 }
 
 @Composable
-private fun ReloadedBanner(banner: PreviewBanner.Reloaded) {
+private fun ReloadedBannerComposable(banner: PreviewBanner.Reloaded) {
     DefaultSuccessBanner(
         text = banner.text,
         modifier = Modifier.fillMaxWidth(),
@@ -51,8 +51,8 @@ internal fun PreviewSourceBanner(banner: PreviewBanner?) {
     ) { current ->
         when (current) {
             null -> Box(modifier = Modifier.fillMaxWidth())
-            is PreviewBanner.Rebuilding -> RebuildingBanner(current)
-            is PreviewBanner.Reloaded -> ReloadedBanner(current)
+            is PreviewBanner.Rebuilding -> RebuildingBannerComposable(current)
+            is PreviewBanner.Reloaded -> ReloadedBannerComposable(current)
         }
     }
 }

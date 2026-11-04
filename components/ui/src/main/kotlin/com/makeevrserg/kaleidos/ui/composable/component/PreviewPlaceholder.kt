@@ -43,7 +43,7 @@ private val FailureSample = PreviewMessage(
 
 /** The spinner while a page is on its way, otherwise the standard dialog icon of what the text says. */
 @Composable
-private fun PlaceholderIcon(kind: PreviewPlaceholderKind) {
+private fun PlaceholderIconComposable(kind: PreviewPlaceholderKind) {
     when (kind) {
         PreviewPlaceholderKind.LOADING -> CircularProgressIndicatorBig()
         PreviewPlaceholderKind.INFO -> Icon(key = AllIconsKeys.General.InformationDialog, contentDescription = null)
@@ -66,7 +66,7 @@ internal fun PreviewPlaceholder(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        PlaceholderIcon(kind = kind)
+        PlaceholderIconComposable(kind = kind)
         Spacer(modifier = Modifier.height(ICON_GAP.dp))
         Text(
             text = message.title,

@@ -56,7 +56,7 @@ internal fun PreviewStatusBar(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        DonationLink(
+        DonationLinkComposable(
             text = donationText,
             onClick = onDonateClick
         )

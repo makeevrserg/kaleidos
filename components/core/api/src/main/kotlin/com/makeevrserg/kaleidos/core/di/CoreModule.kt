@@ -16,7 +16,7 @@ import kotlin.coroutines.CoroutineContext
  * @param mainContext UI thread of the host, the event dispatch thread in the IDE
  */
 class CoreModule(
-    private val coroutineScope: CoroutineScope,
+    coroutineScope: CoroutineScope,
     mainContext: CoroutineContext,
     val clock: Clock
 ) {

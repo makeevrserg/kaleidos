@@ -1,3 +1,5 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
+
 plugins {
     id("kaleidos.kotlin.jvm")
     `java-test-fixtures`
@@ -5,7 +7,7 @@ plugins {
 }
 
 linter {
-    unitKind.set("api")
+    unitKind(UnitKind.CORE_API)
     rootPackage.set("com.makeevrserg.kaleidos.core")
 }
 

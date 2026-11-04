@@ -1,6 +1,6 @@
 package com.makeevrserg.kaleidos.psi.preview
 
-import com.makeevrserg.kaleidos.feature.model.PreviewFunction
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewFunction
 import com.makeevrserg.kaleidos.psi.annotation.AnnotationFqnResolver
 import com.makeevrserg.kaleidos.psi.annotation.PreviewAnnotationCatalog
 import com.makeevrserg.kaleidos.psi.api.PreviewFunctionDetector

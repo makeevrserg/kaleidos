@@ -1,10 +1,10 @@
 package com.makeevrserg.kaleidos.psi.source
 
 import com.makeevrserg.kaleidos.core.di.ProjectDependencies
-import com.makeevrserg.kaleidos.feature.model.PreviewScan
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewScan
+import com.makeevrserg.kaleidos.preview.api.source.api.SelectedFileScanner
 import com.makeevrserg.kaleidos.psi.preview.PreviewFileScanner
 import com.makeevrserg.kaleidos.psi.preview.PreviewSourceSetFilter
-import com.makeevrserg.kaleidos.source.api.SelectedFileScanner
 import java.nio.file.Path
 
 /**

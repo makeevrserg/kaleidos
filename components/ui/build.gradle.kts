@@ -1,3 +1,7 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.Checks
+import ru.astrainteractive.klibs.rules.core.unit.model.RuleId
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitRole
+
 plugins {
     id("kaleidos.kotlin.jvm")
     alias(libs.plugins.kotlin.compose)
@@ -6,7 +10,17 @@ plugins {
 }
 
 linter {
-    unitKind.set("context")
+    unit(
+        UnitRole.Platform(
+            checks = Checks(
+                disabled = mapOf(
+                    RuleId.COMPOSE_KIND_WITHOUT_COMPOSE to
+                        "IntelliJ supplies Compose; main has Compose, but test metadata also includes main " +
+                        "sources and incorrectly marks them as non-Compose."
+                )
+            )
+        )
+    )
     rootPackage.set("com.makeevrserg.kaleidos.ui")
 }
 

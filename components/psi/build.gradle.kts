@@ -1,3 +1,5 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
+
 plugins {
     id("kaleidos.kotlin.jvm")
     id("kaleidos.intellij.module")
@@ -5,7 +7,7 @@ plugins {
 }
 
 linter {
-    unitKind.set("technology")
+    unitKind(UnitKind.PLATFORM)
     rootPackage.set("com.makeevrserg.kaleidos.psi")
 }
 

@@ -1,11 +1,11 @@
 package com.makeevrserg.kaleidos.ui.theme
 
-import com.makeevrserg.kaleidos.feature.model.PageState
-import com.makeevrserg.kaleidos.feature.model.PreviewScan
-import com.makeevrserg.kaleidos.feature.util.PREVIEW_SOURCE_SETS
-import com.makeevrserg.kaleidos.host.model.PreviewHost
-import com.makeevrserg.kaleidos.host.model.PreviewHostResolution
-import com.makeevrserg.kaleidos.server.model.DevServerState
+import com.makeevrserg.kaleidos.host.api.model.PreviewHost
+import com.makeevrserg.kaleidos.host.api.model.PreviewHostResolution
+import com.makeevrserg.kaleidos.preview.api.feature.model.PageState
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewScan
+import com.makeevrserg.kaleidos.preview.api.feature.util.PREVIEW_SOURCE_SETS
+import com.makeevrserg.kaleidos.server.api.model.DevServerState
 import com.makeevrserg.kaleidos.ui.state.model.PreviewMessage
 
 /**

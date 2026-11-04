@@ -18,13 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.makeevrserg.kaleidos.feature.api.PreviewStore
-import com.makeevrserg.kaleidos.feature.model.PreviewState
+import com.makeevrserg.kaleidos.preview.api.feature.api.PreviewStore
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewState
 import com.makeevrserg.kaleidos.ui.browser.api.PreviewBrowser
-import com.makeevrserg.kaleidos.ui.composable.component.PreviewPageView
-import com.makeevrserg.kaleidos.ui.composable.component.PreviewPlaceholder
-import com.makeevrserg.kaleidos.ui.composable.component.PreviewSourceBanner
-import com.makeevrserg.kaleidos.ui.composable.component.PreviewStatusBar
 import com.makeevrserg.kaleidos.ui.state.model.PreviewContent
 import com.makeevrserg.kaleidos.ui.state.model.PreviewPlaceholderKind
 import com.makeevrserg.kaleidos.ui.state.model.PreviewUiState
@@ -35,7 +31,7 @@ private const val CONTENT_TRANSITION = "preview-content"
 private const val CONTENT_WEIGHT = 1f
 
 @Composable
-private fun LoadingContent(content: PreviewContent.Loading) {
+private fun LoadingContentComposable(content: PreviewContent.Loading) {
     PreviewPlaceholder(
         message = content.message,
         kind = PreviewPlaceholderKind.LOADING,
@@ -44,7 +40,7 @@ private fun LoadingContent(content: PreviewContent.Loading) {
 }
 
 @Composable
-private fun EmptyContent(content: PreviewContent.Empty) {
+private fun EmptyContentComposable(content: PreviewContent.Empty) {
     PreviewPlaceholder(
         message = content.message,
         kind = PreviewPlaceholderKind.INFO,
@@ -53,7 +49,7 @@ private fun EmptyContent(content: PreviewContent.Empty) {
 }
 
 @Composable
-private fun FailureContent(content: PreviewContent.Failure) {
+private fun FailureContentComposable(content: PreviewContent.Failure) {
     PreviewPlaceholder(
         message = content.message,
         kind = PreviewPlaceholderKind.FAILURE,
@@ -117,9 +113,9 @@ internal fun PreviewToolWindowContent(
             ) { content ->
                 when (content) {
                     is PreviewContent.Page -> Box(modifier = Modifier.fillMaxSize())
-                    is PreviewContent.Loading -> LoadingContent(content)
-                    is PreviewContent.Empty -> EmptyContent(content)
-                    is PreviewContent.Failure -> FailureContent(content)
+                    is PreviewContent.Loading -> LoadingContentComposable(content)
+                    is PreviewContent.Empty -> EmptyContentComposable(content)
+                    is PreviewContent.Failure -> FailureContentComposable(content)
                 }
             }
         }

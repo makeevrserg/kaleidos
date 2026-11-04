@@ -1,7 +1,7 @@
 package com.makeevrserg.kaleidos.psi.model
 
-import com.makeevrserg.kaleidos.harness.model.HarnessPreview
-import com.makeevrserg.kaleidos.harness.model.PrivatePreviewFile
+import com.makeevrserg.kaleidos.harness.api.model.HarnessPreview
+import com.makeevrserg.kaleidos.harness.api.model.PrivatePreviewFile
 
 data class ScannedPreviewFile(
     val moduleDirectory: String,

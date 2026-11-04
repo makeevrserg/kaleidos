@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.makeevrserg.kaleidos.core.coroutine.api.CoroutineFeature
-import com.makeevrserg.kaleidos.feature.api.PreviewStore
-import com.makeevrserg.kaleidos.feature.model.PreviewFunction
-import com.makeevrserg.kaleidos.server.api.DevServerLog
+import com.makeevrserg.kaleidos.preview.api.feature.api.PreviewStore
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewFunction
+import com.makeevrserg.kaleidos.server.api.api.DevServerLog
 import com.makeevrserg.kaleidos.ui.action.gui.OpenDevToolsAction
 import com.makeevrserg.kaleidos.ui.action.gui.OpenInBrowserAction
 import com.makeevrserg.kaleidos.ui.action.gui.RefreshPreviewAction

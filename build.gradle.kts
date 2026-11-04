@@ -1,3 +1,6 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.ProductKind
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
+
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     // klibs - core
@@ -8,7 +11,8 @@ plugins {
 apply(plugin = "ru.astrainteractive.gradleplugin.rootinfo")
 
 linter {
-    unitKind.set("context")
+    productKind(ProductKind.PLATFORM_PLUGIN)
+    unitKind(UnitKind.CONTEXT)
     rootPackage.set("com.makeevrserg.kaleidos")
 }
 

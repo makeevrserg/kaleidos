@@ -2,8 +2,8 @@ package com.makeevrserg.kaleidos.ui.browser.component
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowser
-import com.makeevrserg.kaleidos.feature.model.PageLoad
-import com.makeevrserg.kaleidos.harness.util.TITLE
+import com.makeevrserg.kaleidos.harness.api.util.TITLE
+import com.makeevrserg.kaleidos.preview.api.feature.model.PageLoad
 import com.makeevrserg.kaleidos.ui.browser.api.PreviewBrowser
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose

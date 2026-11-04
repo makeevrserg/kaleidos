@@ -8,7 +8,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.unit.dp
-import com.makeevrserg.kaleidos.feature.model.PageLoad
+import com.makeevrserg.kaleidos.preview.api.feature.model.PageLoad
 import com.makeevrserg.kaleidos.ui.browser.api.PreviewBrowser
 import com.makeevrserg.kaleidos.ui.state.model.PreviewMessage
 import com.makeevrserg.kaleidos.ui.state.model.PreviewPlaceholderKind
@@ -21,6 +21,8 @@ private const val NO_PAGE_SIZE = 0
  * itself, this only drives it from the composition.
  */
 @Composable
+// A bound function reference captures the old callback instead of reading rememberUpdatedState.
+@Suppress("TrivialLambdaReference")
 private fun PreviewPageLoads(
     browser: PreviewBrowser,
     url: String?,
@@ -32,13 +34,16 @@ private fun PreviewPageLoads(
     LaunchedEffect(browser) {
         browser.loads().collect { load -> currentOnLoad.invoke(load) }
     }
-    LaunchedEffect(browser, url) {
+    LaunchedEffect(
+        browser,
+        url
+    ) {
         if (url == null) browser.clear() else browser.load(url)
     }
 }
 
 @Composable
-private fun EmbeddedBrowserPanel(
+private fun EmbeddedBrowserPanelComposable(
     component: javax.swing.JComponent,
     modifier: Modifier = Modifier
 ) {
@@ -50,7 +55,7 @@ private fun EmbeddedBrowserPanel(
 }
 
 @Composable
-private fun UnsupportedBrowserPlaceholder(message: PreviewMessage, modifier: Modifier = Modifier) {
+private fun UnsupportedBrowserPlaceholderComposable(message: PreviewMessage, modifier: Modifier = Modifier) {
     PreviewPlaceholder(
         message = message,
         kind = PreviewPlaceholderKind.INFO,
@@ -82,8 +87,8 @@ internal fun PreviewPageView(
     val component = browser.component
     val panelModifier = if (isPageVisible) modifier else Modifier.size(NO_PAGE_SIZE.dp)
     when {
-        component != null -> EmbeddedBrowserPanel(component, panelModifier)
-        isPageVisible -> UnsupportedBrowserPlaceholder(unsupportedMessage, modifier)
+        component != null -> EmbeddedBrowserPanelComposable(component, panelModifier)
+        isPageVisible -> UnsupportedBrowserPlaceholderComposable(unsupportedMessage, modifier)
     }
     PreviewPageLoads(
         browser = browser,

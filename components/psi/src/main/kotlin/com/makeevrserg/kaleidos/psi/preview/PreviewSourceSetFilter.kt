@@ -1,7 +1,7 @@
 package com.makeevrserg.kaleidos.psi.preview
 
 import com.intellij.openapi.module.Module
-import com.makeevrserg.kaleidos.feature.util.PREVIEW_SOURCE_SETS
+import com.makeevrserg.kaleidos.preview.api.feature.util.PREVIEW_SOURCE_SETS
 
 /**
  * Reads the source set of an IDE module and answers whether the generated registry may call its code.

@@ -4,8 +4,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.makeevrserg.kaleidos.feature.api.PreviewStore
-import com.makeevrserg.kaleidos.server.model.DevServerState
+import com.makeevrserg.kaleidos.preview.api.feature.api.PreviewStore
+import com.makeevrserg.kaleidos.server.api.model.DevServerState
 
 internal class StopDevServerAction(
     private val contract: PreviewStore

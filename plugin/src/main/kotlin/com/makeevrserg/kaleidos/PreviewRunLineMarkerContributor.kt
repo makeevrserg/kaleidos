@@ -24,6 +24,9 @@ internal class PreviewRunLineMarkerContributor : RunLineMarkerContributor() {
         val rootModule = element.project.service<KaleidosProject>().rootModule
         val previewFunction = rootModule.psiModule.previewFunctionDetector.detect(function) ?: return null
         val actions = arrayOf<AnAction>(rootModule.uiModule.showPreviewAction.invoke(previewFunction))
-        return Info(PreviewIcons.Gutter, actions) { "Show preview of ${previewFunction.name}" }
+        return Info(
+            PreviewIcons.Gutter,
+            actions
+        ) { "Show preview of ${previewFunction.name}" }
     }
 }

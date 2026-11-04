@@ -1,4 +1,5 @@
 import org.gradle.process.CommandLineArgumentProvider
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
 
 plugins {
     id("kaleidos.kotlin.jvm")
@@ -7,7 +8,7 @@ plugins {
 }
 
 linter {
-    unitKind.set("entry-point")
+    unitKind(UnitKind.ENTRY_POINT)
     rootPackage.set("com.makeevrserg.kaleidos")
 }
 

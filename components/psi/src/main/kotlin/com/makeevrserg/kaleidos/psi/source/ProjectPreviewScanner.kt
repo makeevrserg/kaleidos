@@ -5,10 +5,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.makeevrserg.kaleidos.core.di.ProjectDependencies
-import com.makeevrserg.kaleidos.harness.api.ProjectPreviewSource
-import com.makeevrserg.kaleidos.harness.model.HarnessPreview
-import com.makeevrserg.kaleidos.harness.model.ModulePreviews
-import com.makeevrserg.kaleidos.harness.model.PrivatePreviewFile
+import com.makeevrserg.kaleidos.harness.api.api.ProjectPreviewSource
+import com.makeevrserg.kaleidos.harness.api.model.HarnessPreview
+import com.makeevrserg.kaleidos.harness.api.model.ModulePreviews
+import com.makeevrserg.kaleidos.harness.api.model.PrivatePreviewFile
 import com.makeevrserg.kaleidos.psi.model.ScannedPreviewFile
 import com.makeevrserg.kaleidos.psi.preview.EntryPointDetector
 import com.makeevrserg.kaleidos.psi.preview.PreviewFileScanner
@@ -88,7 +88,7 @@ internal class ProjectPreviewScanner(
             smartReadAction(projectDependencies.project) {
                 fileFinder.filesMentioning(PREVIEW_WORD)
                     .mapNotNull(::scan)
-                    .groupBy { file -> file.moduleDirectory }
+                    .groupBy(ScannedPreviewFile::moduleDirectory)
                     .map { entry -> entry.value.toModulePreviews(entry.key) }
             }
         }

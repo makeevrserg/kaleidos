@@ -7,7 +7,7 @@ permissions:
 
 jobs:
   detekt_validation:
-    name: Validate project with detekt
+    name: Validate architecture and Kotlin rules
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Git repo
@@ -18,5 +18,5 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
       - name: Give gradle permission
         run: chmod +x gradlew
-      - name: Run detekt
-        run: ./gradlew detekt
+      - name: Run full lint
+        run: ./gradlew architectureLint --no-configure-on-demand

@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.makeevrserg.kaleidos.server.api.DevServerLog
-import com.makeevrserg.kaleidos.server.model.DevServerLogEvent
+import com.makeevrserg.kaleidos.server.api.api.DevServerLog
+import com.makeevrserg.kaleidos.server.api.model.DevServerLogEvent
 import com.makeevrserg.kaleidos.ui.console.theme.DevServerConsoleTexts
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -20,7 +20,7 @@ import javax.swing.JPanel
 
 class DevServerConsole(
     project: Project,
-    private val log: DevServerLog,
+    log: DevServerLog,
     private val texts: DevServerConsoleTexts,
     coroutineScope: CoroutineScope
 ) : Disposable {
@@ -34,7 +34,7 @@ class DevServerConsole(
     private val collection: Job = coroutineScope.launch { log.events.collect(::show) }
 
     private fun toolbar(consoleComponent: JComponent): JComponent {
-        val actions = DefaultActionGroup(*console.createConsoleActions())
+        val actions = DefaultActionGroup(console.createConsoleActions().toList())
         val toolbar = ActionManager.getInstance().createActionToolbar(
             TOOLBAR_PLACE,
             actions,

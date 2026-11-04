@@ -1,6 +1,6 @@
 package com.makeevrserg.kaleidos.ui.console.theme
 
-import com.makeevrserg.kaleidos.server.model.DevServerLaunchConfig
+import com.makeevrserg.kaleidos.server.api.model.DevServerLaunchConfig
 
 class DevServerConsoleTexts {
 

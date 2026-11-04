@@ -1,11 +1,13 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
+
 plugins {
     id("kaleidos.kotlin.jvm")
     alias(libs.plugins.klibs.rules.linter)
 }
 
 linter {
-    unitKind.set("api")
-    rootPackage.set("com.makeevrserg.kaleidos")
+    unitKind(UnitKind.API)
+    rootPackage.set("com.makeevrserg.kaleidos.preview.api")
 }
 
 dependencies {
@@ -23,4 +25,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.tests.kotlin.test)
     testImplementation(testFixtures(projects.components.core.api))
+    testImplementation(testFixtures(projects.components.harness.api))
+    testImplementation(testFixtures(projects.components.host.api))
+    testImplementation(testFixtures(projects.components.server.api))
 }

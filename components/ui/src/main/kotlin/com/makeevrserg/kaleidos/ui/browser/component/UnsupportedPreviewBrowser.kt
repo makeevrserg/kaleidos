@@ -1,6 +1,6 @@
 package com.makeevrserg.kaleidos.ui.browser.component
 
-import com.makeevrserg.kaleidos.feature.model.PageLoad
+import com.makeevrserg.kaleidos.preview.api.feature.model.PageLoad
 import com.makeevrserg.kaleidos.ui.browser.api.PreviewBrowser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow

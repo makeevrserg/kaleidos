@@ -1,7 +1,7 @@
 package com.makeevrserg.kaleidos.psi.preview
 
 import com.intellij.psi.PsiFile
-import com.makeevrserg.kaleidos.feature.model.PreviewFunction
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewFunction
 import com.makeevrserg.kaleidos.psi.api.PreviewFunctionDetector
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction

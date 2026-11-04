@@ -1,13 +1,13 @@
 package com.makeevrserg.kaleidos.ui.state.util
 
-import com.makeevrserg.kaleidos.feature.model.PageState
-import com.makeevrserg.kaleidos.feature.model.PreviewScan
-import com.makeevrserg.kaleidos.feature.model.PreviewState
-import com.makeevrserg.kaleidos.feature.model.PreviewTarget
-import com.makeevrserg.kaleidos.feature.model.SourceState
-import com.makeevrserg.kaleidos.host.model.PreviewHost
-import com.makeevrserg.kaleidos.host.model.PreviewHostResolution
-import com.makeevrserg.kaleidos.server.model.DevServerState
+import com.makeevrserg.kaleidos.host.api.model.PreviewHost
+import com.makeevrserg.kaleidos.host.api.model.PreviewHostResolution
+import com.makeevrserg.kaleidos.preview.api.feature.model.PageState
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewScan
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewState
+import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewTarget
+import com.makeevrserg.kaleidos.preview.api.feature.model.SourceState
+import com.makeevrserg.kaleidos.server.api.model.DevServerState
 import com.makeevrserg.kaleidos.ui.state.model.PreviewBanner
 import com.makeevrserg.kaleidos.ui.state.model.PreviewContent
 import com.makeevrserg.kaleidos.ui.state.model.PreviewMessage

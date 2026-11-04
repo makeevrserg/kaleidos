@@ -1,3 +1,5 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
+
 plugins {
     id("kaleidos.kotlin.jvm")
     id("kaleidos.intellij.module")
@@ -5,8 +7,8 @@ plugins {
 }
 
 linter {
-    unitKind.set("context")
-    rootPackage.set("com.makeevrserg.kaleidos.host")
+    unitKind(UnitKind.PLATFORM)
+    rootPackage.set("com.makeevrserg.kaleidos.host.intellij")
 }
 
 dependencies {

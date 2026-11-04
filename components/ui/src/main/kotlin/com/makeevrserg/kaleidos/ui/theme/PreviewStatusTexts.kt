@@ -2,8 +2,8 @@
 
 package com.makeevrserg.kaleidos.ui.theme
 
-import com.makeevrserg.kaleidos.feature.model.SourceState
-import com.makeevrserg.kaleidos.server.model.DevServerState
+import com.makeevrserg.kaleidos.preview.api.feature.model.SourceState
+import com.makeevrserg.kaleidos.server.api.model.DevServerState
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.time.Instant

@@ -1,7 +1,7 @@
 package com.makeevrserg.kaleidos.ui.browser.api
 
 import com.intellij.openapi.Disposable
-import com.makeevrserg.kaleidos.feature.model.PageLoad
+import com.makeevrserg.kaleidos.preview.api.feature.model.PageLoad
 import kotlinx.coroutines.flow.Flow
 import javax.swing.JComponent
 

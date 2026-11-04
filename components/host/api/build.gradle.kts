@@ -1,14 +1,20 @@
+import ru.astrainteractive.klibs.rules.core.unit.model.UnitKind
+
 plugins {
     id("kaleidos.kotlin.jvm")
+    `java-test-fixtures`
     alias(libs.plugins.klibs.rules.linter)
 }
 
 linter {
-    unitKind.set("api")
-    rootPackage.set("com.makeevrserg.kaleidos.host")
+    unitKind(UnitKind.API)
+    rootPackage.set("com.makeevrserg.kaleidos.host.api")
 }
 
 dependencies {
+    testFixturesImplementation(libs.kotlin.stdlib)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
+
     // Provided by the IntelliJ Platform at runtime
     compileOnly(libs.kotlin.stdlib)
     compileOnly(libs.kotlinx.coroutines.core)

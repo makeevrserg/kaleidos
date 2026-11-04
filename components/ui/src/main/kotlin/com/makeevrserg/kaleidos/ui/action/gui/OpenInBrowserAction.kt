@@ -5,7 +5,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.makeevrserg.kaleidos.feature.api.PreviewStore
+import com.makeevrserg.kaleidos.preview.api.feature.api.PreviewStore
 
 internal class OpenInBrowserAction(
     private val contract: PreviewStore
