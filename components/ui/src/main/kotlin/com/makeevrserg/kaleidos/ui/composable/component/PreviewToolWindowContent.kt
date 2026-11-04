@@ -15,7 +15,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.makeevrserg.kaleidos.preview.api.feature.api.PreviewStore
@@ -85,6 +87,13 @@ internal fun PreviewToolWindowContent(
     }
 
     val uiState = remember(visibleState) { buildUiState.invoke(visibleState) }
+    val currentPageUrl by rememberUpdatedState(uiState.pageUrl)
+    LaunchedEffect(
+        browser,
+        store
+    ) {
+        browser.observePages(snapshotFlow { currentPageUrl }).collect(store::onPageLoaded)
+    }
 
     Column(
         modifier = Modifier
@@ -99,10 +108,8 @@ internal fun PreviewToolWindowContent(
         ) {
             PreviewPageView(
                 browser = browser,
-                url = uiState.pageUrl,
                 isPageVisible = uiState.content is PreviewContent.Page,
                 unsupportedMessage = messageTexts.unsupportedBrowser,
-                onLoad = store::onPageLoaded,
                 modifier = Modifier.fillMaxSize()
             )
             AnimatedContent(

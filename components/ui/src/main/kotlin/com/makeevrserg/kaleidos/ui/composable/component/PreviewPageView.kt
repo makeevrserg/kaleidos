@@ -2,45 +2,15 @@ package com.makeevrserg.kaleidos.ui.composable.component
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.unit.dp
-import com.makeevrserg.kaleidos.preview.api.feature.model.PageLoad
 import com.makeevrserg.kaleidos.ui.browser.api.PreviewBrowser
 import com.makeevrserg.kaleidos.ui.state.model.PreviewMessage
 import com.makeevrserg.kaleidos.ui.state.model.PreviewPlaceholderKind
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 private const val NO_PAGE_SIZE = 0
-
-/**
- * Feeds the browser and reports its loads. Renders nothing: the page is painted by the browser
- * itself, this only drives it from the composition.
- */
-@Composable
-// A bound function reference captures the old callback instead of reading rememberUpdatedState.
-@Suppress("TrivialLambdaReference")
-private fun PreviewPageLoads(
-    browser: PreviewBrowser,
-    url: String?,
-    onLoad: (PageLoad) -> Unit
-) {
-    val currentOnLoad by rememberUpdatedState(onLoad)
-    // Subscribed before the first load and kept subscribed for the life of the browser: a handler
-    // added after a load can miss its end and leave the tool window waiting for a page already there.
-    LaunchedEffect(browser) {
-        browser.loads().collect { load -> currentOnLoad.invoke(load) }
-    }
-    LaunchedEffect(
-        browser,
-        url
-    ) {
-        if (url == null) browser.clear() else browser.load(url)
-    }
-}
 
 @Composable
 private fun EmbeddedBrowserPanelComposable(
@@ -71,17 +41,14 @@ private fun UnsupportedBrowserPlaceholderComposable(message: PreviewMessage, mod
  * into an empty rectangle. It stays in the hierarchy: an off-screen browser disposes its rendering
  * on `removeNotify`, and nothing has to be loaded while it has no room anyway.
  *
- * @param url page to load; null while the tool window shows a message instead
  * @param isPageVisible whether the page is on screen, or a message is shown in its place
  * @param unsupportedMessage shown in place of the page when the runtime has no embedded browser
  */
 @Composable
 internal fun PreviewPageView(
     browser: PreviewBrowser,
-    url: String?,
     isPageVisible: Boolean,
     unsupportedMessage: PreviewMessage,
-    onLoad: (PageLoad) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val component = browser.component
@@ -90,9 +57,4 @@ internal fun PreviewPageView(
         component != null -> EmbeddedBrowserPanelComposable(component, panelModifier)
         isPageVisible -> UnsupportedBrowserPlaceholderComposable(unsupportedMessage, modifier)
     }
-    PreviewPageLoads(
-        browser = browser,
-        url = url,
-        onLoad = onLoad
-    )
 }

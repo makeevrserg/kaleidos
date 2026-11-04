@@ -16,18 +16,14 @@ interface PreviewBrowser : Disposable {
 
     val isDevToolsSupported: Boolean
 
-    fun load(url: String)
-
-    /** Drops whatever is on screen, so the page of one file is never seen while another is selected. */
-    fun clear()
-
     fun reload()
 
     fun openDevTools()
 
     /**
-     * Finished main-frame loads of preview pages, live reloads included. Cold: the browser is observed
-     * only while collected. May emit off the event dispatch thread.
+     * Observes before loading the first URL, then reports main-frame loads, including live reloads.
+     * A null URL clears the page. One collection belongs to the panel for its lifetime; cancellation
+     * removes its handlers and pending title checks. Collect on the browser's UI dispatcher.
      */
-    fun loads(): Flow<PageLoad>
+    fun observePages(urls: Flow<String?>): Flow<PageLoad>
 }
