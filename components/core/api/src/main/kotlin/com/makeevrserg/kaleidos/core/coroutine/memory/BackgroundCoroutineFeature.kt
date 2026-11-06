@@ -13,6 +13,6 @@ import kotlin.coroutines.CoroutineContext
 internal class BackgroundCoroutineFeature(
     parentScope: CoroutineScope
 ) : CoroutineFeature {
-    override val coroutineContext: CoroutineContext =
-        parentScope.coroutineContext + SupervisorJob(parentScope.coroutineContext[Job])
+    override val coroutineContext: CoroutineContext = parentScope.coroutineContext
+        .plus(SupervisorJob(parentScope.coroutineContext[Job]))
 }

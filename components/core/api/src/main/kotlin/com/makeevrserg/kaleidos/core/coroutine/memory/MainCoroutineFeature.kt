@@ -16,6 +16,6 @@ internal class MainCoroutineFeature(
     parentScope: CoroutineScope,
     mainContext: CoroutineContext
 ) : CoroutineFeature {
-    override val coroutineContext: CoroutineContext =
-        parentScope.coroutineContext + mainContext + SupervisorJob(parentScope.coroutineContext[Job])
+    private val parentContext: CoroutineContext = parentScope.coroutineContext
+    override val coroutineContext: CoroutineContext = parentContext + mainContext + SupervisorJob(parentContext[Job])
 }

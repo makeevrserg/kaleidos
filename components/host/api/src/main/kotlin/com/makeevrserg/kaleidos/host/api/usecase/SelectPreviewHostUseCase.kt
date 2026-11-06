@@ -92,7 +92,7 @@ class SelectPreviewHostUseCase {
 
     companion object {
         private const val PREVIEW_MARKER = "preview"
-        const val GRADLE_NOT_IMPORTED =
-            "Gradle project is not imported yet. Wait for the sync to finish, then press Refresh Preview."
+        const val GRADLE_NOT_IMPORTED = "Gradle project is not imported yet. " +
+            "Wait for the sync to finish, then press Refresh Preview."
     }
 }
