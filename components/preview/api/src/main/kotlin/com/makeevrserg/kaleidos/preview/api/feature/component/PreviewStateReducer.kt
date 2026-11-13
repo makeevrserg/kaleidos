@@ -30,9 +30,8 @@ internal class PreviewStateReducer(private val clock: Clock) {
         if (running.host != host) return null
         val previews = target.renderablePreviews
         if (previews.isEmpty()) return null
-        return buildPreviewUrl(
+        return host.kind.buildPreviewUrl(
             running.baseUrl,
-            host.kind,
             previews,
             target.focusedFqn
         )

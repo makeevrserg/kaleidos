@@ -1,6 +1,5 @@
 package com.makeevrserg.kaleidos.ui.state.util
 
-import com.makeevrserg.kaleidos.host.api.model.PreviewHost
 import com.makeevrserg.kaleidos.host.api.model.PreviewHostResolution
 import com.makeevrserg.kaleidos.preview.api.feature.model.PageState
 import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewScan
@@ -10,7 +9,6 @@ import com.makeevrserg.kaleidos.preview.api.feature.model.SourceState
 import com.makeevrserg.kaleidos.server.api.model.DevServerState
 import com.makeevrserg.kaleidos.ui.state.model.PreviewBanner
 import com.makeevrserg.kaleidos.ui.state.model.PreviewContent
-import com.makeevrserg.kaleidos.ui.state.model.PreviewMessage
 import com.makeevrserg.kaleidos.ui.state.model.PreviewUiState
 import com.makeevrserg.kaleidos.ui.theme.PreviewMessageTexts
 import com.makeevrserg.kaleidos.ui.theme.PreviewStatusTexts
@@ -46,16 +44,6 @@ private fun PreviewState.failureContent(messageTexts: PreviewMessageTexts): Prev
     }
 }
 
-private fun PreviewState.waitingMessage(host: PreviewHost?, messageTexts: PreviewMessageTexts): PreviewMessage {
-    val starting = serverState as? DevServerState.Starting
-    return when {
-        host == null -> messageTexts.lookingForHost
-        previewUrl != null -> messageTexts.pageLoading(host)
-        starting?.host == host -> messageTexts.startingServer(host)
-        else -> messageTexts.connecting(host)
-    }
-}
-
 private fun PreviewState.pageUrl(): String? {
     return when (pageState) {
         PageState.Loading, PageState.Shown -> previewUrl
@@ -74,18 +62,14 @@ private fun PreviewState.content(
     if (failureContent != null) return failureContent
     if (pageUrl == null || pageState !is PageState.Shown) {
         val host = (target.host as? PreviewHostResolution.Found)?.host
-        return PreviewContent.Loading(waitingMessage(host, messageTexts))
+        val message = selectWaitingMessage(
+            this,
+            host,
+            messageTexts
+        )
+        return PreviewContent.Loading(message)
     }
     return PreviewContent.Page(pageUrl)
-}
-
-private fun PreviewState.statusText(content: PreviewContent, statusTexts: PreviewStatusTexts): String {
-    return when (content) {
-        is PreviewContent.Empty -> ""
-        is PreviewContent.Failure -> ""
-        is PreviewContent.Loading -> statusTexts.status(serverState, previewUrl = null)
-        is PreviewContent.Page -> statusTexts.status(serverState, content.url)
-    }
 }
 
 internal fun PreviewState.buildUiState(
@@ -98,6 +82,10 @@ internal fun PreviewState.buildUiState(
         banner = sourceState.toBanner(statusTexts),
         content = content,
         pageUrl = pageUrl,
-        statusText = statusText(content, statusTexts)
+        statusText = formatStatusText(
+            this,
+            content,
+            statusTexts
+        )
     )
 }
