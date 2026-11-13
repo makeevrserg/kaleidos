@@ -4,7 +4,7 @@ import com.makeevrserg.kaleidos.preview.api.feature.model.PreviewState
 import com.makeevrserg.kaleidos.ui.state.model.PreviewContent
 import com.makeevrserg.kaleidos.ui.theme.PreviewStatusTexts
 
-internal fun statusText(
+internal fun formatStatusText(
     state: PreviewState,
     content: PreviewContent,
     statusTexts: PreviewStatusTexts

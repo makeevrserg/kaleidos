@@ -6,7 +6,7 @@ import com.makeevrserg.kaleidos.server.api.model.DevServerState
 import com.makeevrserg.kaleidos.ui.state.model.PreviewMessage
 import com.makeevrserg.kaleidos.ui.theme.PreviewMessageTexts
 
-internal fun waitingMessage(
+internal fun selectWaitingMessage(
     state: PreviewState,
     host: PreviewHost?,
     messageTexts: PreviewMessageTexts

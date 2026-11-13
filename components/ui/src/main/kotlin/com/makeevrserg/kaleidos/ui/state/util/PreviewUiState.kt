@@ -62,7 +62,7 @@ private fun PreviewState.content(
     if (failureContent != null) return failureContent
     if (pageUrl == null || pageState !is PageState.Shown) {
         val host = (target.host as? PreviewHostResolution.Found)?.host
-        val message = waitingMessage(
+        val message = selectWaitingMessage(
             this,
             host,
             messageTexts
@@ -82,7 +82,7 @@ internal fun PreviewState.buildUiState(
         banner = sourceState.toBanner(statusTexts),
         content = content,
         pageUrl = pageUrl,
-        statusText = statusText(
+        statusText = formatStatusText(
             this,
             content,
             statusTexts
